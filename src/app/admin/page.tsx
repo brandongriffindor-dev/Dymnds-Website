@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { useState, useEffect, useCallback } from 'react';
+import { db, storage } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -9,9 +9,9 @@ import {
   updateDoc, 
   query, 
   orderBy,
-  addDoc,
-  serverTimestamp
+  addDoc
 } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Product, Order, WaitlistEntry, DashboardStats } from '@/lib/firebase';
 
 export default function AdminDashboard() {
@@ -27,6 +27,22 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    slug: '',
+    title: '',
+    subtitle: '',
+    price: 0,
+    stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
+    category: 'Men',
+    productType: 'Tops',
+    imageUrl: '',
+    images: [] as string[],
+  });
 
   useEffect(() => {
     fetchData();
@@ -106,6 +122,128 @@ export default function AdminDashboard() {
       setEditingProduct(null);
     } catch (error) {
       console.error('Error updating product:', error);
+    }
+  };
+
+  // Handle drag and drop
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      await uploadImages(files);
+    }
+  }, []);
+
+  const uploadImages = async (files: FileList) => {
+    setUploadingImages(true);
+    const uploadedUrls: string[] = [];
+
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) continue;
+      
+      try {
+        const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        const downloadUrl = await getDownloadURL(storageRef);
+        uploadedUrls.push(downloadUrl);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        alert(`Failed to upload ${file.name}`);
+      }
+    }
+
+    setNewProduct(prev => ({
+      ...prev,
+      images: [...prev.images, ...uploadedUrls]
+    }));
+    setUploadingImages(false);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      await uploadImages(files);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setNewProduct(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addProduct = async () => {
+    setAddError('');
+    setIsAdding(true);
+    
+    // Validation
+    if (!newProduct.slug.trim()) {
+      setAddError('Slug is required');
+      setIsAdding(false);
+      return;
+    }
+    if (!newProduct.title.trim()) {
+      setAddError('Title is required');
+      setIsAdding(false);
+      return;
+    }
+    if (newProduct.price <= 0) {
+      setAddError('Price must be greater than 0');
+      setIsAdding(false);
+      return;
+    }
+
+    try {
+      const productData = {
+        slug: newProduct.slug.trim(),
+        title: newProduct.title.trim(),
+        subtitle: newProduct.subtitle.trim(),
+        price: newProduct.price,
+        stock: newProduct.stock,
+        category: newProduct.category,
+        productType: newProduct.productType,
+        images: newProduct.images.length > 0 ? newProduct.images : (newProduct.imageUrl ? [newProduct.imageUrl] : []),
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      const docRef = await addDoc(collection(db, 'products'), productData);
+      
+      setProducts([{ id: docRef.id, ...productData } as Product, ...products]);
+      setShowAddProduct(false);
+      setNewProduct({
+        slug: '',
+        title: '',
+        subtitle: '',
+        price: 0,
+        stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
+        category: 'Men',
+        productType: 'Tops',
+        imageUrl: '',
+        images: [],
+      });
+      alert('Product added successfully!');
+    } catch (error) {
+      console.error('Error adding product:', error);
+      setAddError('Failed to add product. Check console for details.');
+      alert('Failed to add product. Try again.');
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -219,13 +357,25 @@ export default function AdminDashboard() {
         {/* Inventory Commander */}
         {activeView === 'inventory' && (
           <div>
-            <h2 className="text-4xl font-bebas italic tracking-wider mb-8">Inventory Commander</h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-4xl font-bebas italic tracking-wider">Inventory Commander</h2>
+              <button
+                onClick={() => {
+                  setShowAddProduct(true);
+                  setAddError('');
+                }}
+                className="px-6 py-3 bg-white text-black text-sm font-bold tracking-wider uppercase rounded-lg hover:bg-white/90 transition-colors"
+              >
+                + Add Product
+              </button>
+            </div>
             
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
               <table className="w-full">
                 <thead className="bg-white/5 border-b border-white/10">
                   <tr>
                     <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Type</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XS</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">S</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">M</th>
@@ -243,8 +393,11 @@ export default function AdminDashboard() {
                           className="text-left hover:text-white/70 transition-colors"
                         >
                           <p className="font-medium">{product.title}</p>
-                          <p className="text-white/40 text-xs">${product.price}</p>
+                          <p className="text-white/40 text-xs">${product.price} • {product.category}</p>
                         </button>
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className="text-white/60 text-xs">{(product as any).productType || 'N/A'}</span>
                       </td>
                       {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
                         <td key={size} className="p-4">
@@ -297,6 +450,233 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* Add Product Modal */}
+      {showAddProduct && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-white/10 rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-2xl font-bebas italic tracking-wider mb-6">Add New Product</h3>
+            
+            {addError && (
+              <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                {addError}
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              {/* Category Selection */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Category (Gender)</label>
+                  <select
+                    value={newProduct.category}
+                    onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                    className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                  >
+                    <option value="Men">Men</option>
+                    <option value="Women">Women</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Product Type</label>
+                  <select
+                    value={newProduct.productType}
+                    onChange={(e) => setNewProduct({...newProduct, productType: e.target.value})}
+                    className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                  >
+                    <option value="Tops">Tops</option>
+                    <option value="Bottoms">Bottoms</option>
+                    <option value="Outerwear">Outerwear</option>
+                    <option value="Leggings">Leggings</option>
+                    <option value="Shorts">Shorts</option>
+                    <option value="Hoodies">Hoodies</option>
+                    <option value="T-Shirts">T-Shirts</option>
+                    <option value="Tank Tops">Tank Tops</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Slug (URL) *</label>
+                <input
+                  type="text"
+                  value={newProduct.slug}
+                  onChange={(e) => setNewProduct({...newProduct, slug: e.target.value})}
+                  placeholder="e.g., heavy-hoodie"
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                />
+                <p className="text-white/30 text-xs mt-1">Used in URL: /products/your-slug</p>
+              </div>
+              
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Title *</label>
+                <input
+                  type="text"
+                  value={newProduct.title}
+                  onChange={(e) => setNewProduct({...newProduct, title: e.target.value})}
+                  placeholder="Heavy Hoodie"
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Subtitle</label>
+                <input
+                  type="text"
+                  value={newProduct.subtitle}
+                  onChange={(e) => setNewProduct({...newProduct, subtitle: e.target.value})}
+                  placeholder="Warmth without weight..."
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Price ($) *</label>
+                <input
+                  type="number"
+                  value={newProduct.price || ''}
+                  onChange={(e) => setNewProduct({...newProduct, price: parseFloat(e.target.value) || 0})}
+                  placeholder="149"
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                />
+              </div>
+
+              {/* Image Upload - Drag & Drop */}
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Product Images</label>
+                
+                {/* Drag & Drop Zone */}
+                <div
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+                    dragActive 
+                      ? 'border-white bg-white/5' 
+                      : 'border-white/20 hover:border-white/40'
+                  }`}
+                >
+                  <div className="text-4xl mb-3">📁</div>
+                  <p className="text-white/60 text-sm mb-2">
+                    Drag & drop PNG images here
+                  </p>
+                  <p className="text-white/40 text-xs mb-4">
+                    or click to select files
+                  </p>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="inline-block px-4 py-2 bg-white/10 rounded-lg text-sm cursor-pointer hover:bg-white/20 transition-colors"
+                  >
+                    Select Images
+                  </label>
+                </div>
+
+                {uploadingImages && (
+                  <div className="mt-3 flex items-center gap-2 text-white/60 text-sm">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Uploading images...
+                  </div>
+                )}
+
+                {/* Preview uploaded images */}
+                {newProduct.images.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-white/60 text-sm mb-2">Uploaded Images:</p>
+                    <div className="flex gap-3 flex-wrap">
+                      {newProduct.images.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img 
+                            src={url} 
+                            alt={`Product ${index + 1}`}
+                            className="w-20 h-20 object-cover rounded-lg border border-white/20"
+                          />
+                          <button
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Or paste URL */}
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <p className="text-white/40 text-xs mb-2">Or paste image URL:</p>
+                  <input
+                    type="text"
+                    value={newProduct.imageUrl}
+                    onChange={(e) => setNewProduct({...newProduct, imageUrl: e.target.value})}
+                    placeholder="https://your-image-url.com/image.jpg"
+                    className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Initial Stock */}
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Initial Stock</label>
+                <div className="grid grid-cols-6 gap-2">
+                  {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
+                    <div key={size}>
+                      <span className="text-xs text-white/40 block text-center mb-1">{size}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={(newProduct.stock as Record<string, number>)[size]}
+                        onChange={(e) => setNewProduct({
+                          ...newProduct, 
+                          stock: {...newProduct.stock, [size]: parseInt(e.target.value) || 0}
+                        })}
+                        className="w-full text-center bg-black border border-white/20 rounded px-2 py-2 text-sm focus:border-white/50 focus:outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-8">
+              <button
+                onClick={() => {
+                  setShowAddProduct(false);
+                  setAddError('');
+                }}
+                disabled={isAdding}
+                className="flex-1 py-3 border border-white/20 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={addProduct}
+                disabled={isAdding}
+                className="flex-1 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition-colors font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isAdding ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  'Add Product'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Product Modal */}
       {editingProduct && (
