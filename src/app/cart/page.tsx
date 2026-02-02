@@ -53,7 +53,7 @@ export default function CartPage() {
                 href="/collections/all"
                 className="inline-flex min-h-[56px] px-12 items-center justify-center bg-white text-black font-bebas italic text-xl tracking-[0.3em] uppercase rounded-xl hover:scale-105 transition-all"
               >
-                Shop Now
+                Checkout
               </Link>
             </div>
           ) : (
@@ -79,19 +79,20 @@ export default function CartPage() {
                         <p className="text-white/60 font-bold mt-1">${item.price}</p>
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-6 mt-4">
                         {/* Quantity */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-white/40 uppercase tracking-wider">Qty:</span>
                           <button 
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="w-10 h-10 flex items-center justify-center border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
+                            className="w-10 h-10 flex items-center justify-center bg-white text-black font-bold rounded-lg hover:bg-white/90 transition-colors"
                           >
                             −
                           </button>
-                          <span className="w-8 text-center font-bold">{item.quantity}</span>
+                          <span className="w-10 text-center font-bold text-lg">{item.quantity}</span>
                           <button 
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="w-10 h-10 flex items-center justify-center border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
+                            className="w-10 h-10 flex items-center justify-center bg-white text-black font-bold rounded-lg hover:bg-white/90 transition-colors"
                           >
                             +
                           </button>
@@ -100,7 +101,7 @@ export default function CartPage() {
                         {/* Remove */}
                         <button 
                           onClick={() => removeFromCart(item.id)}
-                          className="text-white/30 hover:text-white text-sm underline"
+                          className="px-4 py-2 text-xs uppercase tracking-wider text-red-400 hover:text-red-300 border border-red-400/30 hover:border-red-400 rounded-lg transition-all"
                         >
                           Remove
                         </button>

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useCart } from "./CartContext";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { totalItems } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,10 +43,15 @@ export default function Navbar() {
               App
             </Link>
             <Link
-              href="/shop"
-              className="px-5 py-2.5 bg-white text-black hover:bg-white/90 transition-all"
+              href="/cart"
+              className="px-5 py-2.5 bg-white text-black hover:bg-white/90 transition-all flex items-center gap-2"
             >
-              Shop
+              Checkout
+              {totalItems > 0 && (
+                <span className="bg-black text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                  {totalItems}
+                </span>
+              )}
             </Link>
           </div>
 
@@ -93,11 +100,11 @@ export default function Navbar() {
               App
             </Link>
             <Link 
-              href="/shop"
+              href="/cart"
               onClick={() => setMobileMenuOpen(false)}
               className="text-lg tracking-widest uppercase hover:opacity-70 transition-all"
             >
-              Shop
+              Checkout
             </Link>
           </div>
         </div>

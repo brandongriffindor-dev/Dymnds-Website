@@ -4,16 +4,25 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/components/CartContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const products = [
-  { id: 'compression-tee', name: 'Compression Tee', price: 89, category: 'Men', description: 'Your base layer for every battle.' },
-  { id: 'heavy-hoodie', name: 'Heavy Hoodie', price: 149, category: 'Men', description: 'Built for recovery days.' },
-  { id: 'performance-joggers', name: 'Performance Joggers', price: 119, category: 'Men', description: 'From gym to street.' },
-  { id: 'seamless-sports-bra', name: 'Seamless Sports Bra', price: 65, category: 'Women', description: 'Support that moves with you.' },
-  { id: 'high-rise-leggings', name: 'High-Rise Leggings', price: 95, category: 'Women', description: 'Sculpted for every squat.' },
-  { id: 'cropped-tank', name: 'Cropped Tank', price: 55, category: 'Women', description: 'Freedom to move.' },
-];
+interface ShopifyVariant {
+  id: string;
+  title: string;
+  price: string;
+  inventory_quantity: number;
+}
+
+interface ShopifyProduct {
+  id: string;
+  title: string;
+  handle: string;
+  description: string;
+  product_type: string;
+  tags: string;
+  variants: ShopifyVariant[];
+  images: { src: string }[];
+}
 
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
@@ -21,14 +30,56 @@ export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState<'all' | 'men' | 'women'>('all');
   const { addToCart, cart, subtotal } = useCart();
   const [showCart, setShowCart] = useState(false);
+  const [products, setProducts] = useState<ShopifyProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real products from Shopify
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('https://dymnds.myshopify.com/api/2024-01/products.json?limit=50', {
+        headers: {
+          'X-Shopify-Storefront-Access-Token': 'your-storefront-token-here'
+        }
+      });
+      
+      // For now, use the Storefront API or fetch from our admin API
+      // Since we need to handle CORS, let's use a simpler approach
+      const data = await fetch('/api/storefront/products').then(r => r.json()).catch(() => null);
+      
+      if (data?.products) {
+        setProducts(data.products);
+      } else {
+        // Fallback: fetch from admin API through a proxy
+        const adminData = await fetch('https://dymnds-admin.vercel.app/api/products').then(r => r.json()).catch(() => null);
+        if (adminData?.products) {
+          setProducts(adminData.products);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter products by category
+  const getCategory = (product: ShopifyProduct) => {
+    const type = product.product_type?.toLowerCase() || '';
+    const tags = product.tags?.toLowerCase() || '';
+    if (type.includes('men') || tags.includes('men')) return 'men';
+    if (type.includes('women') || tags.includes('women')) return 'women';
+    return 'men'; // default
+  };
 
   const filteredProducts = activeCategory === 'all' 
     ? products 
-    : products.filter(p => p.category.toLowerCase() === activeCategory);
+    : products.filter(p => getCategory(p) === activeCategory);
 
   const handleCheckout = () => {
-    // Redirect to Shopify checkout
-    // Replace with your actual Shopify store URL
     window.location.href = 'https://dymnds.myshopify.com/cart';
   };
 
@@ -47,6 +98,7 @@ export default function ShopPage() {
                   Shop
                 </h1>
                 <p className="text-white/50">Premium activewear. Real impact.</p>
+                {loading && <p className="text-white/30 mt-2">Loading products...</p>}
               </div>
 
               {/* Category Filter */}
@@ -71,11 +123,17 @@ export default function ShopPage() {
               </div>
 
               {/* Products Grid */}
-              <div className="grid md:grid-cols-2 gap-8">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
-                ))}
-              </div>
+              {products.length === 0 && !loading ? (
+                <div className="text-center py-16">
+                  <p className="text-white/40">No products available</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-8">
+                  {filteredProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Cart/Checkout Sidebar */}
@@ -171,17 +229,18 @@ export default function ShopPage() {
 }
 
 function ProductCard({ product, onAddToCart }: { 
-  product: typeof products[0]; 
+  product: ShopifyProduct; 
   onAddToCart: (item: { id: string; name: string; price: number; quantity: number; size: string }) => void;
 }) {
   const [selectedSize, setSelectedSize] = useState('M');
   const [added, setAdded] = useState(false);
 
   const handleAdd = () => {
+    const price = parseFloat(product.variants?.[0]?.price || '0');
     onAddToCart({
       id: `${product.id}-${selectedSize}`,
-      name: product.name,
-      price: product.price,
+      name: product.title,
+      price: price,
       quantity: 1,
       size: selectedSize,
     });
@@ -189,19 +248,30 @@ function ProductCard({ product, onAddToCart }: {
     setTimeout(() => setAdded(false), 1500);
   };
 
+  const price = parseFloat(product.variants?.[0]?.price || '0');
+  const imageUrl = product.images?.[0]?.src || '/diamond-white.png';
+
   return (
     <div className="group">
-      <div className="aspect-[4/5] bg-neutral-900 mb-5 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500">
-        <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-15 group-hover:opacity-40 transition-opacity duration-500" />
+      <div className="aspect-[4/5] bg-neutral-900 mb-5 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500 overflow-hidden">
+        {product.images?.[0]?.src ? (
+          <img 
+            src={imageUrl} 
+            alt={product.title}
+            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+          />
+        ) : (
+          <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-15 group-hover:opacity-40 transition-opacity duration-500" />
+        )}
       </div>
 
       <div className="space-y-3">
-        <p className="text-[10px] tracking-[0.3em] uppercase text-white/30">{product.category}</p>
+        <p className="text-[10px] tracking-[0.3em] uppercase text-white/30">{product.product_type || 'Apparel'}</p>
         <h3 className="text-xl tracking-wide" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-          {product.name}
+          {product.title}
         </h3>
-        <p className="text-white/40 text-sm">{product.description}</p>
-        <p className="text-lg">${product.price}</p>
+        <p className="text-white/40 text-sm line-clamp-2">{product.description?.replace(/<[^>]*>/g, '').slice(0, 100) || 'Premium activewear'}</p>
+        <p className="text-lg">${price}</p>
 
         <div className="flex gap-2 pt-2">
           {sizes.map((size) => (

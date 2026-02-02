@@ -72,14 +72,18 @@ function ProductCard({ product, onAddToCart }: {
 
   return (
     <div className="group">
-      <div className="aspect-[4/5] bg-neutral-900 mb-5 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500">
-        <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-15 group-hover:opacity-40 transition-opacity duration-500" />
-      </div>
+      <Link href={`/products/${product.id}`} className="block">
+        <div className="aspect-[4/5] bg-neutral-900 mb-5 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500">
+          <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-15 group-hover:opacity-40 transition-opacity duration-500" />
+        </div>
+      </Link>
 
       <div className="space-y-3">
-        <h3 className="text-xl tracking-wide" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-          {product.name}
-        </h3>
+        <Link href={`/products/${product.id}`} className="block hover:opacity-70 transition-opacity">
+          <h3 className="text-xl tracking-wide" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+            {product.name}
+          </h3>
+        </Link>
         <p className="text-white/40 text-sm">{product.description}</p>
         <p className="text-lg">${product.price}</p>
 
@@ -109,6 +113,13 @@ function ProductCard({ product, onAddToCart }: {
         >
           {added ? 'Added ✓' : 'Add to Cart'}
         </button>
+
+        <Link 
+          href={`/products/${product.id}`}
+          className="block w-full py-3 text-center text-xs tracking-[0.2em] uppercase border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all"
+        >
+          View Product →
+        </Link>
       </div>
     </div>
   );
