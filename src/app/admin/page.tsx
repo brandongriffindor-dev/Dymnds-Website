@@ -207,7 +207,14 @@ export default function AdminDashboard() {
       return;
     }
 
+    // Create a timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timed out after 10 seconds')), 10000);
+    });
+
     try {
+      console.log('Starting add product...', newProduct);
+      
       const productData = {
         slug: newProduct.slug.trim(),
         title: newProduct.title.trim(),
@@ -222,7 +229,15 @@ export default function AdminDashboard() {
         updated_at: new Date().toISOString(),
       };
       
-      const docRef = await addDoc(collection(db, 'products'), productData);
+      console.log('Adding to Firebase:', productData);
+      
+      // Race between Firebase call and timeout
+      const docRef = await Promise.race([
+        addDoc(collection(db, 'products'), productData),
+        timeoutPromise
+      ]) as any;
+      
+      console.log('Product added with ID:', docRef.id);
       
       setProducts([{ id: docRef.id, ...productData } as Product, ...products]);
       setShowAddProduct(false);
@@ -238,10 +253,11 @@ export default function AdminDashboard() {
         images: [],
       });
       alert('Product added successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding product:', error);
-      setAddError('Failed to add product. Check console for details.');
-      alert('Failed to add product. Try again.');
+      const errorMsg = error?.message || 'Unknown error';
+      setAddError(`Failed to add product: ${errorMsg}`);
+      alert(`Failed to add product: ${errorMsg}`);
     } finally {
       setIsAdding(false);
     }
