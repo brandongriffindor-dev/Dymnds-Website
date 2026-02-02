@@ -3,10 +3,12 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AppWaitlistForm from "@/components/AppWaitlistForm";
 import { useEffect, useState } from "react";
 
 export default function Home() {
   const [loaded, setLoaded] = useState(false);
+  const [showWaitlist, setShowWaitlist] = useState(false);
 
   useEffect(() => {
     setLoaded(true);
@@ -304,12 +306,12 @@ export default function Home() {
           <div className="text-center">
             <p className="text-white/50 mb-6">Download the Dymnds app today—completely free, no strings attached. It's our gift to the fitness community.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
-                href="/app" 
+              <button 
+                onClick={() => setShowWaitlist(true)}
                 className="px-10 py-4 bg-white text-black text-xs tracking-[0.2em] uppercase hover:bg-white/90 transition-all hover:scale-105"
               >
                 Download Free App
-              </Link>
+              </button>
               <Link 
                 href="/shop" 
                 className="px-10 py-4 border border-white/30 text-white text-xs tracking-[0.2em] uppercase hover:bg-white hover:text-black transition-all"
@@ -343,6 +345,9 @@ export default function Home() {
       </section>
 
       <Footer />
+
+      {/* App Waitlist Modal */}
+      {showWaitlist && <AppWaitlistForm onClose={() => setShowWaitlist(false)} />}
     </main>
   );
 }
