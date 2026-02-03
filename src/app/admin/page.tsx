@@ -75,7 +75,16 @@ export default function AdminDashboard() {
       if (!auth) throw new Error('Auth not available');
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
-      setLoginError(error.message || 'Login failed');
+      console.error('Login error:', error.code, error.message);
+      // Map Firebase error codes to friendly messages
+      const errorMap: Record<string, string> = {
+        'auth/user-not-found': 'No account found with this email',
+        'auth/wrong-password': 'Incorrect password',
+        'auth/invalid-email': 'Invalid email format',
+        'auth/invalid-credential': 'Invalid email or password',
+        'auth/too-many-requests': 'Too many failed attempts. Try again later',
+      };
+      setLoginError(errorMap[error.code] || error.message || 'Login failed');
     }
   };
 
