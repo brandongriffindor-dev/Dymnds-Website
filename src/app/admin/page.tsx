@@ -167,6 +167,58 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateDisplayOrder = async (productId: string, newOrder: number) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    const currentOrder = product.displayOrder || 1;
+    if (newOrder === currentOrder) return;
+    
+    try {
+      // If moving to a lower number (earlier in list), shift products in between
+      if (newOrder < currentOrder) {
+        const productsToShift = products.filter(p => 
+          p.id !== productId && 
+          (p.displayOrder || 1) >= newOrder && 
+          (p.displayOrder || 1) < currentOrder
+        );
+        for (const p of productsToShift) {
+          await updateDoc(doc(db, 'products', p.id), {
+            displayOrder: (p.displayOrder || 1) + 1,
+            updated_at: new Date().toISOString()
+          });
+        }
+      } 
+      // If moving to a higher number (later in list), shift products in between
+      else {
+        const productsToShift = products.filter(p => 
+          p.id !== productId && 
+          (p.displayOrder || 1) <= newOrder && 
+          (p.displayOrder || 1) > currentOrder
+        );
+        for (const p of productsToShift) {
+          await updateDoc(doc(db, 'products', p.id), {
+            displayOrder: (p.displayOrder || 1) - 1,
+            updated_at: new Date().toISOString()
+          });
+        }
+      }
+      
+      // Update the target product's order
+      await updateDoc(doc(db, 'products', productId), {
+        displayOrder: newOrder,
+        updated_at: new Date().toISOString()
+      });
+      
+      // Refresh data to show new order
+      await fetchData();
+      alert('Display order updated');
+    } catch (error) {
+      console.error('Error updating display order:', error);
+      alert('Failed to update display order');
+    }
+  };
+
   const updateProductDetails = async (product: Product) => {
     try {
       await updateDoc(doc(db, 'products', product.id), {
@@ -557,7 +609,19 @@ export default function AdminDashboard() {
                   {products.map((product) => (
                     <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="p-4 text-center">
-                        <span className="text-white/40 text-sm">{product.displayOrder || '-'}</span>
+                        <input
+                          type="number"
+                          min={1}
+                          value={product.displayOrder || 1}
+                          onChange={(e) => updateDisplayOrder(product.id, parseInt(e.target.value) || 1)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              updateDisplayOrder(product.id, parseInt((e.target as HTMLInputElement).value) || 1);
+                            }
+                          }}
+                          className="w-12 text-center bg-black border border-white/20 rounded px-2 py-1 text-sm focus:border-white/50 focus:outline-none"
+                          title="Click to change position (Enter to save)"
+                        />
                       </td>
                       <td className="p-4">
                         <button
