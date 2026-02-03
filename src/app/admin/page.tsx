@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
-  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'waitlist'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'waitlist'>('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
@@ -646,6 +646,16 @@ export default function AdminDashboard() {
             )}
           </button>
           <button
+            onClick={() => setActiveView('customers')}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+              activeView === 'customers' 
+                ? 'bg-white text-black' 
+                : 'text-white/60 hover:bg-white/5'
+            }`}
+          >
+            <span className="text-sm tracking-wider uppercase">Customers</span>
+          </button>
+          <button
             onClick={() => setActiveView('waitlist')}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'waitlist' 
@@ -953,6 +963,118 @@ export default function AdminDashboard() {
                         </td>
                       </tr>
                     ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Customers View */}
+        {activeView === 'customers' && (
+          <div>
+            <h2 className="text-4xl font-bebas italic tracking-wider mb-8">Customer Database</h2>
+            
+            {/* Customer Stats */}
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-white/40 mb-1">Total Customers</p>
+                <p className="text-2xl font-bebas italic">{Array.from(new Set(orders.map(o => o.customer_email))).length}</p>
+              </div>
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-green-400 mb-1">VIP Customers</p>
+                <p className="text-2xl font-bebas italic text-green-400">
+                  {Array.from(new Set(orders.map(o => o.customer_email))).filter(email => {
+                    const customerOrders = orders.filter(o => o.customer_email === email);
+                    const totalSpent = customerOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                    return totalSpent > 500;
+                  }).length}
+                </p>
+              </div>
+              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-blue-400 mb-1">Active This Month</p>
+                <p className="text-2xl font-bebas italic text-blue-400">
+                  {Array.from(new Set(orders.filter(o => {
+                    const orderDate = new Date(o.created_at);
+                    const monthAgo = new Date();
+                    monthAgo.setMonth(monthAgo.getMonth() - 1);
+                    return orderDate >= monthAgo;
+                  }).map(o => o.customer_email))).length}
+                </p>
+              </div>
+              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-amber-400 mb-1">Avg. Order Value</p>
+                <p className="text-2xl font-bebas italic text-amber-400">
+                  ${orders.length > 0 ? (orders.reduce((sum, o) => sum + (o.total_amount || 0), 0) / orders.length).toFixed(2) : '0.00'}
+                </p>
+              </div>
+            </div>
+
+            {/* Customers Table */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-white/5 border-b border-white/10">
+                  <tr>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Customer</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Orders</th>
+                    <th className="text-right p-4 text-xs uppercase tracking-wider text-white/40">Total Spent</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Status</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Last Order</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from(new Set(orders.map(o => o.customer_email))).length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-white/40">
+                        No customers yet. Customers will appear here when they place orders.
+                      </td>
+                    </tr>
+                  ) : (
+                    Array.from(new Set(orders.map(o => o.customer_email))).map(email => {
+                      const customerOrders = orders.filter(o => o.customer_email === email);
+                      const totalSpent = customerOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                      const orderCount = customerOrders.length;
+                      const lastOrder = customerOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+                      const isVIP = totalSpent > 500;
+                      const isActive = lastOrder && new Date(lastOrder.created_at) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                      
+                      return (
+                        <tr key={email} className="border-b border-white/5 hover:bg-white/5">
+                          <td className="p-4">
+                            <p className="font-medium">{customerOrders[0]?.customer_name || 'Unknown'}</p>
+                            <p className="text-white/40 text-xs">{email}</p>
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className="px-3 py-1 bg-white/10 rounded-full text-sm">{orderCount}</span>
+                          </td>
+                          <td className="p-4 text-right font-medium">
+                            ${totalSpent.toFixed(2)}
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="flex gap-1 justify-center">
+                              {isVIP && (
+                                <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full" title="VIP: Spent over $500">
+                                  VIP
+                                </span>
+                              )}
+                              {isActive && (
+                                <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full" title="Active: Ordered in last 30 days">
+                                  Active
+                                </span>
+                              )}
+                              {!isVIP && !isActive && (
+                                <span className="px-2 py-1 bg-white/10 text-white/40 text-xs rounded-full">
+                                  Regular
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-4 text-center text-white/60 text-sm">
+                            {lastOrder?.created_at ? new Date(lastOrder.created_at).toLocaleDateString() : 'N/A'}
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
