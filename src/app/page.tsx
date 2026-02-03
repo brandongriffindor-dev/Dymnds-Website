@@ -5,13 +5,51 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AppWaitlistForm from "@/components/AppWaitlistForm";
 import { useEffect, useState } from "react";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
+import type { Product } from "@/lib/firebase";
 
 export default function Home() {
   const [loaded, setLoaded] = useState(false);
   const [showWaitlist, setShowWaitlist] = useState(false);
+  const [menFeatured, setMenFeatured] = useState<Product[]>([]);
+  const [womenFeatured, setWomenFeatured] = useState<Product[]>([]);
 
   useEffect(() => {
     setLoaded(true);
+    
+    // Fetch featured products
+    const fetchFeatured = async () => {
+      try {
+        // Men's featured
+        const menQuery = query(
+          collection(db, 'products'), 
+          where('category', '==', 'Men'),
+          where('featured', '==', true),
+          orderBy('displayOrder', 'asc'),
+          limit(3)
+        );
+        const menSnap = await getDocs(menQuery);
+        const menData = menSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setMenFeatured(menData);
+        
+        // Women's featured
+        const womenQuery = query(
+          collection(db, 'products'), 
+          where('category', '==', 'Women'),
+          where('featured', '==', true),
+          orderBy('displayOrder', 'asc'),
+          limit(3)
+        );
+        const womenSnap = await getDocs(womenQuery);
+        const womenData = womenSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setWomenFeatured(womenData);
+      } catch (err) {
+        console.error('Error fetching featured products:', err);
+      }
+    };
+    
+    fetchFeatured();
   }, []);
 
   return (
@@ -111,22 +149,25 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { name: 'Compression Tee', price: 89, desc: 'Your armor for every battle' },
-              { name: 'Heavy Hoodie', price: 149, desc: 'Built for recovery days' },
-              { name: 'Performance Joggers', price: 119, desc: 'From gym to street' },
-            ].map((product, index) => (
-              <Link key={product.name} href="/collections/men" className={`group transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: `${index * 100 + 200}ms` }}>
-                <div className="aspect-[4/5] bg-neutral-900 mb-6 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500 group-hover:scale-[1.02]">
-                  <img src="/diamond-white.png" alt="" className="w-12 h-12 opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
-                </div>
-                <h3 className="text-xl tracking-wide mb-1" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                  {product.name}
-                </h3>
-                <p className="text-white/40 text-sm mb-2">{product.desc}</p>
-                <p className="text-lg">${product.price}</p>
-              </Link>
-            ))}
+            {menFeatured.length > 0 ? (
+              menFeatured.map((product, index) => (
+                <Link key={product.id} href={`/products/${product.slug}`} className={`group transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: `${index * 100 + 200}ms` }}>
+                  <div className="aspect-[4/5] bg-neutral-900 mb-6 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500 group-hover:scale-[1.02]">
+                    <img src="/diamond-white.png" alt="" className="w-12 h-12 opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
+                  </div>
+                  <h3 className="text-xl tracking-wide mb-1" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+                    {product.title}
+                  </h3>
+                  <p className="text-white/40 text-sm mb-2">{product.subtitle}</p>
+                  <p className="text-lg">${product.price}</p>
+                </Link>
+              ))
+            ) : (
+              // Fallback placeholder when no featured products
+              <div className="col-span-3 text-center py-12">
+                <p className="text-white/40">⭐ Star products in admin to feature them here</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -147,22 +188,25 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { name: 'Seamless Sports Bra', price: 65, desc: 'Support that moves with you' },
-              { name: 'High-Rise Leggings', price: 95, desc: 'Sculpted for every squat' },
-              { name: 'Cropped Tank', price: 55, desc: 'Freedom to move' },
-            ].map((product, index) => (
-              <Link key={product.name} href="/collections/women" className={`group transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: `${index * 100 + 200}ms` }}>
-                <div className="aspect-[4/5] bg-neutral-900 mb-5 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500 group-hover:scale-[1.02]">
-                  <img src="/diamond-white.png" alt="" className="w-14 h-14 opacity-15 group-hover:opacity-40 transition-opacity duration-500" />
-                </div>
-                <h3 className="text-lg tracking-wide mb-1" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                  {product.name}
-                </h3>
-                <p className="text-white/30 text-sm mb-2">{product.desc}</p>
-                <p className="text-base">${product.price}</p>
-              </Link>
-            ))}
+            {womenFeatured.length > 0 ? (
+              womenFeatured.map((product, index) => (
+                <Link key={product.id} href={`/products/${product.slug}`} className={`group transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: `${index * 100 + 200}ms` }}>
+                  <div className="aspect-[4/5] bg-neutral-900 mb-5 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500 group-hover:scale-[1.02]">
+                    <img src="/diamond-white.png" alt="" className="w-14 h-14 opacity-15 group-hover:opacity-40 transition-opacity duration-500" />
+                  </div>
+                  <h3 className="text-lg tracking-wide mb-1" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+                    {product.title}
+                  </h3>
+                  <p className="text-white/30 text-sm mb-2">{product.subtitle}</p>
+                  <p className="text-base">${product.price}</p>
+                </Link>
+              ))
+            ) : (
+              // Fallback placeholder when no featured products
+              <div className="col-span-3 text-center py-12">
+                <p className="text-white/40">⭐ Star products in admin to feature them here</p>
+              </div>
+            )}
           </div>
         </div>
       </section>

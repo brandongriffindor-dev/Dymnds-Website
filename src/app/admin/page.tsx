@@ -50,6 +50,7 @@ export default function AdminDashboard() {
     category: 'Men',
     productType: 'Tops',
     displayOrder: 1,
+    featured: false,
     imageUrl: '',
     images: [] as string[],
   });
@@ -230,6 +231,55 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleFeatured = async (product: Product) => {
+    const newFeaturedState = !product.featured;
+    
+    try {
+      // If featuring, check if we need to unfeature another
+      if (newFeaturedState) {
+        const categoryFeatured = products.filter(p => 
+          p.category === product.category && 
+          p.featured && 
+          p.id !== product.id
+        );
+        
+        // If already 3 featured in this category, unfeature the oldest one
+        if (categoryFeatured.length >= 3) {
+          // Sort by created_at to find oldest
+          const sorted = categoryFeatured.sort((a, b) => 
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+          const oldest = sorted[0];
+          
+          await updateDoc(doc(db, 'products', oldest.id), {
+            featured: false,
+            updated_at: new Date().toISOString()
+          });
+          
+          // Update local state
+          setProducts(products.map(p => 
+            p.id === oldest.id ? { ...p, featured: false } : p
+          ));
+        }
+      }
+      
+      // Toggle the clicked product
+      await updateDoc(doc(db, 'products', product.id), {
+        featured: newFeaturedState,
+        updated_at: new Date().toISOString()
+      });
+      
+      setProducts(products.map(p => 
+        p.id === product.id ? { ...p, featured: newFeaturedState } : p
+      ));
+      
+      alert(newFeaturedState ? '⭐ Added to spotlight' : 'Removed from spotlight');
+    } catch (error) {
+      console.error('Error toggling featured:', error);
+      alert('Failed to update spotlight status');
+    }
+  };
+
   const updateProductDetails = async (product: Product) => {
     try {
       await updateDoc(doc(db, 'products', product.id), {
@@ -358,6 +408,7 @@ export default function AdminDashboard() {
         category: newProduct.category,
         productType: newProduct.productType,
         displayOrder: targetOrder,
+        featured: newProduct.featured,
         images: newProduct.images.length > 0 ? newProduct.images : (newProduct.imageUrl ? [newProduct.imageUrl] : []),
         is_active: true,
         created_at: new Date().toISOString(),
@@ -386,6 +437,7 @@ export default function AdminDashboard() {
         category: 'Men',
         productType: 'Tops',
         displayOrder: 1,
+        featured: false,
         imageUrl: '',
         images: [],
       });
@@ -605,6 +657,7 @@ export default function AdminDashboard() {
                 <thead className="bg-white/5 border-b border-white/10">
                   <tr>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">#</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">⭐</th>
                     <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Type</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XS</th>
@@ -633,6 +686,17 @@ export default function AdminDashboard() {
                           className="w-12 text-center bg-black border border-white/20 rounded px-2 py-1 text-sm focus:border-white/50 focus:outline-none"
                           title="Click to change position (Enter to save)"
                         />
+                      </td>
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() => toggleFeatured(product)}
+                          className={`text-xl transition-colors ${
+                            product.featured ? 'text-yellow-400 hover:text-yellow-300' : 'text-white/20 hover:text-white/40'
+                          }`}
+                          title={product.featured ? 'Remove from spotlight' : 'Add to spotlight (max 3 per category)'}
+                        >
+                          {product.featured ? '⭐' : '☆'}
+                        </button>
                       </td>
                       <td className="p-4">
                         <button

@@ -47,6 +47,7 @@ export interface Product {
   category: string;
   productType?: string;
   displayOrder: number;
+  featured: boolean;
   is_active: boolean;
   created_at: string;
   updated_at: string;
