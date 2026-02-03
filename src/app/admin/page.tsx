@@ -434,8 +434,14 @@ export default function AdminDashboard() {
           }))
         : undefined;
 
+      // Normalize slug - lowercase, replace spaces/special chars with dashes
+      const normalizedSlug = newProduct.slug.trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
       const productData = {
-        slug: newProduct.slug.trim(),
+        slug: normalizedSlug,
         title: newProduct.title.trim(),
         subtitle: newProduct.subtitle.trim(),
         price: newProduct.price,
