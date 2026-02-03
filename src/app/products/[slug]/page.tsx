@@ -16,13 +16,29 @@ export default function ProductPageWrapper() {
     const fetchProduct = async () => {
       if (!params.slug) return;
       
-      // Query by slug field instead of document ID
-      const q = query(collection(db, 'products'), where('slug', '==', params.slug as string));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        setProduct({ id: doc.id, ...doc.data() } as Product);
+      try {
+        // Query by slug field
+        const q = query(collection(db, 'products'), where('slug', '==', params.slug as string));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const doc = querySnapshot.docs[0];
+          setProduct({ id: doc.id, ...doc.data() } as Product);
+        } else {
+          console.error('Product not found for slug:', params.slug);
+        }
+      } catch (error: any) {
+        console.error('Error fetching product:', error.message);
+        // If index error, try fetching all and filtering client-side as fallback
+        try {
+          const allDocs = await getDocs(collection(db, 'products'));
+          const found = allDocs.docs.find(d => d.data().slug === params.slug);
+          if (found) {
+            setProduct({ id: found.id, ...found.data() } as Product);
+          }
+        } catch (e) {
+          console.error('Fallback also failed:', e);
+        }
       }
       setLoading(false);
     };
