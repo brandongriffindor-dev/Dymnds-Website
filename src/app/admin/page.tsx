@@ -440,12 +440,12 @@ export default function AdminDashboard() {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
 
-      const productData = {
+      // Build product data - conditionally include fields to avoid undefined
+      const productData: any = {
         slug: normalizedSlug,
         title: newProduct.title.trim(),
         subtitle: newProduct.subtitle.trim(),
         price: newProduct.price,
-        stock: colorsData ? undefined : newProduct.stock,
         category: newProduct.category,
         productType: newProduct.productType,
         displayOrder: targetOrder,
@@ -458,12 +458,18 @@ export default function AdminDashboard() {
         returnsInfo: newProduct.returnsInfo,
         matchingSetSlug: newProduct.matchingSetSlug,
         sizeGuide: newProduct.sizeGuide,
-        colors: colorsData,
-        images: colorsData ? undefined : (newProduct.images.length > 0 ? newProduct.images : (newProduct.imageUrl ? [newProduct.imageUrl] : [])),
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
+      
+      // Add colors or stock/images (not both)
+      if (colorsData) {
+        productData.colors = colorsData;
+      } else {
+        productData.stock = newProduct.stock;
+        productData.images = newProduct.images.length > 0 ? newProduct.images : (newProduct.imageUrl ? [newProduct.imageUrl] : []);
+      }
       
       console.log('Adding to Firebase:', productData);
       
