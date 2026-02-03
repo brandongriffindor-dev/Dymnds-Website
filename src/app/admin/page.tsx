@@ -721,8 +721,8 @@ export default function AdminDashboard() {
               </button>
             </div>
             
-            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-              <table className="w-full">
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-x-auto">
+              <table className="w-full min-w-[900px]">
                 <thead className="bg-white/5 border-b border-white/10">
                   <tr>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">#</th>
@@ -797,10 +797,10 @@ export default function AdminDashboard() {
                       <td className="p-4 text-center">
                         <button
                           onClick={() => deleteProduct(product.id)}
-                          className="px-3 py-1 bg-red-500/20 text-red-400 text-xs rounded hover:bg-red-500/30 transition-colors"
+                          className="px-3 py-1.5 bg-red-500/20 text-red-400 text-xs font-medium rounded hover:bg-red-500/30 transition-colors"
                           title="Delete product"
                         >
-                          🗑️
+                          Delete
                         </button>
                       </td>
                     </tr>
