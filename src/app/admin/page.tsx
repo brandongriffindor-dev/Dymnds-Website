@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
-  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'waitlist'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'discounts' | 'waitlist'>('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
@@ -68,6 +68,20 @@ export default function AdminDashboard() {
   });
   
   const [activeColorIndex, setActiveColorIndex] = useState(0);
+  
+  // Discount codes state
+  const [discounts, setDiscounts] = useState<any[]>([]);
+  const [showAddDiscount, setShowAddDiscount] = useState(false);
+  const [newDiscount, setNewDiscount] = useState({
+    code: '',
+    type: 'percentage' as 'percentage' | 'fixed',
+    value: 0,
+    minOrder: 0,
+    maxUses: 100,
+    usedCount: 0,
+    expiresAt: '',
+    isActive: true,
+  });
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -153,6 +167,12 @@ export default function AdminDashboard() {
       const waitlistSnap = await getDocs(waitlistQuery);
       const waitlistData = waitlistSnap.docs.map(doc => ({ email: doc.id, ...doc.data() } as WaitlistEntry));
       setWaitlist(waitlistData);
+
+      // Fetch discounts
+      const discountsQuery = query(collection(db, 'discounts'), orderBy('created_at', 'desc'));
+      const discountsSnap = await getDocs(discountsQuery);
+      const discountsData = discountsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDiscounts(discountsData);
 
       // Calculate stats
       const totalRevenue = ordersData.reduce((sum, o) => sum + (o.total_amount || 0), 0);
@@ -664,6 +684,16 @@ export default function AdminDashboard() {
             }`}
           >
             <span className="text-sm tracking-wider uppercase">Analytics</span>
+          </button>
+          <button
+            onClick={() => setActiveView('discounts')}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+              activeView === 'discounts' 
+                ? 'bg-white text-black' 
+                : 'text-white/60 hover:bg-white/5'
+            }`}
+          >
+            <span className="text-sm tracking-wider uppercase">Discounts</span>
           </button>
           <button
             onClick={() => setActiveView('waitlist')}
@@ -1212,6 +1242,116 @@ export default function AdminDashboard() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Discounts View */}
+        {activeView === 'discounts' && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-4xl font-bebas italic tracking-wider">Promo Codes</h2>
+              <button
+                onClick={() => setShowAddDiscount(true)}
+                className="px-6 py-3 bg-white text-black text-sm font-bold tracking-wider uppercase rounded-lg hover:bg-white/90 transition-colors"
+              >
+                + Create Code
+              </button>
+            </div>
+
+            {/* Active Codes Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-green-400 mb-1">Active Codes</p>
+                <p className="text-3xl font-bebas italic text-green-400">{discounts.filter(d => d.isActive && new Date(d.expiresAt) > new Date()).length}</p>
+              </div>
+              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-blue-400 mb-1">Total Uses</p>
+                <p className="text-3xl font-bebas italic text-blue-400">{discounts.reduce((sum, d) => sum + (d.usedCount || 0), 0)}</p>
+              </div>
+              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-amber-400 mb-1">Expired</p>
+                <p className="text-3xl font-bebas italic text-amber-400">{discounts.filter(d => new Date(d.expiresAt) <= new Date()).length}</p>
+              </div>
+            </div>
+
+            {/* Discounts Table */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-white/5 border-b border-white/10">
+                  <tr>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Code</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Discount</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Uses</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Expires</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Status</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {discounts.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-white/40">
+                        No promo codes yet. Create one to get started.
+                      </td>
+                    </tr>
+                  ) : (
+                    discounts.map((discount) => (
+                      <tr key={discount.id} className="border-b border-white/5 hover:bg-white/5">
+                        <td className="p-4">
+                          <span className="font-mono font-bold text-lg">{discount.code}</span>
+                          {discount.minOrder > 0 && (
+                            <p className="text-xs text-white/40">Min order: ${discount.minOrder}</p>
+                          )}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="text-green-400 font-bold">
+                            {discount.type === 'percentage' ? `${discount.value}%` : `$${discount.value}`}
+                          </span>
+                          <span className="text-white/40 text-sm ml-1">OFF</span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="px-3 py-1 bg-white/10 rounded-full text-sm">
+                            {discount.usedCount || 0} / {discount.maxUses}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center text-white/60 text-sm">
+                          {discount.expiresAt ? new Date(discount.expiresAt).toLocaleDateString() : 'Never'}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`px-3 py-1 rounded-full text-xs uppercase ${
+                            discount.isActive && new Date(discount.expiresAt) > new Date()
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-red-500/20 text-red-400'
+                          }`}>
+                            {discount.isActive && new Date(discount.expiresAt) > new Date() ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={async () => {
+                              try {
+                                await updateDoc(doc(db, 'discounts', discount.id), {
+                                  isActive: !discount.isActive,
+                                  updated_at: new Date().toISOString()
+                                });
+                                setDiscounts(discounts.map(d => 
+                                  d.id === discount.id ? { ...d, isActive: !d.isActive } : d
+                                ));
+                              } catch (err) {
+                                console.error('Error toggling discount:', err);
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-white/10 text-white text-xs rounded hover:bg-white/20 transition-colors"
+                          >
+                            {discount.isActive ? 'Disable' : 'Enable'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -1801,6 +1941,144 @@ export default function AdminDashboard() {
                 className="flex-1 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition-colors"
               >
                 Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Discount Modal */}
+      {showAddDiscount && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-white/10 rounded-2xl p-8 w-full max-w-lg">
+            <h3 className="text-2xl font-bebas italic tracking-wider mb-6">Create Promo Code</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Code *</label>
+                <input
+                  type="text"
+                  value={newDiscount.code}
+                  onChange={(e) => setNewDiscount({...newDiscount, code: e.target.value.toUpperCase()})}
+                  placeholder="SUMMER2025"
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Type</label>
+                  <select
+                    value={newDiscount.type}
+                    onChange={(e) => setNewDiscount({...newDiscount, type: e.target.value as 'percentage' | 'fixed'})}
+                    className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                  >
+                    <option value="percentage">Percentage %</option>
+                    <option value="fixed">Fixed Amount $</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Value</label>
+                  <input
+                    type="number"
+                    value={newDiscount.value || ''}
+                    onChange={(e) => setNewDiscount({...newDiscount, value: parseFloat(e.target.value) || 0})}
+                    placeholder={newDiscount.type === 'percentage' ? '20' : '25'}
+                    className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Minimum Order ($)</label>
+                <input
+                  type="number"
+                  value={newDiscount.minOrder || ''}
+                  onChange={(e) => setNewDiscount({...newDiscount, minOrder: parseFloat(e.target.value) || 0})}
+                  placeholder="0"
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                />
+                <p className="text-white/30 text-xs mt-1">Leave 0 for no minimum</p>
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Max Uses</label>
+                <input
+                  type="number"
+                  value={newDiscount.maxUses || ''}
+                  onChange={(e) => setNewDiscount({...newDiscount, maxUses: parseInt(e.target.value) || 0})}
+                  placeholder="100"
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Expiration Date</label>
+                <input
+                  type="date"
+                  value={newDiscount.expiresAt}
+                  onChange={(e) => setNewDiscount({...newDiscount, expiresAt: e.target.value})}
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-8">
+              <button
+                onClick={() => {
+                  setShowAddDiscount(false);
+                  setNewDiscount({
+                    code: '',
+                    type: 'percentage',
+                    value: 0,
+                    minOrder: 0,
+                    maxUses: 100,
+                    usedCount: 0,
+                    expiresAt: '',
+                    isActive: true,
+                  });
+                }}
+                className="flex-1 py-3 border border-white/20 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!newDiscount.code || !newDiscount.value) return;
+                  try {
+                    const discountData = {
+                      code: newDiscount.code.toUpperCase(),
+                      type: newDiscount.type,
+                      value: newDiscount.value,
+                      minOrder: newDiscount.minOrder,
+                      maxUses: newDiscount.maxUses,
+                      usedCount: 0,
+                      expiresAt: newDiscount.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                      isActive: true,
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString(),
+                    };
+                    const docRef = await addDoc(collection(db, 'discounts'), discountData);
+                    setDiscounts([...discounts, { id: docRef.id, ...discountData }]);
+                    setShowAddDiscount(false);
+                    setNewDiscount({
+                      code: '',
+                      type: 'percentage',
+                      value: 0,
+                      minOrder: 0,
+                      maxUses: 100,
+                      usedCount: 0,
+                      expiresAt: '',
+                      isActive: true,
+                    });
+                  } catch (err) {
+                    console.error('Error creating discount:', err);
+                  }
+                }}
+                disabled={!newDiscount.code || !newDiscount.value}
+                className="flex-1 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition-colors font-bold disabled:opacity-50"
+              >
+                Create Code
               </button>
             </div>
           </div>
