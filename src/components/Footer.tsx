@@ -44,11 +44,11 @@ export default function Footer() {
             <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold">Shop</h4>
             <ul className="space-y-3">
               {[
-                { name: 'All Products', href: '/collections/all' },
+                { name: 'All Products', href: '/shop' },
                 { name: 'Men', href: '/collections/men' },
                 { name: 'Women', href: '/collections/women' },
-                { name: 'New Arrivals', href: '/collections/new' },
-                { name: 'Best Sellers', href: '/collections/best-sellers' },
+                { name: 'New Arrivals', href: '/collections/all' },
+                { name: 'Best Sellers', href: '/collections/all' },
               ].map((link) => (
                 <li key={link.name}>
                   <Link 
@@ -71,7 +71,7 @@ export default function Footer() {
                 { name: 'Our Impact', href: '/impact' },
                 { name: 'The App', href: '/app' },
                 { name: 'Contact', href: '/contact' },
-                { name: 'Careers', href: '/careers' },
+                { name: 'Careers', href: '#' },
               ].map((link) => (
                 <li key={link.name}>
                   <Link 
@@ -90,11 +90,11 @@ export default function Footer() {
             <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold">Support</h4>
             <ul className="space-y-3">
               {[
-                { name: 'FAQ', href: '/faq' },
-                { name: 'Shipping', href: '/shipping' },
-                { name: 'Returns', href: '/returns' },
-                { name: 'Size Guide', href: '/size-guide' },
-                { name: 'Track Order', href: '/track-order' },
+                { name: 'FAQ', href: '#' },
+                { name: 'Shipping Info', href: '#' },
+                { name: 'Returns & Exchanges', href: '#' },
+                { name: 'Size Guide', href: '#' },
+                { name: 'Email Us', href: 'mailto:support@dymnds.ca' },
               ].map((link) => (
                 <li key={link.name}>
                   <Link 
