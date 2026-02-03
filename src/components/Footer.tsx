@@ -71,7 +71,7 @@ export default function Footer() {
                 { name: 'Our Impact', href: '/impact' },
                 { name: 'The App', href: '/app' },
                 { name: 'Contact', href: '/contact' },
-                { name: 'Careers', href: '#' },
+                { name: 'Careers', href: '/careers' },
               ].map((link) => (
                 <li key={link.name}>
                   <Link 
@@ -90,10 +90,10 @@ export default function Footer() {
             <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold">Support</h4>
             <ul className="space-y-3">
               {[
-                { name: 'FAQ', href: '#' },
-                { name: 'Shipping Info', href: '#' },
-                { name: 'Returns & Exchanges', href: '#' },
-                { name: 'Size Guide', href: '#' },
+                { name: 'FAQ', href: '/faq' },
+                { name: 'Shipping Info', href: '/shipping' },
+                { name: 'Returns & Exchanges', href: '/returns' },
+                { name: 'Size Guide', href: '/size-guide' },
                 { name: 'Email Us', href: 'mailto:support@dymnds.ca' },
               ].map((link) => (
                 <li key={link.name}>
