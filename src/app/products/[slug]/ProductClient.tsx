@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import useEmblaCarousel from 'embla-carousel-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Check, ShoppingBag, Diamond, Truck, RotateCcw, Mail, ChevronDown, ChevronUp, X } from 'lucide-react';
-import type { Product } from '@/lib/firebase';
+import { Check, ShoppingBag, Diamond, Truck, Mail, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import type { Product, ProductColor } from '@/lib/firebase';
 import { useCart } from '@/components/CartContext';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import Link from 'next/link';
 
 interface ProductClientProps {
@@ -27,8 +26,7 @@ function SizeCalculator({ sizeGuide, onClose }: { sizeGuide?: Product['sizeGuide
 
     if (!chestNum && !waistNum) return;
 
-    // Simple logic - prioritize chest for tops, waist for bottoms
-    let size = 'M'; // default
+    let size = 'M';
     
     if (chestNum <= 34 || waistNum <= 28) size = 'XS';
     else if (chestNum <= 37 || waistNum <= 31) size = 'S';
@@ -113,8 +111,6 @@ function QuestionForm({ productName, onClose }: { productName: string; onClose: 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you'd send this to your backend
-    // For now, we'll open the user's email client
     const subject = `Question about ${productName}`;
     const body = `Product: ${productName}\n\nQuestion:\n${question}\n\nFrom: ${email}`;
     window.location.href = `mailto:support@dymnds.ca?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -179,31 +175,26 @@ function QuestionForm({ productName, onClose }: { productName: string; onClose: 
 
 export default function ProductClient({ product }: ProductClientProps) {
   const { addToCart } = useCart();
+  
+  // Color selection state
+  const hasColors = product.colors && product.colors.length > 0;
+  const [selectedColor, setSelectedColor] = useState<ProductColor | null>(
+    hasColors ? product.colors![0] : null
+  );
+  
+  // Image gallery state
+  const [mainImageIndex, setMainImageIndex] = useState(0);
+  
+  // Get current images based on color selection
+  const currentImages = selectedColor?.images || product.images || [];
+  
+  // Cart state
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
-  const [hoveredImage, setHoveredImage] = useState<number | null>(null);
   const [showSizeCalculator, setShowSizeCalculator] = useState(false);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [matchingProduct, setMatchingProduct] = useState<Product | null>(null);
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
-  const [selectedSlide, setSelectedSlide] = useState(0);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    
-    const onSelect = () => {
-      setSelectedSlide(emblaApi.selectedScrollSnap());
-    };
-    
-    emblaApi.on('select', onSelect);
-    return () => {
-      emblaApi.off('select', onSelect);
-    };
-  }, [emblaApi]);
 
   // Fetch matching set product
   useEffect(() => {
@@ -219,36 +210,35 @@ export default function ProductClient({ product }: ProductClientProps) {
     fetchMatchingSet();
   }, [product.matchingSetSlug]);
 
-  // Fetch related products (same category)
-  useEffect(() => {
-    const fetchRelated = async () => {
-      const q = query(
-        collection(db, 'products'), 
-        where('category', '==', product.category),
-        where('slug', '!=', product.slug),
-        limit(3)
-      );
-      const snap = await getDocs(q);
-      const products = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-      setRelatedProducts(products);
-    };
-    fetchRelated();
-  }, [product.category, product.slug]);
+  // Image navigation
+  const nextImage = () => {
+    setMainImageIndex((prev) => (prev + 1) % currentImages.length);
+  };
 
-  const scrollTo = useCallback(
-    (index: number) => emblaApi && emblaApi.scrollTo(index),
-    [emblaApi]
-  );
+  const prevImage = () => {
+    setMainImageIndex((prev) => (prev - 1 + currentImages.length) % currentImages.length);
+  };
 
+  // Handle color change
+  const handleColorChange = (color: ProductColor) => {
+    setSelectedColor(color);
+    setMainImageIndex(0);
+    setSelectedSize(null); // Reset size when color changes (different stock)
+  };
+
+  // Handle add to cart
   const handleAddToCart = async () => {
     if (!selectedSize) return;
     
     setIsAdding(true);
     await new Promise(resolve => setTimeout(resolve, 500));
     
+    const colorName = selectedColor?.name || '';
+    const itemName = colorName ? `${product.title} (${colorName})` : product.title;
+    
     addToCart({
-      id: `${product.id}-${selectedSize}`,
-      name: product.title,
+      id: `${product.id}-${selectedSize}${colorName ? `-${colorName}` : ''}`,
+      name: itemName,
       price: Number(product.price),
       quantity: 1,
       size: selectedSize,
@@ -259,10 +249,9 @@ export default function ProductClient({ product }: ProductClientProps) {
     setTimeout(() => setIsAdded(false), 2000);
   };
 
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section);
-  };
-
+  // Get current stock based on color
+  const currentStock = selectedColor?.stock || product.stock || {};
+  
   const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
   const impactMinutes = Math.round(Number(product.price) * 0.10 * 2);
 
@@ -270,86 +259,82 @@ export default function ProductClient({ product }: ProductClientProps) {
     <main className="min-h-screen bg-black text-white">
       <Navbar />
       
-      {/* Size Calculator Modal */}
       {showSizeCalculator && (
         <SizeCalculator sizeGuide={product.sizeGuide} onClose={() => setShowSizeCalculator(false)} />
       )}
 
-      {/* Question Form Modal */}
       {showQuestionForm && (
         <QuestionForm productName={product.title} onClose={() => setShowQuestionForm(false)} />
       )}
       
       <div className="pt-20 lg:pt-24">
-        <div className="lg:flex lg:min-h-[calc(100vh-6rem)]">
-          
-          {/* LEFT SIDE - GALLERY */}
-          <div className="lg:w-[55%] lg:sticky lg:top-24 lg:h-[calc(100vh-6rem)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="lg:grid lg:grid-cols-2 lg:gap-12 lg:items-start">
             
-            {/* Desktop: Grid */}
-            <div className="hidden lg:grid grid-cols-2 gap-1">
-              {[0, 1, 2, 3].map((index) => (
-                <div
-                  key={index}
-                  className="relative aspect-[3/4] bg-neutral-900 overflow-hidden cursor-zoom-in group"
-                  onMouseEnter={() => setHoveredImage(index)}
-                  onMouseLeave={() => setHoveredImage(null)}
-                >
-                  <div 
-                    className={`absolute inset-0 bg-neutral-800 transition-transform duration-700 ease-out ${
-                      hoveredImage === index ? 'scale-110' : 'scale-100'
-                    }`}
-                  >
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-900 to-neutral-800">
-                      {product.images && product.images[index] ? (
-                        <img src={product.images[index]} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <img src="/diamond-white.png" alt="" className="w-20 h-20 opacity-20" />
-                      )}
-                    </div>
+            {/* LEFT SIDE - IMAGE GALLERY */}
+            <div className="mb-8 lg:mb-0">
+              {/* Main Image */}
+              <div className="relative aspect-[4/5] bg-neutral-900 rounded-lg overflow-hidden mb-4">
+                {currentImages.length > 0 ? (
+                  <img 
+                    src={currentImages[mainImageIndex]} 
+                    alt={product.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <img src="/diamond-white.png" alt="" className="w-32 h-32 opacity-20" />
                   </div>
-                </div>
-              ))}
-            </div>
+                )}
+                
+                {/* Navigation Arrows */}
+                {currentImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </>
+                )}
+                
+                {/* Image Counter */}
+                {currentImages.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/50 rounded-full text-sm">
+                    {mainImageIndex + 1} / {currentImages.length}
+                  </div>
+                )}
+              </div>
 
-            {/* Mobile: Carousel */}
-            <div className="lg:hidden relative">
-              <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex">
-                  {[0, 1, 2, 3].map((index) => (
-                    <div key={index} className="flex-[0_0_100%] min-w-0">
-                      <div className="aspect-[3/4] bg-neutral-900 relative">
-                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-900 to-neutral-800">
-                          {product.images && product.images[index] ? (
-                            <img src={product.images[index]} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <img src="/diamond-white.png" alt="" className="w-24 h-24 opacity-20" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
+              {/* Thumbnail Strip */}
+              {currentImages.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {currentImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setMainImageIndex(idx)}
+                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                        mainImageIndex === idx ? 'border-white' : 'border-transparent hover:border-white/50'
+                      }`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
                   ))}
                 </div>
-              </div>
-              
-              <div className="flex justify-center gap-2 mt-4">
-                {[0, 1, 2, 3].map((index) => (
-                  <button
-                    key={index}
-                    onClick={() => scrollTo(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      selectedSlide === index ? 'bg-white w-6' : 'bg-white/30'
-                    }`}
-                  />
-                ))}
-              </div>
+              )}
             </div>
-          </div>
 
-          {/* RIGHT SIDE - BUY BOX */}
-          <div className="lg:w-[45%] px-6 py-8 lg:px-12 lg:py-16">
-            <div className="max-w-md">
+            {/* RIGHT SIDE - PRODUCT INFO */}
+            <div className="lg:sticky lg:top-32">
               
+              {/* Title & Price */}
               <div className="mb-6">
                 <h1 className="text-3xl lg:text-4xl font-bebas italic tracking-wide uppercase mb-2">
                   {product.title}
@@ -380,6 +365,30 @@ export default function ProductClient({ product }: ProductClientProps) {
                 </div>
               )}
 
+              {/* Color Selection */}
+              {hasColors && (
+                <div className="mb-6">
+                  <p className="text-[10px] tracking-widest uppercase text-neutral-500 mb-3">
+                    Color: <span className="text-white">{selectedColor?.name}</span>
+                  </p>
+                  <div className="flex gap-3">
+                    {product.colors!.map((color) => (
+                      <button
+                        key={color.name}
+                        onClick={() => handleColorChange(color)}
+                        className={`w-10 h-10 rounded-full border-2 transition-all ${
+                          selectedColor?.name === color.name 
+                            ? 'border-white scale-110' 
+                            : 'border-transparent hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: color.hex }}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Size Selector */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
@@ -393,7 +402,7 @@ export default function ProductClient({ product }: ProductClientProps) {
                 </div>
                 <div className="grid grid-cols-6 gap-2">
                   {sizes.map((size) => {
-                    const stock = (product.stock as Record<string, number>)?.[size] || 0;
+                    const stock = (currentStock as Record<string, number>)?.[size] || 0;
                     const inStock = stock > 0;
                     
                     return (
@@ -412,7 +421,6 @@ export default function ProductClient({ product }: ProductClientProps) {
                         `}
                       >
                         {size}
-                        {!inStock && <span className="block text-[8px] text-neutral-700">0</span>}
                       </button>
                     );
                   })}
@@ -463,82 +471,49 @@ export default function ProductClient({ product }: ProductClientProps) {
                 </p>
               </div>
 
-              {/* Collapsible Sections */}
-              <div className="border-t border-white/10">
-                {/* Delivery & Returns */}
-                <button
-                  onClick={() => toggleSection('delivery')}
-                  className="w-full py-4 flex items-center justify-between text-left border-b border-white/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <Truck className="w-4 h-4 text-white/40" />
-                    <span className="text-sm">Delivery & Returns</span>
+              {/* Delivery & Returns */}
+              <div className="space-y-3 mb-6">
+                <div className="flex items-start gap-3">
+                  <Truck className="w-4 h-4 text-white/40 mt-0.5" />
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-white/40">Delivery</p>
+                    <p className="text-sm text-white/60">{product.deliveryInfo || 'Free shipping on orders over $100. Delivery in 3-5 business days.'}</p>
                   </div>
-                  {expandedSection === 'delivery' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-                {expandedSection === 'delivery' && (
-                  <div className="pb-4 space-y-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-white/40 mb-1">Delivery</p>
-                      <p className="text-sm text-white/60">{product.deliveryInfo || 'Free shipping on orders over $100. Delivery in 3-5 business days.'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-white/40 mb-1">Returns</p>
-                      <p className="text-sm text-white/60">{product.returnsInfo || '30-day hassle-free returns. Items must be unworn with tags attached.'}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Ask a Question */}
-                <button
-                  onClick={() => setShowQuestionForm(true)}
-                  className="w-full py-4 flex items-center gap-3 text-left border-b border-white/10"
-                >
-                  <Mail className="w-4 h-4 text-white/40" />
-                  <span className="text-sm">Ask a Question</span>
-                </button>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Mail className="w-4 h-4 text-white/40 mt-0.5" />
+                  <button 
+                    onClick={() => setShowQuestionForm(true)}
+                    className="text-sm text-white/60 hover:text-white text-left"
+                  >
+                    Ask a question about this product
+                  </button>
+                </div>
               </div>
 
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* Matching Set / Complete Your Look */}
-      {(matchingProduct || relatedProducts.length > 0) && (
+      {/* Complete Your Look / Matching Set */}
+      {matchingProduct && (
         <section className="py-16 px-6 bg-neutral-950 border-t border-white/10">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl font-bebas italic tracking-wider mb-8">Complete Your Look</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {matchingProduct && (
-                <Link href={`/products/${matchingProduct.slug}`} className="group">
-                  <div className="aspect-[4/5] bg-neutral-900 mb-4 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all">
-                    {matchingProduct.images && matchingProduct.images[0] ? (
-                      <img src={matchingProduct.images[0]} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-20" />
-                    )}
-                  </div>
-                  <p className="text-xs text-green-400 mb-1">Matching Set</p>
-                  <h3 className="text-lg font-bebas italic">{matchingProduct.title}</h3>
-                  <p className="text-white/40">${matchingProduct.price}</p>
-                </Link>
-              )}
-              
-              {relatedProducts.map((related) => (
-                <Link key={related.id} href={`/products/${related.slug}`} className="group">
-                  <div className="aspect-[4/5] bg-neutral-900 mb-4 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all">
-                    {related.images && related.images[0] ? (
-                      <img src={related.images[0]} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-20" />
-                    )}
-                  </div>
-                  <h3 className="text-lg font-bebas italic">{related.title}</h3>
-                  <p className="text-white/40">${related.price}</p>
-                </Link>
-              ))}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Link href={`/products/${matchingProduct.slug}`} className="group">
+                <div className="aspect-[4/5] bg-neutral-900 mb-4 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all">
+                  {matchingProduct.images && matchingProduct.images[0] ? (
+                    <img src={matchingProduct.images[0]} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-20" />
+                  )}
+                </div>
+                <p className="text-xs text-green-400 mb-1">Matching Set</p>
+                <h3 className="text-lg font-bebas italic">{matchingProduct.title}</h3>
+                <p className="text-white/40">${matchingProduct.price}</p>
+              </Link>
             </div>
           </div>
         </section>

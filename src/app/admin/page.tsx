@@ -62,9 +62,12 @@ export default function AdminDashboard() {
       chest: { XS: '32-34"', S: '35-37"', M: '38-40"', L: '41-43"', XL: '44-46"', XXL: '47-49"' },
       waist: { XS: '26-28"', S: '29-31"', M: '32-34"', L: '35-37"', XL: '38-40"', XXL: '41-43"' }
     },
+    colors: [] as { name: string; hex: string; images: string[]; stock: { XS: number; S: number; M: number; L: number; XL: number; XXL: number } }[],
     imageUrl: '',
     images: [] as string[],
   });
+  
+  const [activeColorIndex, setActiveColorIndex] = useState(0);
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -421,12 +424,22 @@ export default function AdminDashboard() {
         });
       }
       
+      // Build colors array with images and stock
+      const colorsData = newProduct.colors.length > 0 
+        ? newProduct.colors.map(color => ({
+            name: color.name,
+            hex: color.hex,
+            images: color.images.length > 0 ? color.images : newProduct.images,
+            stock: color.stock
+          }))
+        : undefined;
+
       const productData = {
         slug: newProduct.slug.trim(),
         title: newProduct.title.trim(),
         subtitle: newProduct.subtitle.trim(),
         price: newProduct.price,
-        stock: newProduct.stock,
+        stock: colorsData ? undefined : newProduct.stock,
         category: newProduct.category,
         productType: newProduct.productType,
         displayOrder: targetOrder,
@@ -439,7 +452,8 @@ export default function AdminDashboard() {
         returnsInfo: newProduct.returnsInfo,
         matchingSetSlug: newProduct.matchingSetSlug,
         sizeGuide: newProduct.sizeGuide,
-        images: newProduct.images.length > 0 ? newProduct.images : (newProduct.imageUrl ? [newProduct.imageUrl] : []),
+        colors: colorsData,
+        images: colorsData ? undefined : (newProduct.images.length > 0 ? newProduct.images : (newProduct.imageUrl ? [newProduct.imageUrl] : [])),
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -479,9 +493,11 @@ export default function AdminDashboard() {
           chest: { XS: '32-34"', S: '35-37"', M: '38-40"', L: '41-43"', XL: '44-46"', XXL: '47-49"' },
           waist: { XS: '26-28"', S: '29-31"', M: '32-34"', L: '35-37"', XL: '38-40"', XXL: '41-43"' }
         },
+        colors: [],
         imageUrl: '',
         images: [],
       });
+      setActiveColorIndex(0);
       alert('Product added successfully!');
     } catch (error: any) {
       console.error('Error adding product:', error);
@@ -1002,9 +1018,190 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Image Upload - Drag & Drop */}
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Product Images</label>
+              {/* Colors Management */}
+              <div className="border-t border-white/10 pt-6 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-medium text-white/60">Colors & Variants</h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newColor = {
+                        name: `Color ${newProduct.colors.length + 1}`,
+                        hex: '#000000',
+                        images: [] as string[],
+                        stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 }
+                      };
+                      setNewProduct({...newProduct, colors: [...newProduct.colors, newColor]});
+                      setActiveColorIndex(newProduct.colors.length);
+                    }}
+                    className="px-3 py-1 bg-white/10 text-white text-xs rounded hover:bg-white/20 transition-colors"
+                  >
+                    + Add Color
+                  </button>
+                </div>
+
+                {newProduct.colors.length === 0 ? (
+                  <p className="text-white/40 text-sm mb-4">No colors added. Add colors to manage different variants with separate images and stock.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Color Tabs */}
+                    <div className="flex gap-2 flex-wrap">
+                      {newProduct.colors.map((color, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveColorIndex(idx)}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
+                            activeColorIndex === idx 
+                              ? 'bg-white/20 border border-white/40' 
+                              : 'bg-white/5 border border-transparent hover:bg-white/10'
+                          }`}
+                        >
+                          <div 
+                            className="w-4 h-4 rounded-full border border-white/20"
+                            style={{ backgroundColor: color.hex }}
+                          />
+                          <span>{color.name}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Active Color Editor */}
+                    {newProduct.colors[activeColorIndex] && (
+                      <div className="p-4 bg-white/5 rounded-lg space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Color Name</label>
+                            <input
+                              type="text"
+                              value={newProduct.colors[activeColorIndex].name}
+                              onChange={(e) => {
+                                const newColors = [...newProduct.colors];
+                                newColors[activeColorIndex].name = e.target.value;
+                                setNewProduct({...newProduct, colors: newColors});
+                              }}
+                              placeholder="e.g., Black"
+                              className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Color Hex</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="color"
+                                value={newProduct.colors[activeColorIndex].hex}
+                                onChange={(e) => {
+                                  const newColors = [...newProduct.colors];
+                                  newColors[activeColorIndex].hex = e.target.value;
+                                  setNewProduct({...newProduct, colors: newColors});
+                                }}
+                                className="w-12 h-12 bg-transparent border border-white/20 rounded cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={newProduct.colors[activeColorIndex].hex}
+                                onChange={(e) => {
+                                  const newColors = [...newProduct.colors];
+                                  newColors[activeColorIndex].hex = e.target.value;
+                                  setNewProduct({...newProduct, colors: newColors});
+                                }}
+                                className="flex-1 bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Color Images */}
+                        <div>
+                          <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Color Images</label>
+                          <div className="flex gap-2 flex-wrap mb-2">
+                            {newProduct.colors[activeColorIndex].images.map((img, imgIdx) => (
+                              <div key={imgIdx} className="relative w-16 h-16">
+                                <img src={img} alt="" className="w-full h-full object-cover rounded" />
+                                <button
+                                  onClick={() => {
+                                    const newColors = [...newProduct.colors];
+                                    newColors[activeColorIndex].images = newColors[activeColorIndex].images.filter((_, i) => i !== imgIdx);
+                                    setNewProduct({...newProduct, colors: newColors});
+                                  }}
+                                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={async (e) => {
+                              if (!e.target.files) return;
+                              setUploadingImages(true);
+                              const uploadedUrls: string[] = [];
+                              for (const file of Array.from(e.target.files)) {
+                                try {
+                                  const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+                                  await uploadBytes(storageRef, file);
+                                  const downloadUrl = await getDownloadURL(storageRef);
+                                  uploadedUrls.push(downloadUrl);
+                                } catch (error) {
+                                  console.error('Error uploading image:', error);
+                                }
+                              }
+                              const newColors = [...newProduct.colors];
+                              newColors[activeColorIndex].images = [...newColors[activeColorIndex].images, ...uploadedUrls];
+                              setNewProduct({...newProduct, colors: newColors});
+                              setUploadingImages(false);
+                            }}
+                            className="text-sm text-white/60"
+                          />
+                        </div>
+
+                        {/* Color Stock */}
+                        <div>
+                          <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Stock by Size</label>
+                          <div className="grid grid-cols-6 gap-2">
+                            {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
+                              <div key={size}>
+                                <label className="block text-[10px] text-white/40 text-center mb-1">{size}</label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={newProduct.colors[activeColorIndex].stock[size as keyof typeof newProduct.colors[0]['stock']]}
+                                  onChange={(e) => {
+                                    const newColors = [...newProduct.colors];
+                                    newColors[activeColorIndex].stock[size as keyof typeof newProduct.colors[0]['stock']] = parseInt(e.target.value) || 0;
+                                    setNewProduct({...newProduct, colors: newColors});
+                                  }}
+                                  className="w-full bg-black border border-white/20 rounded px-2 py-2 text-center text-sm focus:border-white/50 focus:outline-none"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Remove Color Button */}
+                        <button
+                          onClick={() => {
+                            const newColors = newProduct.colors.filter((_, i) => i !== activeColorIndex);
+                            setNewProduct({...newProduct, colors: newColors});
+                            setActiveColorIndex(Math.max(0, activeColorIndex - 1));
+                          }}
+                          className="text-red-400 text-xs hover:text-red-300"
+                        >
+                          Remove this color
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Simple Image Upload (for products without colors) */}
+              <div className={newProduct.colors.length > 0 ? 'opacity-50 pointer-events-none' : ''}>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">
+                  Product Images {newProduct.colors.length > 0 && '(Disabled - use color images above)'}
+                </label>
                 
                 {/* Drag & Drop Zone */}
                 <div

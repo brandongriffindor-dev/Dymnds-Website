@@ -29,6 +29,20 @@ export { signInWithEmailAndPassword, signOut, onAuthStateChanged };
 export type { User };
 
 // Types
+export interface ProductColor {
+  name: string;
+  hex: string;
+  images: string[];
+  stock: {
+    XS: number;
+    S: number;
+    M: number;
+    L: number;
+    XL: number;
+    XXL: number;
+  };
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -44,7 +58,7 @@ export interface Product {
     XXL: number;
   };
   images: string[];
-  colors?: { name: string; hex: string; images: string[] }[];
+  colors?: ProductColor[];
   category: string;
   productType?: string;
   description?: string;
