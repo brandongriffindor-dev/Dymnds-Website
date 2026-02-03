@@ -9,6 +9,7 @@ import {
   getDocs, 
   doc, 
   updateDoc, 
+  deleteDoc,
   query, 
   orderBy,
   addDoc
@@ -149,6 +150,19 @@ export default function AdminDashboard() {
       ));
     } catch (error) {
       console.error('Error updating stock:', error);
+    }
+  };
+
+  const deleteProduct = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product? This cannot be undone.')) return;
+    
+    try {
+      await deleteDoc(doc(db, 'products', productId));
+      setProducts(products.filter(p => p.id !== productId));
+      alert('Product deleted successfully');
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('Failed to delete product');
     }
   };
 
@@ -520,6 +534,7 @@ export default function AdminDashboard() {
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">L</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XL</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XXL</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -552,6 +567,15 @@ export default function AdminDashboard() {
                           />
                         </td>
                       ))}
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() => deleteProduct(product.id)}
+                          className="px-3 py-1 bg-red-500/20 text-red-400 text-xs rounded hover:bg-red-500/30 transition-colors"
+                          title="Delete product"
+                        >
+                          🗑️
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

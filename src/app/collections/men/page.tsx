@@ -77,13 +77,21 @@ function ProductCard({ product, onAddToCart }: {
   product: Product;
   onAddToCart: (item: { id: string; name: string; price: number; quantity: number; size: string }) => void;
 }) {
-  const [selectedSize, setSelectedSize] = useState('M');
   const [added, setAdded] = useState(false);
 
   // Check if size is in stock
   const isSizeInStock = (size: string) => {
     return (product.stock as Record<string, number>)?.[size] > 0;
   };
+
+  // Auto-select first available size (prefer M if in stock, otherwise first available)
+  const getDefaultSize = () => {
+    if (isSizeInStock('M')) return 'M';
+    const firstAvailable = sizes.find(size => isSizeInStock(size));
+    return firstAvailable || 'M';
+  };
+
+  const [selectedSize, setSelectedSize] = useState(getDefaultSize());
 
   const handleAdd = () => {
     if (!isSizeInStock(selectedSize)) return;
