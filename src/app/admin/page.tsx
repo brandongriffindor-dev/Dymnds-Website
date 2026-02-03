@@ -49,6 +49,7 @@ export default function AdminDashboard() {
     stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
     category: 'Men',
     productType: 'Tops',
+    displayOrder: 1,
     imageUrl: '',
     images: [] as string[],
   });
@@ -98,8 +99,8 @@ export default function AdminDashboard() {
     setLoading(true);
     
     try {
-      // Fetch products
-      const productsQuery = query(collection(db, 'products'), orderBy('created_at', 'desc'));
+      // Fetch products - sort by displayOrder, then by created_at for items without order
+      const productsQuery = query(collection(db, 'products'), orderBy('displayOrder', 'asc'));
       const productsSnap = await getDocs(productsQuery);
       const productsData = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(productsData);
@@ -274,6 +275,17 @@ export default function AdminDashboard() {
     try {
       console.log('Starting add product...', newProduct);
       
+      const targetOrder = newProduct.displayOrder || 1;
+      
+      // Shift existing products to make room for the new one
+      const productsToShift = products.filter(p => p.displayOrder >= targetOrder);
+      for (const product of productsToShift) {
+        await updateDoc(doc(db, 'products', product.id), {
+          displayOrder: product.displayOrder + 1,
+          updated_at: new Date().toISOString()
+        });
+      }
+      
       const productData = {
         slug: newProduct.slug.trim(),
         title: newProduct.title.trim(),
@@ -282,6 +294,7 @@ export default function AdminDashboard() {
         stock: newProduct.stock,
         category: newProduct.category,
         productType: newProduct.productType,
+        displayOrder: targetOrder,
         images: newProduct.images.length > 0 ? newProduct.images : (newProduct.imageUrl ? [newProduct.imageUrl] : []),
         is_active: true,
         created_at: new Date().toISOString(),
@@ -298,7 +311,8 @@ export default function AdminDashboard() {
       
       console.log('Product added with ID:', docRef.id);
       
-      setProducts([{ id: docRef.id, ...productData } as Product, ...products]);
+      // Refresh data to get correct order
+      await fetchData();
       setShowAddProduct(false);
       setNewProduct({
         slug: '',
@@ -308,6 +322,7 @@ export default function AdminDashboard() {
         stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
         category: 'Men',
         productType: 'Tops',
+        displayOrder: 1,
         imageUrl: '',
         images: [],
       });
@@ -526,6 +541,7 @@ export default function AdminDashboard() {
               <table className="w-full">
                 <thead className="bg-white/5 border-b border-white/10">
                   <tr>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">#</th>
                     <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Type</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XS</th>
@@ -540,6 +556,9 @@ export default function AdminDashboard() {
                 <tbody>
                   {products.map((product) => (
                     <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="p-4 text-center">
+                        <span className="text-white/40 text-sm">{product.displayOrder || '-'}</span>
+                      </td>
                       <td className="p-4">
                         <button
                           onClick={() => setEditingProduct(product)}
@@ -702,6 +721,19 @@ export default function AdminDashboard() {
                   placeholder="149"
                   className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Display Position</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={newProduct.displayOrder || ''}
+                  onChange={(e) => setNewProduct({...newProduct, displayOrder: parseInt(e.target.value) || 1})}
+                  placeholder="1"
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                />
+                <p className="text-white/30 text-xs mt-1">Position in grid (1 = first). Other items will auto-shift.</p>
               </div>
 
               {/* Image Upload - Drag & Drop */}

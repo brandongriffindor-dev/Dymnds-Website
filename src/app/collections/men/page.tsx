@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import { useCart } from '@/components/CartContext';
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import type { Product } from '@/lib/firebase';
 
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
@@ -18,7 +18,7 @@ export default function MenPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const q = query(collection(db, 'products'), where('category', '==', 'Men'));
+      const q = query(collection(db, 'products'), where('category', '==', 'Men'), orderBy('displayOrder', 'asc'));
       const snapshot = await getDocs(q);
       const productsData = snapshot.docs.map(doc => ({ 
         id: doc.id, 

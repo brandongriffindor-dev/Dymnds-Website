@@ -19,7 +19,7 @@ export default function CollectionsPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const q = query(collection(db, 'products'), orderBy('created_at', 'desc'));
+      const q = query(collection(db, 'products'), orderBy('displayOrder', 'asc'));
       const snapshot = await getDocs(q);
       const productsData = snapshot.docs.map(doc => ({ 
         id: doc.id, 
