@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
-  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'waitlist'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'waitlist'>('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
@@ -631,6 +631,21 @@ export default function AdminDashboard() {
             <span className="text-sm tracking-wider uppercase">Inventory</span>
           </button>
           <button
+            onClick={() => setActiveView('orders')}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+              activeView === 'orders' 
+                ? 'bg-white text-black' 
+                : 'text-white/60 hover:bg-white/5'
+            }`}
+          >
+            <span className="text-sm tracking-wider uppercase">Orders</span>
+            {orders.filter(o => o.status === 'pending').length > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                {orders.filter(o => o.status === 'pending').length}
+              </span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveView('waitlist')}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'waitlist' 
@@ -812,6 +827,139 @@ export default function AdminDashboard() {
         )}
 
         {/* App Waitlist */}
+        {/* Orders View */}
+        {activeView === 'orders' && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-4xl font-bebas italic tracking-wider">Order Fulfillment</h2>
+              <div className="flex gap-4">
+                <select 
+                  className="bg-black border border-white/20 rounded-lg px-4 py-2 text-sm"
+                  onChange={(e) => {
+                    const status = e.target.value;
+                    if (status === 'all') {
+                      fetchData();
+                    } else {
+                      const filtered = orders.filter(o => o.status === status);
+                      setOrders(filtered);
+                    }
+                  }}
+                >
+                  <option value="all">All Orders</option>
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Orders Stats */}
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-yellow-400 mb-1">Pending</p>
+                <p className="text-2xl font-bebas italic">{orders.filter(o => o.status === 'pending').length}</p>
+              </div>
+              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-blue-400 mb-1">Processing</p>
+                <p className="text-2xl font-bebas italic">{orders.filter(o => o.status === 'processing').length}</p>
+              </div>
+              <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-purple-400 mb-1">Shipped</p>
+                <p className="text-2xl font-bebas italic">{orders.filter(o => o.status === 'shipped').length}</p>
+              </div>
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-xs uppercase tracking-wider text-green-400 mb-1">Delivered</p>
+                <p className="text-2xl font-bebas italic">{orders.filter(o => o.status === 'delivered').length}</p>
+              </div>
+            </div>
+            
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-white/5 border-b border-white/10">
+                  <tr>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Order ID</th>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Customer</th>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Date</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Items</th>
+                    <th className="text-right p-4 text-xs uppercase tracking-wider text-white/40">Total</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Status</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-white/40">
+                        No orders yet. Orders will appear here when customers check out.
+                      </td>
+                    </tr>
+                  ) : (
+                    orders.map((order) => (
+                      <tr key={order.id} className="border-b border-white/5 hover:bg-white/5">
+                        <td className="p-4">
+                          <span className="font-mono text-sm">#{order.id.slice(-6).toUpperCase()}</span>
+                        </td>
+                        <td className="p-4">
+                          <p className="font-medium">{order.customer_name}</p>
+                          <p className="text-white/40 text-xs">{order.customer_email}</p>
+                        </td>
+                        <td className="p-4 text-white/60 text-sm">
+                          {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
+                        </td>
+                        <td className="p-4 text-center">
+                          {order.items?.length || 0} items
+                        </td>
+                        <td className="p-4 text-right font-medium">
+                          ${order.total_amount?.toFixed(2) || '0.00'}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`px-3 py-1 rounded-full text-xs uppercase ${
+                            order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                            order.status === 'processing' ? 'bg-blue-500/20 text-blue-400' :
+                            order.status === 'shipped' ? 'bg-purple-500/20 text-purple-400' :
+                            order.status === 'delivered' ? 'bg-green-500/20 text-green-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <select
+                            value={order.status}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+                              try {
+                                await updateDoc(doc(db, 'orders', order.id), {
+                                  status: newStatus,
+                                  updated_at: new Date().toISOString()
+                                });
+                                setOrders(orders.map(o => 
+                                  o.id === order.id ? { ...o, status: newStatus as any } : o
+                                ));
+                              } catch (err) {
+                                console.error('Error updating order:', err);
+                              }
+                            }}
+                            className="bg-black border border-white/20 rounded px-2 py-1 text-sm"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {activeView === 'waitlist' && (
           <div>
             <h2 className="text-4xl font-bebas italic tracking-wider mb-8">App Waitlist</h2>
