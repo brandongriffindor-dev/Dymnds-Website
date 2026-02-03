@@ -51,9 +51,31 @@ export default function AdminDashboard() {
     productType: 'Tops',
     displayOrder: 1,
     featured: false,
+    description: '',
+    features: [] as string[],
+    modelSize: '',
+    modelHeight: '',
+    deliveryInfo: 'Free shipping on orders over $100. Delivery in 3-5 business days.',
+    returnsInfo: '30-day hassle-free returns. Items must be unworn with tags attached.',
+    matchingSetSlug: '',
+    sizeGuide: {
+      chest: { XS: '32-34"', S: '35-37"', M: '38-40"', L: '41-43"', XL: '44-46"', XXL: '47-49"' },
+      waist: { XS: '26-28"', S: '29-31"', M: '32-34"', L: '35-37"', XL: '38-40"', XXL: '41-43"' }
+    },
     imageUrl: '',
     images: [] as string[],
   });
+
+  // Auto-generate slug from title
+  useEffect(() => {
+    if (newProduct.title && !newProduct.slug) {
+      const slug = newProduct.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      setNewProduct(prev => ({ ...prev, slug }));
+    }
+  }, [newProduct.title]);
 
   // Auth listener
   useEffect(() => {
@@ -409,6 +431,14 @@ export default function AdminDashboard() {
         productType: newProduct.productType,
         displayOrder: targetOrder,
         featured: newProduct.featured,
+        description: newProduct.description,
+        features: newProduct.features.filter(f => f.trim()),
+        modelSize: newProduct.modelSize,
+        modelHeight: newProduct.modelHeight,
+        deliveryInfo: newProduct.deliveryInfo,
+        returnsInfo: newProduct.returnsInfo,
+        matchingSetSlug: newProduct.matchingSetSlug,
+        sizeGuide: newProduct.sizeGuide,
         images: newProduct.images.length > 0 ? newProduct.images : (newProduct.imageUrl ? [newProduct.imageUrl] : []),
         is_active: true,
         created_at: new Date().toISOString(),
@@ -438,6 +468,17 @@ export default function AdminDashboard() {
         productType: 'Tops',
         displayOrder: 1,
         featured: false,
+        description: '',
+        features: [],
+        modelSize: '',
+        modelHeight: '',
+        deliveryInfo: 'Free shipping on orders over $100. Delivery in 3-5 business days.',
+        returnsInfo: '30-day hassle-free returns. Items must be unworn with tags attached.',
+        matchingSetSlug: '',
+        sizeGuide: {
+          chest: { XS: '32-34"', S: '35-37"', M: '38-40"', L: '41-43"', XL: '44-46"', XXL: '47-49"' },
+          waist: { XS: '26-28"', S: '29-31"', M: '32-34"', L: '35-37"', XL: '38-40"', XXL: '41-43"' }
+        },
         imageUrl: '',
         images: [],
       });
@@ -873,6 +914,92 @@ export default function AdminDashboard() {
                   className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
                 />
                 <p className="text-white/30 text-xs mt-1">Position in grid (1 = first). Other items will auto-shift.</p>
+              </div>
+
+              {/* New Fields for Product Detail Page */}
+              <div className="border-t border-white/10 pt-6 mt-6">
+                <h4 className="text-sm font-medium text-white/60 mb-4">Product Details</h4>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Description</label>
+                    <textarea
+                      value={newProduct.description}
+                      onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                      placeholder="Detailed product description..."
+                      rows={3}
+                      className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Features (one per line)</label>
+                    <textarea
+                      value={newProduct.features.join('\n')}
+                      onChange={(e) => setNewProduct({...newProduct, features: e.target.value.split('\n').filter(f => f.trim())})}
+                      placeholder="4-way stretch&#10;Moisture-wicking&#10;Anti-odor"
+                      rows={3}
+                      className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Model Size</label>
+                      <input
+                        type="text"
+                        value={newProduct.modelSize}
+                        onChange={(e) => setNewProduct({...newProduct, modelSize: e.target.value})}
+                        placeholder="e.g., Medium"
+                        className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Model Height</label>
+                      <input
+                        type="text"
+                        value={newProduct.modelHeight}
+                        onChange={(e) => setNewProduct({...newProduct, modelHeight: e.target.value})}
+                        placeholder="e.g., 6'2"
+                        className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Matching Set Product (Slug)</label>
+                    <input
+                      type="text"
+                      value={newProduct.matchingSetSlug}
+                      onChange={(e) => setNewProduct({...newProduct, matchingSetSlug: e.target.value})}
+                      placeholder="e.g., compression-leggings"
+                      className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                    />
+                    <p className="text-white/30 text-xs mt-1">Enter the slug of the matching item to complete the look</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Delivery Info</label>
+                    <input
+                      type="text"
+                      value={newProduct.deliveryInfo}
+                      onChange={(e) => setNewProduct({...newProduct, deliveryInfo: e.target.value})}
+                      placeholder="Free shipping on orders over $100. Delivery in 3-5 business days."
+                      className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Returns Info</label>
+                    <input
+                      type="text"
+                      value={newProduct.returnsInfo}
+                      onChange={(e) => setNewProduct({...newProduct, returnsInfo: e.target.value})}
+                      placeholder="30-day hassle-free returns. Items must be unworn with tags attached."
+                      className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Image Upload - Drag & Drop */}

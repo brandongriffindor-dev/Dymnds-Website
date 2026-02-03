@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import ProductClient from './ProductClient';
 import type { Product } from '@/lib/firebase';
 
@@ -16,11 +16,13 @@ export default function ProductPageWrapper() {
     const fetchProduct = async () => {
       if (!params.slug) return;
       
-      const docRef = doc(db, 'products', params.slug as string);
-      const docSnap = await getDoc(docRef);
+      // Query by slug field instead of document ID
+      const q = query(collection(db, 'products'), where('slug', '==', params.slug as string));
+      const querySnapshot = await getDocs(q);
       
-      if (docSnap.exists()) {
-        setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        setProduct({ id: doc.id, ...doc.data() } as Product);
       }
       setLoading(false);
     };

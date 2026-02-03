@@ -44,8 +44,20 @@ export interface Product {
     XXL: number;
   };
   images: string[];
+  colors?: { name: string; hex: string; images: string[] }[];
   category: string;
   productType?: string;
+  description?: string;
+  features?: string[];
+  modelSize?: string;
+  modelHeight?: string;
+  deliveryInfo?: string;
+  returnsInfo?: string;
+  matchingSetSlug?: string;
+  sizeGuide?: {
+    chest?: { XS: string; S: string; M: string; L: string; XL: string; XXL: string };
+    waist?: { XS: string; S: string; M: string; L: string; XL: string; XXL: string };
+  };
   displayOrder: number;
   featured: boolean;
   is_active: boolean;
