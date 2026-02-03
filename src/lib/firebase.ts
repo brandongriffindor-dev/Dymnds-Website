@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, type User } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,10 +12,21 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
+// Initialize Firebase (safe for SSR)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Auth - lazy initialize on client only
+let authInstance: ReturnType<typeof getAuth> | null = null;
+export const getAuthClient = () => {
+  if (typeof window !== 'undefined' && !authInstance) {
+    authInstance = getAuth(app);
+  }
+  return authInstance;
+};
+export { signInWithEmailAndPassword, signOut, onAuthStateChanged };
+export type { User };
 
 // Types
 export interface Product {

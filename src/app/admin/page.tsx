@@ -1,7 +1,9 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect, useCallback } from 'react';
-import { db, storage } from '@/lib/firebase';
+import { db, storage, getAuthClient, signInWithEmailAndPassword, signOut, onAuthStateChanged, type User } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -15,6 +17,12 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Product, Order, WaitlistEntry, DashboardStats } from '@/lib/firebase';
 
 export default function AdminDashboard() {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  
   const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'waitlist'>('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -44,9 +52,37 @@ export default function AdminDashboard() {
     images: [] as string[],
   });
 
+  // Auth listener
   useEffect(() => {
-    fetchData();
+    const auth = getAuthClient();
+    if (!auth) return;
+    
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+      if (currentUser) {
+        fetchData();
+      }
+    });
+    return () => unsubscribe();
   }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    try {
+      const auth = getAuthClient();
+      if (!auth) throw new Error('Auth not available');
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error: any) {
+      setLoginError(error.message || 'Login failed');
+    }
+  };
+
+  const handleLogout = async () => {
+    const auth = getAuthClient();
+    if (auth) await signOut(auth);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -263,6 +299,74 @@ export default function AdminDashboard() {
     }
   };
 
+  // Auth loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white/50">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not logged in - show login
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bebas italic tracking-wider mb-2">DYMNDS OS</h1>
+            <p className="text-white/40">Admin Access</p>
+          </div>
+          
+          <form onSubmit={handleLogin} className="bg-white/5 border border-white/10 rounded-2xl p-8">
+            {loginError && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                {loginError}
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/40"
+                  placeholder="admin@weardymnds.com"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/40"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full py-4 bg-white text-black font-bold tracking-wider uppercase rounded-lg hover:bg-white/90 transition-colors"
+              >
+                Sign In
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Data loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -314,6 +418,15 @@ export default function AdminDashboard() {
           >
             <span className="text-sm tracking-wider uppercase">App Waitlist</span>
           </button>
+          
+          <div className="pt-4 mt-4 border-t border-white/10">
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"
+            >
+              <span className="text-sm tracking-wider uppercase">Logout</span>
+            </button>
+          </div>
         </nav>
       </aside>
 
