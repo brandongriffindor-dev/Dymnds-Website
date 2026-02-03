@@ -4,21 +4,32 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/components/CartContext';
-import { useState } from 'react';
-
-const womenProducts = [
-  { id: 'seamless-sports-bra', name: 'Seamless Sports Bra', price: 65, description: 'Support that moves with you. High-impact ready.' },
-  { id: 'high-rise-leggings', name: 'High-Rise Leggings', price: 95, description: 'Compression that sculpts. Stays put through every squat.' },
-  { id: 'cropped-tank', name: 'Cropped Tank', price: 55, description: 'Lightweight and breathable. Freedom to move.' },
-  { id: 'running-shorts', name: 'Running Shorts', price: 68, description: 'Built for distance. Lightweight with secure pockets.' },
-  { id: 'oversized-hoodie', name: 'Oversized Hoodie', price: 139, description: 'Your comfort zone. Soft, cozy, made for recovery.' },
-  { id: 'joggers', name: 'Athletic Joggers', price: 109, description: 'Tapered fit, ultimate comfort. Gym to brunch.' },
-];
+import { useState, useEffect } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import type { Product } from '@/lib/firebase';
 
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export default function WomenPage() {
   const { addToCart } = useCart();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const q = query(collection(db, 'products'), where('category', '==', 'Women'));
+      const snapshot = await getDocs(q);
+      const productsData = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      } as Product));
+      setProducts(productsData);
+      setLoading(false);
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -38,11 +49,22 @@ export default function WomenPage() {
           </div>
 
           {/* Products Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {womenProducts.map((product) => (
-              <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-white/40 text-xl mb-4">No products yet</p>
+              <p className="text-white/30">Add products in the admin dashboard</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -52,16 +74,31 @@ export default function WomenPage() {
 }
 
 function ProductCard({ product, onAddToCart }: { 
-  product: typeof womenProducts[0]; 
+  product: Product;
   onAddToCart: (item: { id: string; name: string; price: number; quantity: number; size: string }) => void;
 }) {
-  const [selectedSize, setSelectedSize] = useState('M');
   const [added, setAdded] = useState(false);
 
+  // Check if size is in stock
+  const isSizeInStock = (size: string) => {
+    return (product.stock as Record<string, number>)?.[size] > 0;
+  };
+
+  // Auto-select first available size (prefer M if in stock, otherwise first available)
+  const getDefaultSize = () => {
+    if (isSizeInStock('M')) return 'M';
+    const firstAvailable = sizes.find(size => isSizeInStock(size));
+    return firstAvailable || 'M';
+  };
+
+  const [selectedSize, setSelectedSize] = useState(getDefaultSize());
+
   const handleAdd = () => {
+    if (!isSizeInStock(selectedSize)) return;
+    
     onAddToCart({
       id: `${product.id}-${selectedSize}`,
-      name: product.name,
+      name: product.title,
       price: product.price,
       quantity: 1,
       size: selectedSize,
@@ -72,43 +109,63 @@ function ProductCard({ product, onAddToCart }: {
 
   return (
     <div className="group">
-      <div className="aspect-[4/5] bg-neutral-900 mb-5 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500">
-        <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-15 group-hover:opacity-40 transition-opacity duration-500" />
-      </div>
+      <Link href={`/products/${product.slug}`} className="block">
+        <div className="aspect-[4/5] bg-neutral-900 mb-5 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500">
+          <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-15 group-hover:opacity-40 transition-opacity duration-500" />
+        </div>
+      </Link>
 
       <div className="space-y-3">
-        <h3 className="text-xl tracking-wide" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-          {product.name}
-        </h3>
-        <p className="text-white/40 text-sm">{product.description}</p>
+        <Link href={`/products/${product.slug}`} className="block hover:opacity-70 transition-opacity">
+          <h3 className="text-xl tracking-wide" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+            {product.title}
+          </h3>
+        </Link>
+        <p className="text-white/40 text-sm">{product.subtitle}</p>
         <p className="text-lg">${product.price}</p>
 
         <div className="flex gap-2 pt-2">
-          {sizes.map((size) => (
-            <button
-              key={size}
-              onClick={() => setSelectedSize(size)}
-              className={`w-10 h-10 flex items-center justify-center text-xs transition-all ${
-                selectedSize === size
-                  ? 'bg-white text-black'
-                  : 'border border-white/20 text-white/50 hover:text-white hover:border-white/40'
-              }`}
-            >
-              {size}
-            </button>
-          ))}
+          {sizes.map((size) => {
+            const inStock = isSizeInStock(size);
+            return (
+              <button
+                key={size}
+                onClick={() => inStock && setSelectedSize(size)}
+                disabled={!inStock}
+                className={`w-10 h-10 flex items-center justify-center text-xs transition-all ${
+                  selectedSize === size
+                    ? 'bg-white text-black'
+                    : inStock
+                      ? 'border border-white/20 text-white/50 hover:text-white hover:border-white/40'
+                      : 'border border-neutral-800 text-neutral-700 cursor-not-allowed line-through'
+                }`}
+              >
+                {size}
+              </button>
+            );
+          })}
         </div>
 
         <button
           onClick={handleAdd}
+          disabled={!isSizeInStock(selectedSize)}
           className={`w-full py-4 mt-3 text-xs tracking-[0.2em] uppercase transition-all ${
             added 
               ? 'bg-green-500 text-white' 
-              : 'bg-white text-black hover:bg-white/90'
+              : isSizeInStock(selectedSize)
+                ? 'bg-white text-black hover:bg-white/90'
+                : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
           }`}
         >
-          {added ? 'Added ✓' : 'Add to Cart'}
+          {added ? 'Added ✓' : isSizeInStock(selectedSize) ? 'Add to Cart' : 'Out of Stock'}
         </button>
+
+        <Link 
+          href={`/products/${product.slug}`}
+          className="block w-full py-3 text-center text-xs tracking-[0.2em] uppercase border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all"
+        >
+          View Product →
+        </Link>
       </div>
     </div>
   );
