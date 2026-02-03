@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
-  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'discounts' | 'waitlist'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'discounts' | 'alerts' | 'waitlist'>('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
@@ -696,6 +696,27 @@ export default function AdminDashboard() {
             <span className="text-sm tracking-wider uppercase">Discounts</span>
           </button>
           <button
+            onClick={() => setActiveView('alerts')}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+              activeView === 'alerts' 
+                ? 'bg-white text-black' 
+                : 'text-white/60 hover:bg-white/5'
+            }`}
+          >
+            <span className="text-sm tracking-wider uppercase">Alerts</span>
+            {(() => {
+              const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
+              const lowStockProducts = products.filter(p => {
+                return sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) < 5);
+              });
+              return lowStockProducts.length > 0 ? (
+                <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                  {lowStockProducts.length}
+                </span>
+              ) : null;
+            })()}
+          </button>
+          <button
             onClick={() => setActiveView('waitlist')}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'waitlist' 
@@ -724,7 +745,7 @@ export default function AdminDashboard() {
           <div>
             <h2 className="text-4xl font-bebas italic tracking-wider mb-8">CEO Overview</h2>
             
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-4 gap-6">
               {/* Impact Fund Card */}
               <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
                 <div className="flex items-center gap-3 mb-4">
@@ -766,6 +787,39 @@ export default function AdminDashboard() {
                 </p>
                 <p className="text-white/40 text-sm mt-2">{stats.totalOrders} orders</p>
               </div>
+
+              {/* Low Stock Alert Card */}
+              {(() => {
+                const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
+                const lowStockProducts = products.filter(p => {
+                  return sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) < 5);
+                });
+                const hasCritical = products.some(p => {
+                  return sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) === 0);
+                });
+                
+                if (lowStockProducts.length === 0) return null;
+                
+                return (
+                  <div 
+                    className="p-6 bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-2xl cursor-pointer hover:border-red-500/40 transition-all"
+                    onClick={() => setActiveView('alerts')}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <span className="text-red-400 text-lg">⚠️</span>
+                      </div>
+                      <span className="text-white/40 text-xs uppercase tracking-wider">Low Stock Alert</span>
+                    </div>
+                    <p className="text-4xl font-bebas italic text-red-400">
+                      {lowStockProducts.length}
+                    </p>
+                    <p className="text-white/40 text-sm mt-2">
+                      {hasCritical ? 'Some items out of stock' : 'Products need restocking'}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -1350,6 +1404,121 @@ export default function AdminDashboard() {
                       </tr>
                     ))
                   )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Alerts View - Low Stock */}
+        {activeView === 'alerts' && (
+          <div>
+            <h2 className="text-4xl font-bebas italic tracking-wider mb-8">Low Stock Alerts</h2>
+
+            {/* Alert Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              {(() => {
+                const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
+                const lowStockProducts = products.filter(p => {
+                  return sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) < 5);
+                });
+                const criticalStock = products.filter(p => {
+                  return sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) === 0);
+                });
+                const lowStockCount = lowStockProducts.length;
+                const criticalCount = criticalStock.length;
+                const totalLowItems = products.reduce((sum, p) => {
+                  return sum + sizes.filter(size => ((p.stock as Record<string, number>)?.[size] || 0) < 5).length;
+                }, 0);
+
+                return (
+                  <>
+                    <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                      <p className="text-xs uppercase tracking-wider text-yellow-400 mb-1">Low Stock Items</p>
+                      <p className="text-3xl font-bebas italic text-yellow-400">{totalLowItems}</p>
+                      <p className="text-xs text-white/40 mt-1">&lt; 5 units</p>
+                    </div>
+                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                      <p className="text-xs uppercase tracking-wider text-red-400 mb-1">Out of Stock</p>
+                      <p className="text-3xl font-bebas italic text-red-400">{criticalCount}</p>
+                      <p className="text-xs text-white/40 mt-1">0 units</p>
+                    </div>
+                    <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                      <p className="text-xs uppercase tracking-wider text-orange-400 mb-1">Products Affected</p>
+                      <p className="text-3xl font-bebas italic text-orange-400">{lowStockCount}</p>
+                      <p className="text-xs text-white/40 mt-1">need restock</p>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Low Stock Products */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <table className="w-full min-w-[900px]">
+                <thead className="bg-white/5 border-b border-white/10">
+                  <tr>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XS</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">S</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">M</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">L</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XL</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XXL</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
+                    const lowStockProducts = products.filter(p => 
+                      sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) < 5)
+                    );
+
+                    if (lowStockProducts.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={8} className="p-8 text-center text-white/40">
+                            ✅ All stock levels are healthy! No alerts at this time.
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return lowStockProducts.map((product) => (
+                      <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
+                        <td className="p-4">
+                          <p className="font-medium">{product.title}</p>
+                          <p className="text-white/40 text-xs">{product.category}</p>
+                        </td>
+                        {sizes.map((size) => {
+                          const stock = (product.stock as Record<string, number>)?.[size] || 0;
+                          const isLow = stock < 5;
+                          const isCritical = stock === 0;
+                          
+                          return (
+                            <td key={size} className="p-4 text-center">
+                              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
+                                isCritical ? 'bg-red-500 text-white' :
+                                isLow ? 'bg-yellow-500 text-black' :
+                                'bg-green-500/20 text-green-400'
+                              }`}>
+                                {stock}
+                              </span>
+                            </td>
+                          );
+                        })}
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() => setActiveView('inventory')}
+                            className="px-3 py-1.5 bg-white/10 text-white text-xs rounded hover:bg-white/20 transition-colors"
+                          >
+                            Restock
+                          </button>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
