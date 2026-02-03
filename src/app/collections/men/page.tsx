@@ -18,13 +18,28 @@ export default function MenPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const q = query(collection(db, 'products'), where('category', '==', 'Men'), orderBy('displayOrder', 'asc'));
-      const snapshot = await getDocs(q);
-      const productsData = snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data() 
-      } as Product));
-      setProducts(productsData);
+      try {
+        // Try with ordering first
+        const q = query(collection(db, 'products'), where('category', '==', 'Men'), orderBy('displayOrder', 'asc'));
+        const snapshot = await getDocs(q);
+        const productsData = snapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        } as Product));
+        setProducts(productsData);
+      } catch (err: any) {
+        console.error('Query error:', err.message);
+        // Fallback: fetch without orderBy
+        const fallbackQ = query(collection(db, 'products'), where('category', '==', 'Men'));
+        const fallbackSnap = await getDocs(fallbackQ);
+        const productsData = fallbackSnap.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        } as Product));
+        // Sort manually
+        productsData.sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999));
+        setProducts(productsData);
+      }
       setLoading(false);
     };
 

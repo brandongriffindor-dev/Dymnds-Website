@@ -19,13 +19,25 @@ export default function CollectionsPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const q = query(collection(db, 'products'), orderBy('displayOrder', 'asc'));
-      const snapshot = await getDocs(q);
-      const productsData = snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data() 
-      } as Product));
-      setProducts(productsData);
+      try {
+        const q = query(collection(db, 'products'), orderBy('displayOrder', 'asc'));
+        const snapshot = await getDocs(q);
+        const productsData = snapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        } as Product));
+        setProducts(productsData);
+      } catch (err: any) {
+        console.error('Query error:', err.message);
+        const fallbackQ = query(collection(db, 'products'));
+        const fallbackSnap = await getDocs(fallbackQ);
+        const productsData = fallbackSnap.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        } as Product));
+        productsData.sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999));
+        setProducts(productsData);
+      }
       setLoading(false);
     };
 

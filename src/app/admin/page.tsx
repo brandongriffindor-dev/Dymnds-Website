@@ -99,10 +99,21 @@ export default function AdminDashboard() {
     setLoading(true);
     
     try {
-      // Fetch products - sort by displayOrder, then by created_at for items without order
-      const productsQuery = query(collection(db, 'products'), orderBy('displayOrder', 'asc'));
-      const productsSnap = await getDocs(productsQuery);
-      const productsData = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      // Fetch products - try displayOrder first, fallback to created_at
+      let productsData: Product[] = [];
+      try {
+        const productsQuery = query(collection(db, 'products'), orderBy('displayOrder', 'asc'));
+        const productsSnap = await getDocs(productsQuery);
+        productsData = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      } catch (queryError: any) {
+        console.error('Error with displayOrder query:', queryError.message);
+        // Fallback: fetch without ordering
+        const fallbackQuery = query(collection(db, 'products'));
+        const fallbackSnap = await getDocs(fallbackQuery);
+        productsData = fallbackSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        // Sort manually with default displayOrder of 999
+        productsData.sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999));
+      }
       setProducts(productsData);
 
       // Fetch orders
