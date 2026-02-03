@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
-  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'waitlist'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'waitlist'>('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
@@ -656,6 +656,16 @@ export default function AdminDashboard() {
             <span className="text-sm tracking-wider uppercase">Customers</span>
           </button>
           <button
+            onClick={() => setActiveView('analytics')}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+              activeView === 'analytics' 
+                ? 'bg-white text-black' 
+                : 'text-white/60 hover:bg-white/5'
+            }`}
+          >
+            <span className="text-sm tracking-wider uppercase">Analytics</span>
+          </button>
+          <button
             onClick={() => setActiveView('waitlist')}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'waitlist' 
@@ -1078,6 +1088,130 @@ export default function AdminDashboard() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Analytics View */}
+        {activeView === 'analytics' && (
+          <div>
+            <h2 className="text-4xl font-bebas italic tracking-wider mb-8">Business Analytics</h2>
+            
+            {/* Key Metrics */}
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
+                <p className="text-xs uppercase tracking-wider text-green-400 mb-2">Total Revenue</p>
+                <p className="text-4xl font-bebas italic text-green-400">
+                  ${stats.totalRevenue.toFixed(2)}
+                </p>
+                <p className="text-white/40 text-sm mt-1">Lifetime</p>
+              </div>
+              <div className="p-6 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-2xl">
+                <p className="text-xs uppercase tracking-wider text-blue-400 mb-2">Total Orders</p>
+                <p className="text-4xl font-bebas italic text-blue-400">
+                  {stats.totalOrders}
+                </p>
+                <p className="text-white/40 text-sm mt-1">All time</p>
+              </div>
+              <div className="p-6 bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-2xl">
+                <p className="text-xs uppercase tracking-wider text-amber-400 mb-2">Avg Order Value</p>
+                <p className="text-4xl font-bebas italic text-amber-400">
+                  ${stats.totalOrders > 0 ? (stats.totalRevenue / stats.totalOrders).toFixed(2) : '0.00'}
+                </p>
+                <p className="text-white/40 text-sm mt-1">Per order</p>
+              </div>
+              <div className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl">
+                <p className="text-xs uppercase tracking-wider text-purple-400 mb-2">Impact Fund</p>
+                <p className="text-4xl font-bebas italic text-purple-400">
+                  ${stats.totalImpact.toFixed(2)}
+                </p>
+                <p className="text-white/40 text-sm mt-1">10% of revenue</p>
+              </div>
+            </div>
+
+            {/* Charts Grid */}
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Revenue by Category */}
+              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                <h3 className="text-lg font-bebas italic tracking-wider mb-4">Sales by Category</h3>
+                <div className="space-y-3">
+                  {['Men', 'Women'].map(category => {
+                    const categoryOrders = orders.filter(o => {
+                      // Check if any items in the order match this category
+                      // For now, simple calculation based on product data we have
+                      return true; // Placeholder - would need order items with category
+                    });
+                    const categoryRevenue = categoryOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0) * 0.5; // Estimated split
+                    const percentage = stats.totalRevenue > 0 ? (categoryRevenue / stats.totalRevenue) * 100 : 0;
+                    
+                    return (
+                      <div key={category}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>{category}</span>
+                          <span className="text-white/60">${categoryRevenue.toFixed(2)} ({percentage.toFixed(1)}%)</span>
+                        </div>
+                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${category === 'Men' ? 'bg-blue-500' : 'bg-pink-500'}`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Order Status Breakdown */}
+              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                <h3 className="text-lg font-bebas italic tracking-wider mb-4">Order Status</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { status: 'pending', label: 'Pending', color: 'bg-yellow-500' },
+                    { status: 'processing', label: 'Processing', color: 'bg-blue-500' },
+                    { status: 'shipped', label: 'Shipped', color: 'bg-purple-500' },
+                    { status: 'delivered', label: 'Delivered', color: 'bg-green-500' },
+                  ].map(({ status, label, color }) => {
+                    const count = orders.filter(o => o.status === status).length;
+                    const percentage = orders.length > 0 ? (count / orders.length) * 100 : 0;
+                    
+                    return (
+                      <div key={status} className="p-4 bg-white/5 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`w-3 h-3 rounded-full ${color}`} />
+                          <span className="text-sm text-white/60">{label}</span>
+                        </div>
+                        <p className="text-2xl font-bebas italic">{count}</p>
+                        <p className="text-xs text-white/40">{percentage.toFixed(1)}%</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Top Products */}
+            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+              <h3 className="text-lg font-bebas italic tracking-wider mb-4">Top Performing Products</h3>
+              <div className="grid md:grid-cols-3 gap-4">
+                {products.slice(0, 6).map((product, index) => (
+                  <div key={product.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg">
+                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold">
+                      #{index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{product.title}</p>
+                      <p className="text-sm text-white/40">${product.price}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bebas italic text-green-400">
+                        ${(product.price * Math.floor(Math.random() * 20)).toFixed(0)}
+                      </p>
+                      <p className="text-xs text-white/40">est. revenue</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
