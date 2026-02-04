@@ -23,7 +23,7 @@ export default function CartPage() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-white font-mono">
+    <main className="min-h-screen bg-black text-white">
       <Navbar />
 
       <section className="pt-32 pb-16 px-6">
