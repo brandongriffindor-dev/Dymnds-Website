@@ -98,6 +98,9 @@ export default function AdminDashboard() {
 
   // Search state
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+
+  // Mobile menu state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
@@ -746,16 +749,49 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-black text-white font-mono">
+      {/* Mobile Header */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-neutral-950 border-b border-white/10 z-50 flex items-center justify-between px-4">
+        <div>
+          <h1 className="text-xl font-bebas italic tracking-wider">DYMNDS OS</h1>
+        </div>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {mobileMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-neutral-950 border-r border-white/10 z-50">
-        <div className="p-6 border-b border-white/10">
+      <aside className={`fixed left-0 top-0 h-full w-64 bg-neutral-950 border-r border-white/10 z-50 transform transition-transform duration-300 lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:block`}>
+        <div className="p-6 border-b border-white/10 hidden lg:block">
+          <h1 className="text-2xl font-bebas italic tracking-wider">DYMNDS OS</h1>
+          <p className="text-white/40 text-xs mt-1">Command Center</p>
+        </div>
+
+        {/* Mobile sidebar header */}
+        <div className="p-6 border-b border-white/10 lg:hidden">
           <h1 className="text-2xl font-bebas italic tracking-wider">DYMNDS OS</h1>
           <p className="text-white/40 text-xs mt-1">Command Center</p>
         </div>
 
         <nav className="p-4 space-y-2">
           <button
-            onClick={() => setActiveView('overview')}
+            onClick={() => { setActiveView('overview'); setMobileMenuOpen(false); }}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'overview' 
                 ? 'bg-white text-black' 
@@ -765,7 +801,7 @@ export default function AdminDashboard() {
             <span className="text-sm tracking-wider uppercase">Overview</span>
           </button>
           <button
-            onClick={() => setActiveView('inventory')}
+            onClick={() => { setActiveView('inventory'); setMobileMenuOpen(false); }}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'inventory' 
                 ? 'bg-white text-black' 
@@ -775,7 +811,7 @@ export default function AdminDashboard() {
             <span className="text-sm tracking-wider uppercase">Inventory</span>
           </button>
           <button
-            onClick={() => setActiveView('orders')}
+            onClick={() => { setActiveView('orders'); setMobileMenuOpen(false); }}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'orders' 
                 ? 'bg-white text-black' 
@@ -790,7 +826,7 @@ export default function AdminDashboard() {
             )}
           </button>
           <button
-            onClick={() => setActiveView('customers')}
+            onClick={() => { setActiveView('customers'); setMobileMenuOpen(false); }}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'customers' 
                 ? 'bg-white text-black' 
@@ -800,7 +836,7 @@ export default function AdminDashboard() {
             <span className="text-sm tracking-wider uppercase">Customers</span>
           </button>
           <button
-            onClick={() => setActiveView('analytics')}
+            onClick={() => { setActiveView('analytics'); setMobileMenuOpen(false); }}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'analytics' 
                 ? 'bg-white text-black' 
@@ -810,7 +846,7 @@ export default function AdminDashboard() {
             <span className="text-sm tracking-wider uppercase">Analytics</span>
           </button>
           <button
-            onClick={() => setActiveView('discounts')}
+            onClick={() => { setActiveView('discounts'); setMobileMenuOpen(false); }}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'discounts' 
                 ? 'bg-white text-black' 
@@ -820,7 +856,7 @@ export default function AdminDashboard() {
             <span className="text-sm tracking-wider uppercase">Discounts</span>
           </button>
           <button
-            onClick={() => setActiveView('alerts')}
+            onClick={() => { setActiveView('alerts'); setMobileMenuOpen(false); }}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'alerts' 
                 ? 'bg-white text-black' 
@@ -841,7 +877,7 @@ export default function AdminDashboard() {
             })()}
           </button>
           <button
-            onClick={() => setActiveView('finance')}
+            onClick={() => { setActiveView('finance'); setMobileMenuOpen(false); }}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'finance' 
                 ? 'bg-white text-black' 
@@ -873,13 +909,13 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="ml-64 p-8">
+      <main className="lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
         {/* CEO Overview */}
         {activeView === 'overview' && (
           <div>
             <h2 className="text-4xl font-bebas italic tracking-wider mb-8">CEO Overview</h2>
             
-            <div className="grid grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Impact Fund Card */}
               <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
                 <div className="flex items-center gap-3 mb-4">
@@ -988,7 +1024,7 @@ export default function AdminDashboard() {
             </div>
             
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-x-auto">
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-[600px] lg:min-w-[900px]">
                 <thead className="bg-white/5 border-b border-white/10">
                   <tr>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">#</th>
@@ -1125,7 +1161,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Orders Stats */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                 <p className="text-xs uppercase tracking-wider text-yellow-400 mb-1">Pending</p>
                 <p className="text-2xl font-bebas italic">{orders.filter(o => o.status === 'pending').length}</p>
@@ -1259,7 +1295,7 @@ export default function AdminDashboard() {
             </div>
             
             {/* Customer Stats */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
                 <p className="text-xs uppercase tracking-wider text-white/40 mb-1">Total Customers</p>
                 <p className="text-2xl font-bebas italic">{Array.from(new Set(orders.map(o => o.customer_email))).length}</p>
@@ -1423,7 +1459,7 @@ export default function AdminDashboard() {
               return (
                 <>
                   {/* Key Metrics */}
-                  <div className="grid grid-cols-4 gap-4 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
                       <p className="text-xs uppercase tracking-wider text-green-400 mb-2">Revenue</p>
                       <p className="text-4xl font-bebas italic text-green-400">
@@ -1462,7 +1498,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Charts Grid */}
-                  <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  <div className="grid md:grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {/* Revenue by Category */}
                     <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
                       <h3 className="text-lg font-bebas italic tracking-wider mb-4">Sales by Category</h3>
@@ -1497,7 +1533,7 @@ export default function AdminDashboard() {
                     {/* Order Status Breakdown */}
                     <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
                       <h3 className="text-lg font-bebas italic tracking-wider mb-4">Order Status</h3>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {[
                           { status: 'pending', label: 'Pending', color: 'bg-yellow-500' },
                           { status: 'processing', label: 'Processing', color: 'bg-blue-500' },
@@ -1525,7 +1561,7 @@ export default function AdminDashboard() {
                   {/* Top Products */}
                   <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
                     <h3 className="text-lg font-bebas italic tracking-wider mb-4">Top Performing Products</h3>
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-1 md:grid-cols-3 gap-4">
                       {products.slice(0, 6).map((product, index) => (
                   <div key={product.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg">
                     <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold">
@@ -1565,7 +1601,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Active Codes Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <p className="text-xs uppercase tracking-wider text-green-400 mb-1">Active Codes</p>
                 <p className="text-3xl font-bebas italic text-green-400">{discounts.filter(d => d.isActive && new Date(d.expiresAt) > new Date()).length}</p>
@@ -1667,7 +1703,7 @@ export default function AdminDashboard() {
             <h2 className="text-4xl font-bebas italic tracking-wider mb-8">Low Stock Alerts</h2>
 
             {/* Alert Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               {(() => {
                 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
                 const lowStockProducts = products.filter(p => {
@@ -1706,7 +1742,7 @@ export default function AdminDashboard() {
 
             {/* Low Stock Products */}
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-[600px] lg:min-w-[900px]">
                 <thead className="bg-white/5 border-b border-white/10">
                   <tr>
                     <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product</th>
@@ -1871,7 +1907,7 @@ export default function AdminDashboard() {
                   
                   return (
                     <>
-                      <div className="grid grid-cols-5 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
                           <p className="text-xs uppercase tracking-wider text-green-400 mb-2">{periodLabel} Revenue</p>
                           <p className="text-3xl font-bebas italic text-green-400">${periodRevenue.toFixed(2)}</p>
@@ -1902,7 +1938,7 @@ export default function AdminDashboard() {
                       </div>
 
                       {/* Period Activity */}
-                      <div className="grid md:grid-cols-2 gap-6">
+                      <div className="grid md:grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
                           <h3 className="text-lg font-bebas italic tracking-wider mb-4">Orders in Period</h3>
                           {filteredOrders.length === 0 ? (
@@ -1989,7 +2025,7 @@ export default function AdminDashboard() {
                   
                   return (
                     <>
-                      <div className="grid grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
                           <p className="text-xs uppercase tracking-wider text-green-400 mb-2">{periodLabel} Revenue</p>
                           <p className="text-4xl font-bebas italic text-green-400">${periodRevenue.toFixed(2)}</p>
@@ -2079,7 +2115,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Expense Categories Summary */}
-                <div className="grid grid-cols-6 gap-4 mb-6">
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-6">
                   {['Shipping', 'Marketing', 'Software', 'Inventory', 'Legal/Admin', 'Other'].map(cat => {
                     const catTotal = expenses.filter(e => e.category === cat).reduce((sum, e) => sum + (e.amount || 0), 0);
                     return (
@@ -2166,7 +2202,7 @@ export default function AdminDashboard() {
                   
                   return (
                     <>
-                      <div className="grid grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="p-6 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-2xl">
                           <p className="text-xs uppercase tracking-wider text-blue-400 mb-2">YTD Revenue</p>
                           <p className="text-3xl font-bebas italic text-blue-400">${ytdRevenue.toFixed(2)}</p>
@@ -2258,7 +2294,7 @@ export default function AdminDashboard() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Amount ($) *</label>
                         <input
@@ -2595,7 +2631,7 @@ export default function AdminDashboard() {
 
             <div className="p-6 space-y-6">
               {/* Customer Info */}
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-4 bg-white/5 rounded-xl">
                   <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Customer</p>
                   <p className="font-medium text-lg">{viewingOrder.customer_name}</p>
@@ -2728,7 +2764,7 @@ export default function AdminDashboard() {
             
             <div className="space-y-4">
               {/* Category Selection */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Category (Gender)</label>
                   <select
@@ -2845,7 +2881,7 @@ export default function AdminDashboard() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Model Size</label>
                       <input
@@ -2954,7 +2990,7 @@ export default function AdminDashboard() {
                     {/* Active Color Editor */}
                     {newProduct.colors[activeColorIndex] && (
                       <div className="p-4 bg-white/5 rounded-lg space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Color Name</label>
                             <input
@@ -3046,7 +3082,7 @@ export default function AdminDashboard() {
                         {/* Color Stock */}
                         <div>
                           <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Stock by Size</label>
-                          <div className="grid grid-cols-6 gap-2">
+                          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                             {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
                               <div key={size}>
                                 <label className="block text-[10px] text-white/40 text-center mb-1">{size}</label>
@@ -3171,7 +3207,7 @@ export default function AdminDashboard() {
               {/* Initial Stock */}
               <div>
                 <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Initial Stock</label>
-                <div className="grid grid-cols-6 gap-2">
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                   {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
                     <div key={size}>
                       <span className="text-xs text-white/40 block text-center mb-1">{size}</span>
@@ -3295,7 +3331,7 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Type</label>
                   <select
