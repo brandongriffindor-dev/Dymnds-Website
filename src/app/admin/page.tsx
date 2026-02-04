@@ -1626,7 +1626,22 @@ export default function AdminDashboard() {
                           {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
                         </td>
                         <td className="p-4 text-center">
-                          {order.items?.length || 0} items
+                          <div className="flex flex-col items-center gap-1">
+                            <span>{order.items?.length || 0} items</span>
+                            {/* Show unique colors in this order */}
+                            {order.items && order.items.some((i: any) => i.color) && (
+                              <div className="flex gap-1 justify-center">
+                                {Array.from(new Set(order.items.filter((i: any) => i.color).map((i: any) => i.color))).slice(0, 3).map((color: string, idx: number) => (
+                                  <span key={idx} className="text-[10px] px-1.5 py-0.5 bg-white/10 rounded text-white/50">
+                                    {color}
+                                  </span>
+                                ))}
+                                {new Set(order.items.filter((i: any) => i.color).map((i: any) => i.color)).size > 3 && (
+                                  <span className="text-[10px] text-white/30">+</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="p-4 text-right font-medium">
                           ${order.total_amount?.toFixed(2) || '0.00'}
@@ -1968,25 +1983,41 @@ export default function AdminDashboard() {
 
                   {/* Top Products */}
                   <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                    <h3 className="text-lg font-bebas italic tracking-wider mb-4">Top Performing Products</h3>
-                    <div className="grid md:grid-cols-1 md:grid-cols-3 gap-4">
+                    <h3 className="text-lg font-bebas italic tracking-wider mb-4">Products & Color Variants</h3>
+                    <div className="space-y-3">
                       {products.slice(0, 6).map((product, index) => (
-                  <div key={product.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg">
-                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold">
-                      #{index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{product.title}</p>
-                      <p className="text-sm text-white/40">${product.price}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bebas italic text-green-400">
-                        ${(product.price * Math.floor(Math.random() * 20)).toFixed(0)}
-                      </p>
-                      <p className="text-xs text-white/40">est. revenue</p>
-                    </div>
-                  </div>
-                ))}
+                        <div key={product.id} className="p-4 bg-white/5 rounded-lg">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-bold text-sm">
+                                #{index + 1}
+                              </div>
+                              <div>
+                                <p className="font-medium">{product.title}</p>
+                                <p className="text-sm text-white/40">${product.price}</p>
+                              </div>
+                            </div>
+                            <p className="text-xs text-white/40">{product.category}</p>
+                          </div>
+                          
+                          {/* Color Variants */}
+                          {product.colors && product.colors.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {product.colors.map((color: any) => (
+                                <div key={color.name} className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded-full">
+                                  <div 
+                                    className="w-3 h-3 rounded-full border border-white/20" 
+                                    style={{ backgroundColor: color.hex }}
+                                  />
+                                  <span className="text-xs text-white/60">{color.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-white/30">No color variants</p>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </>
