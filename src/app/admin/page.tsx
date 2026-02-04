@@ -1005,12 +1005,32 @@ export default function AdminDashboard() {
             <span className="text-sm tracking-wider uppercase">Alerts</span>
             {(() => {
               const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
-              const lowStockProducts = products.filter(p => {
-                return sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) < 5);
+              let lowStockCount = 0;
+              
+              products.forEach(p => {
+                const colors = p.colors || [];
+                if (colors.length > 0) {
+                  // Check each color-size combination
+                  colors.forEach((color: any) => {
+                    sizes.forEach(size => {
+                      if ((color.stock?.[size] || 0) < 5) {
+                        lowStockCount++;
+                      }
+                    });
+                  });
+                } else {
+                  // Check total stock
+                  sizes.forEach(size => {
+                    if (((p.stock as Record<string, number>)?.[size] || 0) < 5) {
+                      lowStockCount++;
+                    }
+                  });
+                }
               });
-              return lowStockProducts.length > 0 ? (
+              
+              return lowStockCount > 0 ? (
                 <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
-                  {lowStockProducts.length}
+                  {lowStockCount}
                 </span>
               ) : null;
             })()}
@@ -1147,14 +1167,29 @@ export default function AdminDashboard() {
               {/* Low Stock Alert Card */}
               {(() => {
                 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
-                const lowStockProducts = products.filter(p => {
-                  return sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) < 5);
-                });
-                const hasCritical = products.some(p => {
-                  return sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) === 0);
+                let lowStockCount = 0;
+                let hasCritical = false;
+                
+                products.forEach(p => {
+                  const colors = p.colors || [];
+                  if (colors.length > 0) {
+                    colors.forEach((color: any) => {
+                      sizes.forEach(size => {
+                        const stock = color.stock?.[size] || 0;
+                        if (stock < 5) lowStockCount++;
+                        if (stock === 0) hasCritical = true;
+                      });
+                    });
+                  } else {
+                    sizes.forEach(size => {
+                      const stock = (p.stock as Record<string, number>)?.[size] || 0;
+                      if (stock < 5) lowStockCount++;
+                      if (stock === 0) hasCritical = true;
+                    });
+                  }
                 });
                 
-                if (lowStockProducts.length === 0) return null;
+                if (lowStockCount === 0) return null;
                 
                 return (
                   <div 
@@ -1168,10 +1203,10 @@ export default function AdminDashboard() {
                       <span className="text-white/40 text-xs uppercase tracking-wider">Low Stock Alert</span>
                     </div>
                     <p className="text-4xl font-bebas italic text-red-400">
-                      {lowStockProducts.length}
+                      {lowStockCount}
                     </p>
                     <p className="text-white/40 text-sm mt-2">
-                      {hasCritical ? 'Some items out of stock' : 'Products need restocking'}
+                      {hasCritical ? 'Some color-size combos out of stock' : 'Color-size combos need restocking'}
                     </p>
                   </div>
                 );
@@ -1332,26 +1367,85 @@ export default function AdminDashboard() {
                       <td className="p-4 text-center">
                         <span className="text-white/60 text-xs">{(product as any).productType || 'N/A'}</span>
                       </td>
-                      {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
-                        <td key={size} className="p-4">
-                          <button
-                            onClick={() => {
-                              setStockChangeProduct(product);
-                              setStockChangeSize(size);
-                              setStockChangeAmount((product.stock as Record<string, number>)?.[size] || 0);
-                              setStockChangeReason('');
-                              setShowStockChangeModal(true);
-                            }}
-                            className={`w-16 text-center bg-black border border-white/20 rounded px-2 py-1 text-sm hover:border-white/40 transition-colors ${
-                              ((product.stock as Record<string, number>)?.[size] || 0) < 5 
-                                ? 'text-yellow-400 border-yellow-500/30' 
-                                : ''
-                            }`}
-                          >
-                            {(product.stock as Record<string, number>)?.[size] || 0}
-                          </button>
-                        </td>
-                      ))}
+                      {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
+                        const totalStock = (product.stock as Record<string, number>)?.[size] || 0;
+                        const colors = product.colors || [];
+                        const hasColors = colors.length > 0;
+                        
+                        // Calculate lowest stock across all colors for this size
+                        let lowestColorStock = Infinity;
+                        let lowestColorName = '';
+                        if (hasColors) {
+                          colors.forEach((color: any) => {
+                            const colorStock = color.stock?.[size] || 0;
+                            if (colorStock < lowestColorStock) {
+                              lowestColorStock = colorStock;
+                              lowestColorName = color.name;
+                            }
+                          });
+                        }
+                        const isLow = hasColors ? lowestColorStock < 5 : totalStock < 5;
+                        const isCritical = hasColors ? lowestColorStock === 0 : totalStock === 0;
+                        
+                        return (
+                          <td key={size} className="p-4">
+                            {hasColors ? (
+                              <div className="relative group">
+                                <button
+                                  onClick={() => {
+                                    setStockChangeProduct(product);
+                                    setStockChangeSize(size);
+                                    setStockChangeAmount(totalStock);
+                                    setStockChangeReason('');
+                                    setShowStockChangeModal(true);
+                                  }}
+                                  className={`w-16 text-center bg-black border rounded px-2 py-1 text-sm hover:border-white/40 transition-colors ${
+                                    isCritical ? 'text-red-400 border-red-500/50' :
+                                    isLow ? 'text-yellow-400 border-yellow-500/30' :
+                                    'border-white/20'
+                                  }`}
+                                  title={`${colors.length} colors. Lowest: ${lowestColorName} (${lowestColorStock})`}
+                                >
+                                  {totalStock}
+                                </button>
+                                {/* Color breakdown tooltip */}
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-neutral-900 border border-white/20 rounded-lg p-3 z-50 whitespace-nowrap">
+                                  <p className="text-xs text-white/60 mb-2">Color Breakdown:</p>
+                                  {colors.map((color: any) => (
+                                    <div key={color.name} className="flex items-center gap-2 text-sm">
+                                      <div 
+                                        className="w-3 h-3 rounded-full border border-white/20" 
+                                        style={{ backgroundColor: color.hex }}
+                                      />
+                                      <span className="text-white/80">{color.name}:</span>
+                                      <span className={color.stock?.[size] < 5 ? 'text-yellow-400' : 'text-white'}>
+                                        {color.stock?.[size] || 0}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setStockChangeProduct(product);
+                                  setStockChangeSize(size);
+                                  setStockChangeAmount(totalStock);
+                                  setStockChangeReason('');
+                                  setShowStockChangeModal(true);
+                                }}
+                                className={`w-16 text-center bg-black border rounded px-2 py-1 text-sm hover:border-white/40 transition-colors ${
+                                  isCritical ? 'text-red-400 border-red-500/50' :
+                                  isLow ? 'text-yellow-400 border-yellow-500/30' :
+                                  'border-white/20'
+                                }`}
+                              >
+                                {totalStock}
+                              </button>
+                            )}
+                          </td>
+                        );
+                      })}
                       <td className="p-4 text-center">
                         <button
                           onClick={() => deleteProduct(product.id)}
@@ -2020,33 +2114,58 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               {(() => {
                 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
-                const lowStockProducts = products.filter(p => {
-                  return sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) < 5);
+                
+                // Count low stock at color level
+                let totalLowItems = 0;
+                let totalCriticalItems = 0;
+                let affectedProducts = new Set<string>();
+                
+                products.forEach(p => {
+                  const colors = p.colors || [];
+                  if (colors.length > 0) {
+                    // Check each color-size combination
+                    colors.forEach((color: any) => {
+                      sizes.forEach(size => {
+                        const stock = color.stock?.[size] || 0;
+                        if (stock < 5) {
+                          totalLowItems++;
+                          affectedProducts.add(p.id);
+                        }
+                        if (stock === 0) {
+                          totalCriticalItems++;
+                        }
+                      });
+                    });
+                  } else {
+                    // Check total stock
+                    sizes.forEach(size => {
+                      const stock = (p.stock as Record<string, number>)?.[size] || 0;
+                      if (stock < 5) {
+                        totalLowItems++;
+                        affectedProducts.add(p.id);
+                      }
+                      if (stock === 0) {
+                        totalCriticalItems++;
+                      }
+                    });
+                  }
                 });
-                const criticalStock = products.filter(p => {
-                  return sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) === 0);
-                });
-                const lowStockCount = lowStockProducts.length;
-                const criticalCount = criticalStock.length;
-                const totalLowItems = products.reduce((sum, p) => {
-                  return sum + sizes.filter(size => ((p.stock as Record<string, number>)?.[size] || 0) < 5).length;
-                }, 0);
 
                 return (
                   <>
                     <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                       <p className="text-xs uppercase tracking-wider text-yellow-400 mb-1">Low Stock Items</p>
                       <p className="text-3xl font-bebas italic text-yellow-400">{totalLowItems}</p>
-                      <p className="text-xs text-white/40 mt-1">&lt; 5 units</p>
+                      <p className="text-xs text-white/40 mt-1">color-size combos &lt; 5</p>
                     </div>
                     <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
                       <p className="text-xs uppercase tracking-wider text-red-400 mb-1">Out of Stock</p>
-                      <p className="text-3xl font-bebas italic text-red-400">{criticalCount}</p>
-                      <p className="text-xs text-white/40 mt-1">0 units</p>
+                      <p className="text-3xl font-bebas italic text-red-400">{totalCriticalItems}</p>
+                      <p className="text-xs text-white/40 mt-1">color-size combos at 0</p>
                     </div>
                     <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
                       <p className="text-xs uppercase tracking-wider text-orange-400 mb-1">Products Affected</p>
-                      <p className="text-3xl font-bebas italic text-orange-400">{lowStockCount}</p>
+                      <p className="text-3xl font-bebas italic text-orange-400">{affectedProducts.size}</p>
                       <p className="text-xs text-white/40 mt-1">need restock</p>
                     </div>
                   </>
@@ -2054,74 +2173,95 @@ export default function AdminDashboard() {
               })()}
             </div>
 
-            {/* Low Stock Products */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-              <table className="w-full min-w-[600px] lg:min-w-[900px]">
-                <thead className="bg-white/5 border-b border-white/10">
-                  <tr>
-                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product</th>
-                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XS</th>
-                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">S</th>
-                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">M</th>
-                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">L</th>
-                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XL</th>
-                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XXL</th>
-                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(() => {
-                    const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
-                    const lowStockProducts = products.filter(p => 
-                      sizes.some(size => ((p.stock as Record<string, number>)?.[size] || 0) < 5)
-                    );
+            {/* Low Stock Items Detail */}
+            <div className="space-y-4">
+              {(() => {
+                const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
+                const lowStockItems: any[] = [];
+                
+                products.forEach(p => {
+                  const colors = p.colors || [];
+                  if (colors.length > 0) {
+                    // Check each color-size combination
+                    colors.forEach((color: any) => {
+                      sizes.forEach(size => {
+                        const stock = color.stock?.[size] || 0;
+                        if (stock < 5) {
+                          lowStockItems.push({
+                            product: p,
+                            color: color.name,
+                            colorHex: color.hex,
+                            size,
+                            stock,
+                            isCritical: stock === 0
+                          });
+                        }
+                      });
+                    });
+                  } else {
+                    // Check total stock
+                    sizes.forEach(size => {
+                      const stock = (p.stock as Record<string, number>)?.[size] || 0;
+                      if (stock < 5) {
+                        lowStockItems.push({
+                          product: p,
+                          color: null,
+                          size,
+                          stock,
+                          isCritical: stock === 0
+                        });
+                      }
+                    });
+                  }
+                });
 
-                    if (lowStockProducts.length === 0) {
-                      return (
-                        <tr>
-                          <td colSpan={8} className="p-8 text-center text-white/40">
-                            ✅ All stock levels are healthy! No alerts at this time.
-                          </td>
-                        </tr>
-                      );
-                    }
+                if (lowStockItems.length === 0) {
+                  return (
+                    <div className="p-8 text-center text-white/40 bg-white/5 border border-white/10 rounded-2xl">
+                      ✅ All stock levels are healthy! No alerts at this time.
+                    </div>
+                  );
+                }
 
-                    return lowStockProducts.map((product) => (
-                      <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
-                        <td className="p-4">
-                          <p className="font-medium">{product.title}</p>
-                          <p className="text-white/40 text-xs">{product.category}</p>
-                        </td>
-                        {sizes.map((size) => {
-                          const stock = (product.stock as Record<string, number>)?.[size] || 0;
-                          const isLow = stock < 5;
-                          const isCritical = stock === 0;
-                          
-                          return (
-                            <td key={size} className="p-4 text-center">
-                              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
-                                isCritical ? 'bg-red-500 text-white' :
-                                isLow ? 'bg-yellow-500 text-black' :
-                                'bg-green-500/20 text-green-400'
-                              }`}>
-                                {stock}
-                              </span>
-                            </td>
-                          );
-                        })}
-                        <td className="p-4 text-center">
-                          <button
-                            onClick={() => setActiveView('inventory')}
-                            className="px-3 py-1.5 bg-white/10 text-white text-xs rounded hover:bg-white/20 transition-colors"
-                          >
-                            Restock
-                          </button>
-                        </td>
-                      </tr>
-                    ));
-                  })()}
-                </tbody>
-              </table>
+                return lowStockItems.map((item, index) => (
+                  <div key={index} className={`p-4 rounded-xl flex items-center justify-between ${
+                    item.isCritical 
+                      ? 'bg-red-500/10 border border-red-500/20' 
+                      : 'bg-yellow-500/10 border border-yellow-500/20'
+                  }`}>
+                    <div className="flex items-center gap-4">
+                      {item.color && (
+                        <div 
+                          className="w-8 h-8 rounded-full border border-white/20" 
+                          style={{ backgroundColor: item.colorHex }}
+                          title={item.color}
+                        />
+                      )}
+                      <div>
+                        <p className="font-medium">
+                          {item.product.title}
+                          {item.color && <span className="text-white/60"> — {item.color}</span>}
+                        </p>
+                        <p className="text-sm text-white/40">
+                          Size {item.size}: <span className={item.isCritical ? 'text-red-400 font-bold' : 'text-yellow-400'}>{item.stock} left</span>
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setStockChangeProduct(item.product);
+                        setStockChangeSize(item.size);
+                        setStockChangeAmount(item.stock);
+                        setStockChangeReason('');
+                        setShowStockChangeModal(true);
+                      }}
+                      className="px-4 py-2 bg-white/10 text-white text-sm rounded hover:bg-white/20 transition-colors"
+                    >
+                      Restock
+                    </button>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         )}
