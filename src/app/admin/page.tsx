@@ -122,6 +122,10 @@ export default function AdminDashboard() {
   const [stockChangeAmount, setStockChangeAmount] = useState(0);
   const [stockChangeReason, setStockChangeReason] = useState('');
 
+  // Customer 360° view state
+  const [viewingCustomer, setViewingCustomer] = useState<{email: string, name: string} | null>(null);
+  const [customerNotes, setCustomerNotes] = useState('');
+
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
@@ -1633,7 +1637,14 @@ export default function AdminDashboard() {
                         const isActive = lastOrder && new Date(lastOrder.created_at) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
                         
                         return (
-                          <tr key={email} className="border-b border-white/5 hover:bg-white/5">
+                          <tr 
+                            key={email} 
+                            className="border-b border-white/5 hover:bg-white/5 cursor-pointer"
+                            onClick={() => {
+                              setViewingCustomer({email, name: customerOrders[0]?.customer_name || 'Unknown'});
+                              setCustomerNotes('');
+                            }}
+                          >
                             <td className="p-4">
                               <p className="font-medium">{customerOrders[0]?.customer_name || 'Unknown'}</p>
                               <p className="text-white/40 text-xs">{email}</p>
@@ -3892,6 +3903,131 @@ export default function AdminDashboard() {
                 Update Stock
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer 360° Modal */}
+      {viewingCustomer && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bebas italic tracking-wider">Customer 360°</h3>
+                <p className="text-white/40 text-sm">{viewingCustomer.email}</p>
+              </div>
+              <button
+                onClick={() => setViewingCustomer(null)}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {(() => {
+              const customerOrders = orders.filter(o => o.customer_email === viewingCustomer.email);
+              const totalSpent = customerOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+              const orderCount = customerOrders.length;
+              const avgOrderValue = orderCount > 0 ? totalSpent / orderCount : 0;
+              const firstOrder = customerOrders.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
+              const lastOrder = customerOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+              const isVIP = totalSpent > 500;
+              
+              return (
+                <div className="p-6 space-y-6">
+                  {/* Customer Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="p-4 bg-white/5 rounded-xl">
+                      <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Total Spent</p>
+                      <p className="text-2xl font-bebas italic text-green-400">${totalSpent.toFixed(2)}</p>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl">
+                      <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Orders</p>
+                      <p className="text-2xl font-bebas italic">{orderCount}</p>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl">
+                      <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Avg Order</p>
+                      <p className="text-2xl font-bebas italic">${avgOrderValue.toFixed(2)}</p>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl">
+                      <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Status</p>
+                      <div className="flex gap-1">
+                        {isVIP && (
+                          <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">VIP</span>
+                        )}
+                        {lastOrder && new Date(lastOrder.created_at) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) && (
+                          <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">Active</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer Timeline */}
+                  <div className="grid md:grid-cols-2 gap-4 text-sm text-white/60">
+                    <div className="p-4 bg-white/5 rounded-xl">
+                      <p className="text-white/40 text-xs uppercase tracking-wider mb-1">First Order</p>
+                      <p>{firstOrder?.created_at ? new Date(firstOrder.created_at).toLocaleDateString() : 'N/A'}</p>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl">
+                      <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Last Order</p>
+                      <p>{lastOrder?.created_at ? new Date(lastOrder.created_at).toLocaleDateString() : 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  {/* Notes Section */}
+                  <div className="p-4 bg-white/5 rounded-xl">
+                    <p className="text-white/40 text-xs uppercase tracking-wider mb-2">Notes</p>
+                    <textarea
+                      value={customerNotes}
+                      onChange={(e) => setCustomerNotes(e.target.value)}
+                      placeholder="Add notes about this customer..."
+                      rows={3}
+                      className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  {/* Order History */}
+                  <div>
+                    <h4 className="text-lg font-bebas italic tracking-wider mb-4">Order History</h4>
+                    <div className="space-y-3">
+                      {customerOrders.length === 0 ? (
+                        <p className="text-white/40 text-center py-8">No orders yet.</p>
+                      ) : (
+                        customerOrders
+                          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                          .map(order => (
+                            <div 
+                              key={order.id} 
+                              className="p-4 bg-white/5 rounded-xl flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors"
+                              onClick={() => {
+                                setViewingCustomer(null);
+                                setViewingOrder(order);
+                              }}
+                            >
+                              <div>
+                                <p className="font-medium">Order #{order.id.slice(-6).toUpperCase()}</p>
+                                <p className="text-white/40 text-sm">{order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}</p>
+                                <p className="text-white/40 text-xs">{order.items?.length || 0} items</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xl font-bebas italic text-green-400">${order.total_amount?.toFixed(2)}</p>
+                                <span className={`px-2 py-1 rounded text-xs ${
+                                  order.status === 'delivered' ? 'bg-green-500/20 text-green-400' :
+                                  order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                                  'bg-blue-500/20 text-blue-400'
+                                }`}>
+                                  {order.status}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
