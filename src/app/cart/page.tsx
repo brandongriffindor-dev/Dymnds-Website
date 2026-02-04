@@ -75,7 +75,7 @@ export default function CartPage() {
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
                         <h3 className="text-lg font-bebas italic uppercase tracking-wide">{item.name}</h3>
-                        <p className="text-white/40 text-sm mt-1">Size: {item.size}{item.color ? ` • Color: ${item.color}` : ''}</p>
+                        <p className="text-white/40 text-sm mt-1">Size: {item.size}</p>
                         <p className="text-white/60 font-bold mt-1">${item.price}</p>
                       </div>
 

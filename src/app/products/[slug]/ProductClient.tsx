@@ -234,15 +234,16 @@ export default function ProductClient({ product }: ProductClientProps) {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const colorName = selectedColor?.name || '';
-    const itemName = colorName ? `${product.title} (${colorName})` : product.title;
+    const colorImage = selectedColor?.images?.[0] || product.images?.[0] || '';
     
     addToCart({
       id: `${product.id}-${selectedSize}${colorName ? `-${colorName}` : ''}`,
-      name: itemName,
+      name: product.title,
       price: Number(product.price),
       quantity: 1,
       size: selectedSize,
       color: colorName || undefined,
+      image: colorImage,
     });
     
     setIsAdding(false);
