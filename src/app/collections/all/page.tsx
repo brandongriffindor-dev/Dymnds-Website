@@ -4,18 +4,14 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useCart } from '@/components/CartContext';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import type { Product } from '@/lib/firebase';
-
-const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export default function CollectionsPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -47,17 +43,6 @@ export default function CollectionsPage() {
   const filteredProducts = selectedCategory === 'All' 
     ? products 
     : products.filter(p => p.category === selectedCategory);
-
-  const handleAddToCart = (product: Product, size: string) => {
-    addToCart({
-      id: `${product.id}-${size}`,
-      name: product.title,
-      price: product.price,
-      quantity: 1,
-      size,
-    });
-    alert(`${product.title} (Size ${size}) added to cart!`);
-  };
 
   return (
     <main className="min-h-screen bg-black text-white font-mono">
@@ -106,7 +91,7 @@ export default function CollectionsPage() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
@@ -118,33 +103,10 @@ export default function CollectionsPage() {
   );
 }
 
-function ProductCard({ product, onAddToCart }: { 
+function ProductCard({ product }: { 
   product: Product;
-  onAddToCart: (p: Product, size: string) => void;
 }) {
-  const [added, setAdded] = useState(false);
-
-  // Check if size is in stock
-  const isSizeInStock = (size: string) => {
-    return (product.stock as Record<string, number>)?.[size] > 0;
-  };
-
-  // Auto-select first available size (prefer M if in stock, otherwise first available)
-  const getDefaultSize = () => {
-    if (isSizeInStock('M')) return 'M';
-    const firstAvailable = sizes.find(size => isSizeInStock(size));
-    return firstAvailable || 'M';
-  };
-
-  const [selectedSize, setSelectedSize] = useState(getDefaultSize());
   const donation = (product.price * 0.10).toFixed(2);
-
-  const handleAdd = () => {
-    if (!isSizeInStock(selectedSize)) return;
-    onAddToCart(product, selectedSize);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
-  };
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
@@ -177,46 +139,14 @@ function ProductCard({ product, onAddToCart }: {
         {/* Price */}
         <p className="text-2xl font-bebas italic mb-4">${product.price}</p>
 
-        {/* Size Selector */}
-        <div className="mb-4">
-          <p className="text-xs tracking-widest uppercase text-white/40 mb-2">Size</p>
-          <div className="flex flex-wrap gap-2">
-            {sizes.map((size) => {
-              const inStock = isSizeInStock(size);
-              return (
-                <button
-                  key={size}
-                  onClick={() => inStock && setSelectedSize(size)}
-                  disabled={!inStock}
-                  className={`w-10 h-10 flex items-center justify-center text-sm rounded-lg transition-all ${
-                    selectedSize === size
-                      ? 'bg-white text-black'
-                      : inStock
-                        ? 'border border-white/20 text-white/60 hover:text-white hover:border-white/40'
-                        : 'border border-neutral-800 text-neutral-700 cursor-not-allowed line-through'
-                  }`}
-                >
-                  {size}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Add to Cart */}
-        <button
-          onClick={handleAdd}
-          disabled={!isSizeInStock(selectedSize)}
-          className={`w-full py-4 font-bebas italic text-lg tracking-widest uppercase rounded-xl transition-all ${
-            added
-              ? 'bg-green-500 text-white'
-              : isSizeInStock(selectedSize)
-                ? 'bg-white text-black hover:scale-[1.02]'
-                : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-          }`}
-        >
-          {added ? 'Added ✓' : isSizeInStock(selectedSize) ? 'Add to Cart' : 'Out of Stock'}
-        </button>
+        {/* View Product Button */}
+        <Link href={`/products/${product.slug}`}>
+          <button
+            className="w-full py-4 font-bebas italic text-lg tracking-widest uppercase rounded-xl bg-white text-black hover:scale-[1.02] transition-all"
+          >
+            View Product
+          </button>
+        </Link>
       </div>
     </div>
   );

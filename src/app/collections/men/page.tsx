@@ -3,16 +3,12 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useCart } from '@/components/CartContext';
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import type { Product } from '@/lib/firebase';
 
-const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-
 export default function MenPage() {
-  const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -76,7 +72,7 @@ export default function MenPage() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
@@ -88,40 +84,9 @@ export default function MenPage() {
   );
 }
 
-function ProductCard({ product, onAddToCart }: { 
+function ProductCard({ product }: { 
   product: Product;
-  onAddToCart: (item: { id: string; name: string; price: number; quantity: number; size: string }) => void;
 }) {
-  const [added, setAdded] = useState(false);
-
-  // Check if size is in stock
-  const isSizeInStock = (size: string) => {
-    return (product.stock as Record<string, number>)?.[size] > 0;
-  };
-
-  // Auto-select first available size (prefer M if in stock, otherwise first available)
-  const getDefaultSize = () => {
-    if (isSizeInStock('M')) return 'M';
-    const firstAvailable = sizes.find(size => isSizeInStock(size));
-    return firstAvailable || 'M';
-  };
-
-  const [selectedSize, setSelectedSize] = useState(getDefaultSize());
-
-  const handleAdd = () => {
-    if (!isSizeInStock(selectedSize)) return;
-    
-    onAddToCart({
-      id: `${product.id}-${selectedSize}`,
-      name: product.title,
-      price: product.price,
-      quantity: 1,
-      size: selectedSize,
-    });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
-  };
-
   return (
     <div className="group">
       <Link href={`/products/${product.slug}`} className="block">
@@ -139,47 +104,12 @@ function ProductCard({ product, onAddToCart }: {
         <p className="text-white/40 text-sm">{product.subtitle}</p>
         <p className="text-lg">${product.price}</p>
 
-        <div className="flex gap-2 pt-2">
-          {sizes.map((size) => {
-            const inStock = isSizeInStock(size);
-            return (
-              <button
-                key={size}
-                onClick={() => inStock && setSelectedSize(size)}
-                disabled={!inStock}
-                className={`w-10 h-10 flex items-center justify-center text-xs transition-all ${
-                  selectedSize === size
-                    ? 'bg-white text-black'
-                    : inStock
-                      ? 'border border-white/20 text-white/50 hover:text-white hover:border-white/40'
-                      : 'border border-neutral-800 text-neutral-700 cursor-not-allowed line-through'
-                }`}
-              >
-                {size}
-              </button>
-            );
-          })}
-        </div>
-
-        <button
-          onClick={handleAdd}
-          disabled={!isSizeInStock(selectedSize)}
-          className={`w-full py-4 mt-3 text-xs tracking-[0.2em] uppercase transition-all ${
-            added 
-              ? 'bg-green-500 text-white' 
-              : isSizeInStock(selectedSize)
-                ? 'bg-white text-black hover:bg-white/90'
-                : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-          }`}
-        >
-          {added ? 'Added ✓' : isSizeInStock(selectedSize) ? 'Add to Cart' : 'Out of Stock'}
-        </button>
-
-        <Link 
-          href={`/products/${product.slug}`}
-          className="block w-full py-3 text-center text-xs tracking-[0.2em] uppercase border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all"
-        >
-          View Product →
+        <Link href={`/products/${product.slug}`}>
+          <button
+            className="w-full py-4 mt-3 text-xs tracking-[0.2em] uppercase bg-white text-black hover:bg-white/90 transition-all"
+          >
+            View Product
+          </button>
         </Link>
       </div>
     </div>
