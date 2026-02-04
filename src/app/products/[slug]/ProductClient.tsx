@@ -242,6 +242,7 @@ export default function ProductClient({ product }: ProductClientProps) {
       price: Number(product.price),
       quantity: 1,
       size: selectedSize,
+      color: colorName || undefined,
     });
     
     setIsAdding(false);
