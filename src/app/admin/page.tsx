@@ -99,6 +99,12 @@ export default function AdminDashboard() {
   // Search state
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
 
+  // Bulk actions state
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkDeleteTarget, setBulkDeleteTarget] = useState<'products' | 'orders' | null>(null);
+
   // Mobile menu state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
@@ -1022,11 +1028,55 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </div>
+
+            {/* Bulk Actions Bar */}
+            {selectedProducts.length > 0 && (
+              <div className="mb-4 p-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between">
+                <span className="text-white/60">{selectedProducts.length} product{selectedProducts.length !== 1 ? 's' : ''} selected</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setBulkDeleteTarget('products');
+                      setShowBulkDeleteConfirm(true);
+                    }}
+                    className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium"
+                  >
+                    Delete Selected
+                  </button>
+                  <button
+                    onClick={() => setSelectedProducts([])}
+                    className="px-4 py-2 bg-white/10 text-white/60 rounded-lg hover:bg-white/20 transition-colors text-sm"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
             
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-x-auto">
               <table className="w-full min-w-[600px] lg:min-w-[900px]">
                 <thead className="bg-white/5 border-b border-white/10">
                   <tr>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">
+                      <input
+                        type="checkbox"
+                        checked={selectedProducts.length === products.filter(p => !productSearch || p.title?.toLowerCase().includes(productSearch.toLowerCase()) || p.slug?.toLowerCase().includes(productSearch.toLowerCase()) || p.category?.toLowerCase().includes(productSearch.toLowerCase())).length && products.filter(p => !productSearch || p.title?.toLowerCase().includes(productSearch.toLowerCase()) || p.slug?.toLowerCase().includes(productSearch.toLowerCase()) || p.category?.toLowerCase().includes(productSearch.toLowerCase())).length > 0}
+                        onChange={(e) => {
+                          const filtered = products.filter(p => 
+                            !productSearch || 
+                            p.title?.toLowerCase().includes(productSearch.toLowerCase()) ||
+                            p.slug?.toLowerCase().includes(productSearch.toLowerCase()) ||
+                            p.category?.toLowerCase().includes(productSearch.toLowerCase())
+                          );
+                          if (e.target.checked) {
+                            setSelectedProducts(filtered.map(p => p.id));
+                          } else {
+                            setSelectedProducts([]);
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-white/20 bg-black"
+                      />
+                    </th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">#</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">⭐</th>
                     <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product</th>
@@ -1050,6 +1100,20 @@ export default function AdminDashboard() {
                     )
                     .map((product) => (
                     <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="p-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedProducts.includes(product.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProducts([...selectedProducts, product.id]);
+                            } else {
+                              setSelectedProducts(selectedProducts.filter(id => id !== product.id));
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-white/20 bg-black"
+                        />
+                      </td>
                       <td className="p-4 text-center">
                         <input
                           type="number"
@@ -1160,6 +1224,30 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Bulk Actions Bar */}
+            {selectedOrders.length > 0 && (
+              <div className="mb-4 p-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between">
+                <span className="text-white/60">{selectedOrders.length} order{selectedOrders.length !== 1 ? 's' : ''} selected</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setBulkDeleteTarget('orders');
+                      setShowBulkDeleteConfirm(true);
+                    }}
+                    className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium"
+                  >
+                    Delete Selected
+                  </button>
+                  <button
+                    onClick={() => setSelectedOrders([])}
+                    className="px-4 py-2 bg-white/10 text-white/60 rounded-lg hover:bg-white/20 transition-colors text-sm"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Orders Stats */}
             <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
@@ -1184,6 +1272,26 @@ export default function AdminDashboard() {
               <table className="w-full">
                 <thead className="bg-white/5 border-b border-white/10">
                   <tr>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">
+                      <input
+                        type="checkbox"
+                        checked={selectedOrders.length === orders.filter(o => !orderSearch || o.id?.toLowerCase().includes(orderSearch.toLowerCase()) || o.customer_name?.toLowerCase().includes(orderSearch.toLowerCase()) || o.customer_email?.toLowerCase().includes(orderSearch.toLowerCase())).length && orders.filter(o => !orderSearch || o.id?.toLowerCase().includes(orderSearch.toLowerCase()) || o.customer_name?.toLowerCase().includes(orderSearch.toLowerCase()) || o.customer_email?.toLowerCase().includes(orderSearch.toLowerCase())).length > 0}
+                        onChange={(e) => {
+                          const filtered = orders.filter(o =>
+                            !orderSearch ||
+                            o.id?.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                            o.customer_name?.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                            o.customer_email?.toLowerCase().includes(orderSearch.toLowerCase())
+                          );
+                          if (e.target.checked) {
+                            setSelectedOrders(filtered.map(o => o.id));
+                          } else {
+                            setSelectedOrders([]);
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-white/20 bg-black"
+                      />
+                    </th>
                     <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Order ID</th>
                     <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Customer</th>
                     <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Date</th>
@@ -1196,24 +1304,38 @@ export default function AdminDashboard() {
                 <tbody>
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-white/40">
+                      <td colSpan={8} className="p-8 text-center text-white/40">
                         No orders yet. Orders will appear here when customers check out.
                       </td>
                     </tr>
                   ) : (
                     orders
-                      .filter(o => 
+                      .filter(o =>
                         !orderSearch ||
                         o.id?.toLowerCase().includes(orderSearch.toLowerCase()) ||
                         o.customer_name?.toLowerCase().includes(orderSearch.toLowerCase()) ||
                         o.customer_email?.toLowerCase().includes(orderSearch.toLowerCase())
                       )
                       .map((order) => (
-                      <tr 
-                        key={order.id} 
+                      <tr
+                        key={order.id}
                         className="border-b border-white/5 hover:bg-white/5 cursor-pointer"
                         onClick={() => setViewingOrder(order)}
                       >
+                        <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedOrders.includes(order.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedOrders([...selectedOrders, order.id]);
+                              } else {
+                                setSelectedOrders(selectedOrders.filter(id => id !== order.id));
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-white/20 bg-black"
+                          />
+                        </td>
                         <td className="p-4">
                           <span className="font-mono text-sm">#{order.id.slice(-6).toUpperCase()}</span>
                         </td>
@@ -1251,7 +1373,7 @@ export default function AdminDashboard() {
                                   status: newStatus,
                                   updated_at: new Date().toISOString()
                                 });
-                                setOrders(orders.map(o => 
+                                setOrders(orders.map(o =>
                                   o.id === order.id ? { ...o, status: newStatus as any } : o
                                 ));
                               } catch (err) {
@@ -3445,6 +3567,61 @@ export default function AdminDashboard() {
                 className="flex-1 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition-colors font-bold disabled:opacity-50"
               >
                 Create Code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-white/10 rounded-2xl p-8 w-full max-w-md">
+            <h3 className="text-2xl font-bebas italic tracking-wider mb-4 text-red-400">⚠️ Delete Confirmation</h3>
+            <p className="text-white/60 mb-6">
+              Are you sure you want to delete {bulkDeleteTarget === 'products' ? selectedProducts.length : selectedOrders.length} {bulkDeleteTarget}?
+              <br /><br />
+              <span className="text-red-400">This action cannot be undone.</span>
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  setShowBulkDeleteConfirm(false);
+                  setBulkDeleteTarget(null);
+                }}
+                className="flex-1 py-3 border border-white/20 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (bulkDeleteTarget === 'products') {
+                    for (const productId of selectedProducts) {
+                      try {
+                        await deleteDoc(doc(db, 'products', productId));
+                      } catch (err) {
+                        console.error('Error deleting product:', err);
+                      }
+                    }
+                    setProducts(products.filter(p => !selectedProducts.includes(p.id)));
+                    setSelectedProducts([]);
+                  } else if (bulkDeleteTarget === 'orders') {
+                    for (const orderId of selectedOrders) {
+                      try {
+                        await deleteDoc(doc(db, 'orders', orderId));
+                      } catch (err) {
+                        console.error('Error deleting order:', err);
+                      }
+                    }
+                    setOrders(orders.filter(o => !selectedOrders.includes(o.id)));
+                    setSelectedOrders([]);
+                  }
+                  setShowBulkDeleteConfirm(false);
+                  setBulkDeleteTarget(null);
+                }}
+                className="flex-1 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-bold"
+              >
+                Delete
               </button>
             </div>
           </div>
