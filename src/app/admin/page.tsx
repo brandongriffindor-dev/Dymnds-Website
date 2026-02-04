@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
-  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'discounts' | 'alerts' | 'waitlist' | 'finance'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'discounts' | 'alerts' | 'waitlist' | 'finance' | 'audit'>('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
@@ -113,6 +113,15 @@ export default function AdminDashboard() {
 
   // Mobile menu state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Inventory audit log state
+  const [inventoryLogs, setInventoryLogs] = useState<any[]>([]);
+  const [showStockChangeModal, setShowStockChangeModal] = useState(false);
+  const [stockChangeProduct, setStockChangeProduct] = useState<Product | null>(null);
+  const [stockChangeSize, setStockChangeSize] = useState('');
+  const [stockChangeAmount, setStockChangeAmount] = useState(0);
+  const [stockChangeReason, setStockChangeReason] = useState('');
+
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
@@ -369,6 +378,9 @@ export default function AdminDashboard() {
       const expensesData = expensesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setExpenses(expensesData);
 
+      // Fetch inventory logs
+      await fetchInventoryLogs();
+
       // Calculate stats
       const totalRevenue = ordersData.reduce((sum, o) => sum + (o.total_amount || 0), 0);
       const totalImpact = totalRevenue * 0.10;
@@ -386,23 +398,52 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  const updateStock = async (productId: string, size: string, newStock: number) => {
+  const updateStock = async (productId: string, size: string, newStock: number, reason?: string) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
+    const oldStock = (product.stock as Record<string, number>)?.[size] || 0;
     const updatedStock = { ...product.stock, [size]: newStock };
     
     try {
+      // Update product stock
       await updateDoc(doc(db, 'products', productId), {
         stock: updatedStock,
         updated_at: new Date().toISOString()
       });
       
+      // Log the inventory change
+      await addDoc(collection(db, 'inventory_logs'), {
+        product_id: productId,
+        product_name: product.title,
+        size: size,
+        old_stock: oldStock,
+        new_stock: newStock,
+        change: newStock - oldStock,
+        reason: reason || 'Manual adjustment',
+        user_email: user?.email || 'unknown',
+        created_at: new Date().toISOString()
+      });
+      
       setProducts(products.map(p => 
         p.id === productId ? { ...p, stock: updatedStock } : p
       ));
+      
+      // Refresh inventory logs
+      fetchInventoryLogs();
     } catch (error) {
       console.error('Error updating stock:', error);
+    }
+  };
+
+  const fetchInventoryLogs = async () => {
+    try {
+      const logsQuery = query(collection(db, 'inventory_logs'), orderBy('created_at', 'desc'));
+      const logsSnap = await getDocs(logsQuery);
+      const logsData = logsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setInventoryLogs(logsData);
+    } catch (error) {
+      console.error('Error fetching inventory logs:', error);
     }
   };
 
@@ -955,6 +996,16 @@ export default function AdminDashboard() {
             <span className="text-sm tracking-wider uppercase">Finance</span>
           </button>
           <button
+            onClick={() => { setActiveView('audit'); setMobileMenuOpen(false); }}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+              activeView === 'audit' 
+                ? 'bg-white text-black' 
+                : 'text-white/60 hover:bg-white/5'
+            }`}
+          >
+            <span className="text-sm tracking-wider uppercase">Audit Trail</span>
+          </button>
+          <button
             onClick={() => setActiveView('waitlist')}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
               activeView === 'waitlist' 
@@ -1242,17 +1293,22 @@ export default function AdminDashboard() {
                       </td>
                       {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
                         <td key={size} className="p-4">
-                          <input
-                            type="number"
-                            value={(product.stock as Record<string, number>)?.[size] || 0}
-                            onChange={(e) => updateStock(product.id, size, parseInt(e.target.value) || 0)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                updateStock(product.id, size, parseInt((e.target as HTMLInputElement).value) || 0);
-                              }
+                          <button
+                            onClick={() => {
+                              setStockChangeProduct(product);
+                              setStockChangeSize(size);
+                              setStockChangeAmount((product.stock as Record<string, number>)?.[size] || 0);
+                              setStockChangeReason('');
+                              setShowStockChangeModal(true);
                             }}
-                            className="w-16 text-center bg-black border border-white/20 rounded px-2 py-1 text-sm focus:border-white/50 focus:outline-none"
-                          />
+                            className={`w-16 text-center bg-black border border-white/20 rounded px-2 py-1 text-sm hover:border-white/40 transition-colors ${
+                              ((product.stock as Record<string, number>)?.[size] || 0) < 5 
+                                ? 'text-yellow-400 border-yellow-500/30' 
+                                : ''
+                            }`}
+                          >
+                            {(product.stock as Record<string, number>)?.[size] || 0}
+                          </button>
                         </td>
                       ))}
                       <td className="p-4 text-center">
@@ -2626,6 +2682,62 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* Audit Trail View */}
+        {activeView === 'audit' && (
+          <div>
+            <h2 className="text-4xl font-bebas italic tracking-wider mb-8">Inventory Audit Trail</h2>
+            
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-white/5 border-b border-white/10">
+                  <tr>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Date</th>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Size</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Old Stock</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">New Stock</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Change</th>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Reason</th>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">User</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inventoryLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-8 text-center text-white/40">
+                        No inventory changes recorded yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    inventoryLogs.map((log) => (
+                      <tr key={log.id} className="border-b border-white/5 hover:bg-white/5">
+                        <td className="p-4 text-white/60 text-sm">
+                          {log.created_at ? new Date(log.created_at).toLocaleString() : 'N/A'}
+                        </td>
+                        <td className="p-4">
+                          <p className="font-medium">{log.product_name}</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="px-2 py-1 bg-white/10 rounded text-sm">{log.size}</span>
+                        </td>
+                        <td className="p-4 text-center text-white/60">{log.old_stock}</td>
+                        <td className="p-4 text-center font-medium">{log.new_stock}</td>
+                        <td className="p-4 text-center">
+                          <span className={`font-bold ${log.change > 0 ? 'text-green-400' : log.change < 0 ? 'text-red-400' : 'text-white/60'}`}>
+                            {log.change > 0 ? '+' : ''}{log.change}
+                          </span>
+                        </td>
+                        <td className="p-4 text-white/60 text-sm">{log.reason}</td>
+                        <td className="p-4 text-white/60 text-sm">{log.user_email}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {activeView === 'waitlist' && (
           <div>
             <h2 className="text-4xl font-bebas italic tracking-wider mb-8">App Waitlist</h2>
@@ -3710,6 +3822,74 @@ export default function AdminDashboard() {
                 className="flex-1 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-bold"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stock Change Modal */}
+      {showStockChangeModal && stockChangeProduct && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-white/10 rounded-2xl p-8 w-full max-w-md">
+            <h3 className="text-2xl font-bebas italic tracking-wider mb-6">Update Stock</h3>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-white/5 rounded-lg">
+                <p className="text-white/40 text-sm">Product</p>
+                <p className="font-medium">{stockChangeProduct.title}</p>
+              </div>
+              
+              <div className="p-4 bg-white/5 rounded-lg">
+                <p className="text-white/40 text-sm">Size</p>
+                <p className="font-medium text-xl">{stockChangeSize}</p>
+              </div>
+              
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">New Stock Amount</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={stockChangeAmount}
+                  onChange={(e) => setStockChangeAmount(parseInt(e.target.value) || 0)}
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 text-lg text-center focus:border-white/50 focus:outline-none"
+                  autoFocus
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Reason (optional)</label>
+                <input
+                  type="text"
+                  value={stockChangeReason}
+                  onChange={(e) => setStockChangeReason(e.target.value)}
+                  placeholder="e.g., New shipment arrived, Sold at event, Inventory count"
+                  className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-8">
+              <button
+                onClick={() => {
+                  setShowStockChangeModal(false);
+                  setStockChangeProduct(null);
+                  setStockChangeReason('');
+                }}
+                className="flex-1 py-3 border border-white/20 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await updateStock(stockChangeProduct.id, stockChangeSize, stockChangeAmount, stockChangeReason);
+                  setShowStockChangeModal(false);
+                  setStockChangeProduct(null);
+                  setStockChangeReason('');
+                }}
+                className="flex-1 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition-colors font-bold"
+              >
+                Update Stock
               </button>
             </div>
           </div>
