@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
-  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'discounts' | 'alerts' | 'waitlist'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'discounts' | 'alerts' | 'waitlist' | 'finance'>('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
@@ -82,6 +82,19 @@ export default function AdminDashboard() {
     expiresAt: '',
     isActive: true,
   });
+
+  // Finance / Expenses state
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [newExpense, setNewExpense] = useState({
+    description: '',
+    amount: 0,
+    category: 'Shipping' as 'Shipping' | 'Marketing' | 'Software' | 'Inventory' | 'Legal/Admin' | 'Other',
+    date: new Date().toISOString().split('T')[0],
+    gstAmount: 0,
+    hasGst: false,
+  });
+  const [financeView, setFinanceView] = useState<'daily' | 'monthly' | 'expenses' | 'tax'>('daily');
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -173,6 +186,12 @@ export default function AdminDashboard() {
       const discountsSnap = await getDocs(discountsQuery);
       const discountsData = discountsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setDiscounts(discountsData);
+
+      // Fetch expenses
+      const expensesQuery = query(collection(db, 'expenses'), orderBy('date', 'desc'));
+      const expensesSnap = await getDocs(expensesQuery);
+      const expensesData = expensesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setExpenses(expensesData);
 
       // Calculate stats
       const totalRevenue = ordersData.reduce((sum, o) => sum + (o.total_amount || 0), 0);
@@ -715,6 +734,16 @@ export default function AdminDashboard() {
                 </span>
               ) : null;
             })()}
+          </button>
+          <button
+            onClick={() => setActiveView('finance')}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+              activeView === 'finance' 
+                ? 'bg-white text-black' 
+                : 'text-white/60 hover:bg-white/5'
+            }`}
+          >
+            <span className="text-sm tracking-wider uppercase">Finance</span>
           </button>
           <button
             onClick={() => setActiveView('waitlist')}
@@ -1522,6 +1551,550 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Finance View */}
+        {activeView === 'finance' && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-4xl font-bebas italic tracking-wider">Financial Overview</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setFinanceView('daily')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    financeView === 'daily' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  }`}
+                >
+                  Daily P&L
+                </button>
+                <button
+                  onClick={() => setFinanceView('monthly')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    financeView === 'monthly' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setFinanceView('expenses')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    financeView === 'expenses' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  }`}
+                >
+                  Expenses
+                </button>
+                <button
+                  onClick={() => setFinanceView('tax')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    financeView === 'tax' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  }`}
+                >
+                  Tax Prep
+                </button>
+              </div>
+            </div>
+
+            {/* Daily P&L View */}
+            {financeView === 'daily' && (
+              <div className="space-y-6">
+                {/* Key Metrics */}
+                {(() => {
+                  const today = new Date().toISOString().split('T')[0];
+                  const todayOrders = orders.filter(o => o.created_at?.split('T')[0] === today);
+                  const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                  const todayExpenses = expenses.filter(e => e.date === today).reduce((sum, e) => sum + (e.amount || 0), 0);
+                  const todayNet = todayRevenue - todayExpenses;
+                  const todayDonation = todayRevenue * 0.10;
+                  
+                  return (
+                    <>
+                      <div className="grid grid-cols-5 gap-4">
+                        <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-green-400 mb-2">Today's Revenue</p>
+                          <p className="text-3xl font-bebas italic text-green-400">${todayRevenue.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{todayOrders.length} orders</p>
+                        </div>
+                        <div className="p-6 bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-red-400 mb-2">Today's Expenses</p>
+                          <p className="text-3xl font-bebas italic text-red-400">${todayExpenses.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{expenses.filter(e => e.date === today).length} transactions</p>
+                        </div>
+                        <div className={`p-6 bg-gradient-to-br ${todayNet >= 0 ? 'from-blue-500/10 to-blue-500/5 border-blue-500/20' : 'from-orange-500/10 to-orange-500/5 border-orange-500/20'} border rounded-2xl`}>
+                          <p className={`text-xs uppercase tracking-wider ${todayNet >= 0 ? 'text-blue-400' : 'text-orange-400'} mb-2`}>Net Profit</p>
+                          <p className={`text-3xl font-bebas italic ${todayNet >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>${todayNet.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{todayNet >= 0 ? 'In the green' : 'In the red'}</p>
+                        </div>
+                        <div className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-purple-400 mb-2">Impact Fund (10%)</p>
+                          <p className="text-3xl font-bebas italic text-purple-400">${todayDonation.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">Auto-calculated</p>
+                        </div>
+                        <div className="p-6 bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-amber-400 mb-2">Margin</p>
+                          <p className="text-3xl font-bebas italic text-amber-400">
+                            {todayRevenue > 0 ? ((todayNet / todayRevenue) * 100).toFixed(1) : '0.0'}%
+                          </p>
+                          <p className="text-white/40 text-sm mt-1">Profit margin</p>
+                        </div>
+                      </div>
+
+                      {/* Today's Activity */}
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                          <h3 className="text-lg font-bebas italic tracking-wider mb-4">Today's Orders</h3>
+                          {todayOrders.length === 0 ? (
+                            <p className="text-white/40 text-center py-8">No orders today yet.</p>
+                          ) : (
+                            <div className="space-y-3 max-h-64 overflow-y-auto">
+                              {todayOrders.map(order => (
+                                <div key={order.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                  <div>
+                                    <p className="font-medium">#{order.id.slice(-6).toUpperCase()}</p>
+                                    <p className="text-white/40 text-xs">{order.customer_name}</p>
+                                  </div>
+                                  <p className="text-green-400 font-bebas italic text-xl">+${order.total_amount?.toFixed(2)}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                          <h3 className="text-lg font-bebas italic tracking-wider mb-4">Today's Expenses</h3>
+                          {expenses.filter(e => e.date === today).length === 0 ? (
+                            <p className="text-white/40 text-center py-8">No expenses recorded today.</p>
+                          ) : (
+                            <div className="space-y-3 max-h-64 overflow-y-auto">
+                              {expenses.filter(e => e.date === today).map(expense => (
+                                <div key={expense.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                  <div>
+                                    <p className="font-medium">{expense.description}</p>
+                                    <p className="text-white/40 text-xs">{expense.category}</p>
+                                  </div>
+                                  <p className="text-red-400 font-bebas italic text-xl">-${expense.amount?.toFixed(2)}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Monthly View */}
+            {financeView === 'monthly' && (
+              <div className="space-y-6">
+                {(() => {
+                  const currentMonth = new Date().toISOString().slice(0, 7); // "2026-02"
+                  const monthlyOrders = orders.filter(o => o.created_at?.startsWith(currentMonth));
+                  const monthlyRevenue = monthlyOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                  const monthlyExpenses = expenses.filter(e => e.date?.startsWith(currentMonth)).reduce((sum, e) => sum + (e.amount || 0), 0);
+                  const monthlyNet = monthlyRevenue - monthlyExpenses;
+                  const monthlyDonation = monthlyRevenue * 0.10;
+                  const monthlyGst = expenses.filter(e => e.date?.startsWith(currentMonth) && e.hasGst).reduce((sum, e) => sum + (e.gstAmount || 0), 0);
+                  
+                  // Get last 6 months for chart
+                  const months = [];
+                  for (let i = 5; i >= 0; i--) {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() - i);
+                    months.push(d.toISOString().slice(0, 7));
+                  }
+                  
+                  return (
+                    <>
+                      <div className="grid grid-cols-4 gap-4">
+                        <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-green-400 mb-2">{currentMonth} Revenue</p>
+                          <p className="text-4xl font-bebas italic text-green-400">${monthlyRevenue.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{monthlyOrders.length} orders</p>
+                        </div>
+                        <div className="p-6 bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-red-400 mb-2">{currentMonth} Expenses</p>
+                          <p className="text-4xl font-bebas italic text-red-400">${monthlyExpenses.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{expenses.filter(e => e.date?.startsWith(currentMonth)).length} transactions</p>
+                        </div>
+                        <div className={`p-6 bg-gradient-to-br ${monthlyNet >= 0 ? 'from-blue-500/10 to-blue-500/5 border-blue-500/20' : 'from-orange-500/10 to-orange-500/5 border-orange-500/20'} border rounded-2xl`}>
+                          <p className={`text-xs uppercase tracking-wider ${monthlyNet >= 0 ? 'text-blue-400' : 'text-orange-400'} mb-2`}>Net Profit</p>
+                          <p className={`text-4xl font-bebas italic ${monthlyNet >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>${monthlyNet.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">This month</p>
+                        </div>
+                        <div className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-purple-400 mb-2">GST Paid</p>
+                          <p className="text-4xl font-bebas italic text-purple-400">${monthlyGst.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">Input tax credits</p>
+                        </div>
+                      </div>
+
+                      {/* Simple Bar Chart */}
+                      <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                        <h3 className="text-lg font-bebas italic tracking-wider mb-4">6-Month Trend</h3>
+                        <div className="flex items-end justify-between h-48 gap-2">
+                          {months.map(month => {
+                            const mOrders = orders.filter(o => o.created_at?.startsWith(month));
+                            const mRevenue = mOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                            const mExpenses = expenses.filter(e => e.date?.startsWith(month)).reduce((sum, e) => sum + (e.amount || 0), 0);
+                            const maxVal = Math.max(...months.map(m => {
+                              const r = orders.filter(o => o.created_at?.startsWith(m)).reduce((s, o) => s + (o.total_amount || 0), 0);
+                              const e = expenses.filter(x => x.date?.startsWith(m)).reduce((s, x) => s + (x.amount || 0), 0);
+                              return Math.max(r, e);
+                            }), 1);
+                            
+                            return (
+                              <div key={month} className="flex-1 flex flex-col items-center gap-1">
+                                <div className="w-full flex flex-col gap-1 h-36 justify-end">
+                                  <div 
+                                    className="w-full bg-green-500/60 rounded-t"
+                                    style={{ height: `${(mRevenue / maxVal) * 100}%`, minHeight: mRevenue > 0 ? '4px' : '0' }}
+                                    title={`Revenue: $${mRevenue.toFixed(2)}`}
+                                  />
+                                  <div 
+                                    className="w-full bg-red-500/60 rounded-t"
+                                    style={{ height: `${(mExpenses / maxVal) * 100}%`, minHeight: mExpenses > 0 ? '4px' : '0' }}
+                                    title={`Expenses: $${mExpenses.toFixed(2)}`}
+                                  />
+                                </div>
+                                <p className="text-xs text-white/40">{month.slice(5)}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-center gap-4 mt-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-green-500/60 rounded" />
+                            <span className="text-xs text-white/60">Revenue</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-red-500/60 rounded" />
+                            <span className="text-xs text-white/60">Expenses</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Expenses View */}
+            {financeView === 'expenses' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-2xl font-bebas italic tracking-wider">Expense Tracker</h3>
+                    <p className="text-white/40 text-sm">{expenses.length} total transactions</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddExpense(true)}
+                    className="px-6 py-3 bg-white text-black text-sm font-bold tracking-wider uppercase rounded-lg hover:bg-white/90 transition-colors"
+                  >
+                    + Add Expense
+                  </button>
+                </div>
+
+                {/* Expense Categories Summary */}
+                <div className="grid grid-cols-6 gap-4 mb-6">
+                  {['Shipping', 'Marketing', 'Software', 'Inventory', 'Legal/Admin', 'Other'].map(cat => {
+                    const catTotal = expenses.filter(e => e.category === cat).reduce((sum, e) => sum + (e.amount || 0), 0);
+                    return (
+                      <div key={cat} className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
+                        <p className="text-white/40 text-xs uppercase mb-1">{cat}</p>
+                        <p className="text-xl font-bebas italic">${catTotal.toFixed(0)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Expenses Table */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-white/5 border-b border-white/10">
+                      <tr>
+                        <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Date</th>
+                        <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Description</th>
+                        <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Category</th>
+                        <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">GST</th>
+                        <th className="text-right p-4 text-xs uppercase tracking-wider text-white/40">Amount</th>
+                        <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {expenses.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-white/40">
+                            No expenses recorded yet. Click "Add Expense" to get started.
+                          </td>
+                        </tr>
+                      ) : (
+                        expenses.map(expense => (
+                          <tr key={expense.id} className="border-b border-white/5 hover:bg-white/5">
+                            <td className="p-4 text-white/60 text-sm">{expense.date}</td>
+                            <td className="p-4">{expense.description}</td>
+                            <td className="p-4 text-center">
+                              <span className="px-3 py-1 bg-white/10 rounded-full text-xs">{expense.category}</span>
+                            </td>
+                            <td className="p-4 text-center">
+                              {expense.hasGst ? (
+                                <span className="text-green-400 text-xs">${expense.gstAmount?.toFixed(2)}</span>
+                              ) : (
+                                <span className="text-white/20 text-xs">—</span>
+                              )}
+                            </td>
+                            <td className="p-4 text-right font-bebas italic text-lg">${expense.amount?.toFixed(2)}</td>
+                            <td className="p-4 text-center">
+                              <button
+                                onClick={async () => {
+                                  if (!confirm('Delete this expense?')) return;
+                                  try {
+                                    await deleteDoc(doc(db, 'expenses', expense.id));
+                                    setExpenses(expenses.filter(e => e.id !== expense.id));
+                                  } catch (err) {
+                                    console.error('Error deleting expense:', err);
+                                  }
+                                }}
+                                className="px-3 py-1.5 bg-red-500/20 text-red-400 text-xs rounded hover:bg-red-500/30 transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Tax Prep View */}
+            {financeView === 'tax' && (
+              <div className="space-y-6">
+                {(() => {
+                  const currentYear = new Date().getFullYear();
+                  const ytdOrders = orders.filter(o => o.created_at?.startsWith(String(currentYear)));
+                  const ytdRevenue = ytdOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                  const ytdExpenses = expenses.filter(e => e.date?.startsWith(String(currentYear))).reduce((sum, e) => sum + (e.amount || 0), 0);
+                  const ytdGst = expenses.filter(e => e.date?.startsWith(String(currentYear)) && e.hasGst).reduce((sum, e) => sum + (e.gstAmount || 0), 0);
+                  const estimatedTaxable = ytdRevenue - ytdExpenses;
+                  const estimatedTax = estimatedTaxable > 0 ? estimatedTaxable * 0.25 : 0; // Rough 25% estimate
+                  
+                  return (
+                    <>
+                      <div className="grid grid-cols-4 gap-4">
+                        <div className="p-6 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-blue-400 mb-2">YTD Revenue</p>
+                          <p className="text-3xl font-bebas italic text-blue-400">${ytdRevenue.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{currentYear}</p>
+                        </div>
+                        <div className="p-6 bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-red-400 mb-2">YTD Expenses</p>
+                          <p className="text-3xl font-bebas italic text-red-400">${ytdExpenses.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">Deductible</p>
+                        </div>
+                        <div className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-purple-400 mb-2">GST Credits</p>
+                          <p className="text-3xl font-bebas italic text-purple-400">${ytdGst.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">Input tax credits</p>
+                        </div>
+                        <div className="p-6 bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-2xl">
+                          <p className="text-xs uppercase tracking-wider text-amber-400 mb-2">Est. Tax Owed</p>
+                          <p className="text-3xl font-bebas italic text-amber-400">${estimatedTax.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">~25% of profit</p>
+                        </div>
+                      </div>
+
+                      {/* Tax Notes */}
+                      <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                        <h3 className="text-lg font-bebas italic tracking-wider mb-4">Tax Preparation Notes</h3>
+                        <div className="space-y-3 text-sm text-white/60">
+                          <p>• <strong>GST/HST:</strong> You have ${ytdGst.toFixed(2)} in input tax credits from business expenses.</p>
+                          <p>• <strong>Deductible Expenses:</strong> ${ytdExpenses.toFixed(2)} in total business expenses recorded.</p>
+                          <p>• <strong>Home Office:</strong> If you work from home, you may claim a portion of rent/utilities.</p>
+                          <p>• <strong>Vehicle:</strong> Track business mileage for additional deductions.</p>
+                          <p>• <strong>Professional Fees:</strong> Accountant and legal fees are 100% deductible.</p>
+                        </div>
+                        <div className="mt-6 pt-6 border-t border-white/10">
+                          <p className="text-xs text-white/40">
+                            <strong>Note:</strong> Tax estimates are rough (25% of profit). Consult an accountant for accurate calculations. 
+                            This is not tax advice.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Export Button */}
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => {
+                            const csv = [
+                              ['Date', 'Description', 'Category', 'Amount', 'GST', 'Total'].join(','),
+                              ...expenses.map(e => [
+                                e.date,
+                                `"${e.description}"`,
+                                e.category,
+                                e.amount,
+                                e.hasGst ? e.gstAmount : 0,
+                                e.hasGst ? e.amount + e.gstAmount : e.amount
+                              ].join(','))
+                            ].join('\n');
+                            const blob = new Blob([csv], { type: 'text/csv' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `expenses-${currentYear}.csv`;
+                            a.click();
+                          }}
+                          className="px-6 py-3 bg-white text-black text-sm font-bold tracking-wider uppercase rounded-lg hover:bg-white/90 transition-colors"
+                        >
+                          Export Expenses (CSV)
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Add Expense Modal */}
+            {showAddExpense && (
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-neutral-900 border border-white/10 rounded-2xl p-8 w-full max-w-lg">
+                  <h3 className="text-2xl font-bebas italic tracking-wider mb-6">Add Expense</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Description *</label>
+                      <input
+                        type="text"
+                        value={newExpense.description}
+                        onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
+                        placeholder="e.g., Shopify subscription"
+                        className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Amount ($) *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={newExpense.amount || ''}
+                          onChange={(e) => {
+                            const amount = parseFloat(e.target.value) || 0;
+                            const gstAmount = newExpense.hasGst ? amount * 0.05 : 0;
+                            setNewExpense({...newExpense, amount, gstAmount});
+                          }}
+                          placeholder="49.99"
+                          className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Category</label>
+                        <select
+                          value={newExpense.category}
+                          onChange={(e) => setNewExpense({...newExpense, category: e.target.value as any})}
+                          className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                        >
+                          <option value="Shipping">Shipping</option>
+                          <option value="Marketing">Marketing</option>
+                          <option value="Software">Software</option>
+                          <option value="Inventory">Inventory</option>
+                          <option value="Legal/Admin">Legal/Admin</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Date</label>
+                      <input
+                        type="date"
+                        value={newExpense.date}
+                        onChange={(e) => setNewExpense({...newExpense, date: e.target.value})}
+                        className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 focus:border-white/50 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3 p-4 bg-white/5 rounded-lg">
+                      <input
+                        type="checkbox"
+                        id="hasGst"
+                        checked={newExpense.hasGst}
+                        onChange={(e) => {
+                          const hasGst = e.target.checked;
+                          const gstAmount = hasGst ? (newExpense.amount || 0) * 0.05 : 0;
+                          setNewExpense({...newExpense, hasGst, gstAmount});
+                        }}
+                        className="w-5 h-5 rounded border-white/20 bg-black"
+                      />
+                      <label htmlFor="hasGst" className="flex-1">
+                        <span className="text-sm font-medium">Includes GST (5%)</span>
+                        <p className="text-xs text-white/40">Check if this expense includes GST</p>
+                      </label>
+                      {newExpense.hasGst && (
+                        <span className="text-green-400 font-bebas italic">+${newExpense.gstAmount.toFixed(2)} GST</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 mt-8">
+                    <button
+                      onClick={() => {
+                        setShowAddExpense(false);
+                        setNewExpense({
+                          description: '',
+                          amount: 0,
+                          category: 'Shipping',
+                          date: new Date().toISOString().split('T')[0],
+                          gstAmount: 0,
+                          hasGst: false,
+                        });
+                      }}
+                      className="flex-1 py-3 border border-white/20 rounded-lg hover:bg-white/5 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!newExpense.description || !newExpense.amount) return;
+                        try {
+                          const expenseData = {
+                            description: newExpense.description,
+                            amount: newExpense.amount,
+                            category: newExpense.category,
+                            date: newExpense.date,
+                            hasGst: newExpense.hasGst,
+                            gstAmount: newExpense.gstAmount,
+                            created_at: new Date().toISOString(),
+                          };
+                          const docRef = await addDoc(collection(db, 'expenses'), expenseData);
+                          setExpenses([{ id: docRef.id, ...expenseData }, ...expenses]);
+                          setShowAddExpense(false);
+                          setNewExpense({
+                            description: '',
+                            amount: 0,
+                            category: 'Shipping',
+                            date: new Date().toISOString().split('T')[0],
+                            gstAmount: 0,
+                            hasGst: false,
+                          });
+                        } catch (err) {
+                          console.error('Error adding expense:', err);
+                        }
+                      }}
+                      disabled={!newExpense.description || !newExpense.amount}
+                      className="flex-1 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition-colors font-bold disabled:opacity-50"
+                    >
+                      Add Expense
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
