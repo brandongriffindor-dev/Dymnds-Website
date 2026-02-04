@@ -107,6 +107,7 @@ export default function AdminDashboard() {
 
   // Bulk actions state
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [bulkDeleteTarget, setBulkDeleteTarget] = useState<'products' | 'orders' | null>(null);
@@ -1288,8 +1289,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {(() => {
-                    // Flatten products with colors into multiple rows
-                    const rows: any[] = [];
+                    const allRows: React.ReactElement[] = [];
                     products
                       .filter(p => 
                         !productSearch || 
@@ -1299,24 +1299,20 @@ export default function AdminDashboard() {
                       )
                       .forEach((product) => {
                         const colors = product.colors || [];
-                        if (colors.length > 0) {
-                          // Add product header row
-                          rows.push({ type: 'header', product });
-                          // Add a row for each color
-                          colors.forEach((color: any, idx: number) => {
-                            rows.push({ type: 'color', product, color, colorIndex: idx });
-                          });
-                        } else {
-                          // No colors - just add the product row
-                          rows.push({ type: 'product', product });
-                        }
-                      });
-                    
-                    return rows.map((row, idx) => {
-                      if (row.type === 'header') {
-                        const product = row.product;
-                        return (
-                          <tr key={`${product.id}-header`} className="border-b border-white/10 bg-white/5">
+                        const hasColors = colors.length > 0;
+                        const isExpanded = expandedProducts.has(product.id);
+                        
+                        // Calculate totals
+                        const getTotalStock = (size: string) => {
+                          if (hasColors) {
+                            return colors.reduce((sum: number, color: any) => sum + (color.stock?.[size] || 0), 0);
+                          }
+                          return (product.stock as Record<string, number>)?.[size] || 0;
+                        };
+                        
+                        // Add main product row
+                        allRows.push(
+                          <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
                             <td className="p-4 text-center">
                               <input
                                 type="checkbox"
@@ -1355,42 +1351,20 @@ export default function AdminDashboard() {
                                 {product.featured ? '⭐' : '☆'}
                               </button>
                             </td>
-                            <td className="p-4" colSpan={9}>
+                            <td className="p-4">
                               <button
                                 onClick={() => setEditingProduct(product)}
                                 className="text-left hover:text-white/70 transition-colors"
                               >
-                                <p className="font-medium text-lg">{product.title}</p>
-                                <p className="text-white/40 text-xs">${product.price} • {product.category} • {product.colors?.length || 0} colors</p>
+                                <p className="font-medium">{product.title}</p>
+                                <p className="text-white/40 text-xs">${product.price} • {product.category}{hasColors ? ` • ${colors.length} colors` : ''}</p>
                               </button>
                             </td>
                             <td className="p-4 text-center">
-                              <button
-                                onClick={() => deleteProduct(product.id)}
-                                className="px-3 py-1.5 bg-red-500/20 text-red-400 text-xs font-medium rounded hover:bg-red-500/30 transition-colors"
-                              >
-                                Delete
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      }
-                      
-                      if (row.type === 'color') {
-                        const { product, color } = row;
-                        return (
-                          <tr key={`${product.id}-color-${color.name}`} className="border-b border-white/5 hover:bg-white/5">
-                            <td className="p-4 text-center">
-                              <div className="w-4 h-4 rounded-full border border-white/20 mx-auto" style={{ backgroundColor: color.hex }} />
-                            </td>
-                            <td className="p-4 text-center" colSpan={2}>
-                              <span className="text-white/60 text-sm">{color.name}</span>
-                            </td>
-                            <td className="p-4 text-center">
-                              <span className="text-white/40 text-xs">Color Variant</span>
+                              <span className="text-white/60 text-xs">{(product as any).productType || 'N/A'}</span>
                             </td>
                             {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
-                              const stock = color.stock?.[size] || 0;
+                              const stock = getTotalStock(size);
                               const isLow = stock < 5;
                               const isCritical = stock === 0;
                               
@@ -1401,7 +1375,7 @@ export default function AdminDashboard() {
                                       setStockChangeProduct(product);
                                       setStockChangeSize(size);
                                       setStockChangeAmount(stock);
-                                      setStockChangeReason(`Updating ${color.name}`);
+                                      setStockChangeReason('');
                                       setShowStockChangeModal(true);
                                     }}
                                     className={`w-16 text-center bg-black border rounded px-2 py-1 text-sm hover:border-white/40 transition-colors ${
@@ -1416,103 +1390,84 @@ export default function AdminDashboard() {
                               );
                             })}
                             <td className="p-4 text-center">
-                              <span className="text-white/20 text-xs">—</span>
+                              <div className="flex items-center gap-2 justify-center">
+                                {hasColors && (
+                                  <button
+                                    onClick={() => {
+                                      const newExpanded = new Set(expandedProducts);
+                                      if (isExpanded) {
+                                        newExpanded.delete(product.id);
+                                      } else {
+                                        newExpanded.add(product.id);
+                                      }
+                                      setExpandedProducts(newExpanded);
+                                    }}
+                                    className="p-2 bg-white/10 text-white rounded hover:bg-white/20 transition-colors"
+                                    title={isExpanded ? 'Hide color breakdown' : 'Show color breakdown'}
+                                  >
+                                    {isExpanded ? '▲' : '▼'}
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => deleteProduct(product.id)}
+                                  className="px-3 py-1.5 bg-red-500/20 text-red-400 text-xs font-medium rounded hover:bg-red-500/30 transition-colors"
+                                >
+                                  Delete
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
-                      }
-                      
-                      // Regular product without colors
-                      const product = row.product;
-                      return (
-                        <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
-                          <td className="p-4 text-center">
-                            <input
-                              type="checkbox"
-                              checked={selectedProducts.includes(product.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedProducts([...selectedProducts, product.id]);
-                                } else {
-                                  setSelectedProducts(selectedProducts.filter(id => id !== product.id));
-                                }
-                              }}
-                              className="w-4 h-4 rounded border-white/20 bg-black"
-                            />
-                          </td>
-                          <td className="p-4 text-center">
-                            <input
-                              type="number"
-                              min={1}
-                              value={product.displayOrder || 1}
-                              onChange={(e) => updateDisplayOrder(product.id, parseInt(e.target.value) || 1)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  updateDisplayOrder(product.id, parseInt((e.target as HTMLInputElement).value) || 1);
-                                }
-                              }}
-                              className="w-12 text-center bg-black border border-white/20 rounded px-2 py-1 text-sm focus:border-white/50 focus:outline-none"
-                            />
-                          </td>
-                          <td className="p-4 text-center">
-                            <button
-                              onClick={() => toggleFeatured(product)}
-                              className={`text-xl transition-colors ${
-                                product.featured ? 'text-yellow-400 hover:text-yellow-300' : 'text-white/20 hover:text-white/40'
-                              }`}
-                            >
-                              {product.featured ? '⭐' : '☆'}
-                            </button>
-                          </td>
-                          <td className="p-4">
-                            <button
-                              onClick={() => setEditingProduct(product)}
-                              className="text-left hover:text-white/70 transition-colors"
-                            >
-                              <p className="font-medium">{product.title}</p>
-                              <p className="text-white/40 text-xs">${product.price} • {product.category}</p>
-                            </button>
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className="text-white/60 text-xs">{(product as any).productType || 'N/A'}</span>
-                          </td>
-                          {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
-                            const stock = (product.stock as Record<string, number>)?.[size] || 0;
-                            const isLow = stock < 5;
-                            const isCritical = stock === 0;
-                            
-                            return (
-                              <td key={size} className="p-4">
-                                <button
-                                  onClick={() => {
-                                    setStockChangeProduct(product);
-                                    setStockChangeSize(size);
-                                    setStockChangeAmount(stock);
-                                    setStockChangeReason('');
-                                    setShowStockChangeModal(true);
-                                  }}
-                                  className={`w-16 text-center bg-black border rounded px-2 py-1 text-sm hover:border-white/40 transition-colors ${
-                                    isCritical ? 'text-red-400 border-red-500/50' :
-                                    isLow ? 'text-yellow-400 border-yellow-500/30' :
-                                    'border-white/20'
-                                  }`}
-                                >
-                                  {stock}
-                                </button>
-                              </td>
+                        
+                        // Add color breakdown rows if expanded
+                        if (isExpanded && hasColors) {
+                          colors.forEach((color: any) => {
+                            allRows.push(
+                              <tr key={`${product.id}-${color.name}`} className="border-b border-white/5 bg-white/[0.02]">
+                                <td className="p-4 text-center">
+                                  <div className="w-4 h-4 rounded-full border border-white/20 mx-auto" style={{ backgroundColor: color.hex }} />
+                                </td>
+                                <td className="p-4" colSpan={2}>
+                                  <span className="text-white/60 text-sm ml-4">↳ {color.name}</span>
+                                </td>
+                                <td className="p-4 text-center">
+                                  <span className="text-white/30 text-xs">Color</span>
+                                </td>
+                                {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
+                                  const stock = color.stock?.[size] || 0;
+                                  const isLow = stock < 5;
+                                  const isCritical = stock === 0;
+                                  
+                                  return (
+                                    <td key={size} className="p-4">
+                                      <button
+                                        onClick={() => {
+                                          setStockChangeProduct(product);
+                                          setStockChangeSize(size);
+                                          setStockChangeAmount(stock);
+                                          setStockChangeReason(`Updating ${color.name}`);
+                                          setShowStockChangeModal(true);
+                                        }}
+                                        className={`w-16 text-center bg-black/50 border rounded px-2 py-1 text-sm hover:border-white/40 transition-colors ${
+                                          isCritical ? 'text-red-400 border-red-500/50' :
+                                          isLow ? 'text-yellow-400 border-yellow-500/30' :
+                                          'border-white/10'
+                                        }`}
+                                      >
+                                        {stock}
+                                      </button>
+                                    </td>
+                                  );
+                                })}
+                                <td className="p-4 text-center">
+                                  <span className="text-white/20 text-xs">—</span>
+                                </td>
+                              </tr>
                             );
-                          })}
-                          <td className="p-4 text-center">
-                            <button
-                              onClick={() => deleteProduct(product.id)}
-                              className="px-3 py-1.5 bg-red-500/20 text-red-400 text-xs font-medium rounded hover:bg-red-500/30 transition-colors"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    });
+                          });
+                        }
+                      });
+                    return allRows;
                   })()}
                 </tbody>
               </table>
