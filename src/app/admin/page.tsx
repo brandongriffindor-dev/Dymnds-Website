@@ -103,6 +103,9 @@ export default function AdminDashboard() {
   const [orderSearch, setOrderSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
 
+  // Order detail view state
+  const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+
   // Auto-generate slug from title
   useEffect(() => {
     if (newProduct.title && !newProduct.slug) {
@@ -1092,7 +1095,11 @@ export default function AdminDashboard() {
                         o.customer_email?.toLowerCase().includes(orderSearch.toLowerCase())
                       )
                       .map((order) => (
-                      <tr key={order.id} className="border-b border-white/5 hover:bg-white/5">
+                      <tr 
+                        key={order.id} 
+                        className="border-b border-white/5 hover:bg-white/5 cursor-pointer"
+                        onClick={() => setViewingOrder(order)}
+                      >
                         <td className="p-4">
                           <span className="font-mono text-sm">#{order.id.slice(-6).toUpperCase()}</span>
                         </td>
@@ -1120,7 +1127,7 @@ export default function AdminDashboard() {
                             {order.status}
                           </span>
                         </td>
-                        <td className="p-4 text-center">
+                        <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
                           <select
                             value={order.status}
                             onChange={async (e) => {
@@ -2367,6 +2374,150 @@ export default function AdminDashboard() {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Detail Modal */}
+      {viewingOrder && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bebas italic tracking-wider">Order #{viewingOrder.id.slice(-6).toUpperCase()}</h3>
+                <p className="text-white/40 text-sm">
+                  {viewingOrder.created_at ? new Date(viewingOrder.created_at).toLocaleString() : 'N/A'}
+                </p>
+              </div>
+              <span className={`px-4 py-2 rounded-full text-sm uppercase font-medium ${
+                viewingOrder.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                viewingOrder.status === 'processing' ? 'bg-blue-500/20 text-blue-400' :
+                viewingOrder.status === 'shipped' ? 'bg-purple-500/20 text-purple-400' :
+                viewingOrder.status === 'delivered' ? 'bg-green-500/20 text-green-400' :
+                'bg-red-500/20 text-red-400'
+              }`}>
+                {viewingOrder.status}
+              </span>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Customer Info */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="p-4 bg-white/5 rounded-xl">
+                  <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Customer</p>
+                  <p className="font-medium text-lg">{viewingOrder.customer_name}</p>
+                  <p className="text-white/60">{viewingOrder.customer_email}</p>
+                  {(() => {
+                    const customerOrders = orders.filter(o => o.customer_email === viewingOrder.customer_email);
+                    const totalSpent = customerOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                    return (
+                      <div className="mt-3 pt-3 border-t border-white/10">
+                        <p className="text-sm text-white/40">
+                          {customerOrders.length} orders • ${totalSpent.toFixed(2)} lifetime
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="p-4 bg-white/5 rounded-xl">
+                  <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Shipping Address</p>
+                  {viewingOrder.shipping_address ? (
+                    <div className="text-white/80 text-sm space-y-1">
+                      <p>{viewingOrder.shipping_address.name}</p>
+                      <p>{viewingOrder.shipping_address.line1}</p>
+                      {viewingOrder.shipping_address.line2 && <p>{viewingOrder.shipping_address.line2}</p>}
+                      <p>{viewingOrder.shipping_address.city}, {viewingOrder.shipping_address.state} {viewingOrder.shipping_address.postal_code}</p>
+                      <p>{viewingOrder.shipping_address.country}</p>
+                    </div>
+                  ) : (
+                    <p className="text-white/40">No shipping address on file</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Line Items */}
+              <div>
+                <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Order Items</p>
+                <div className="bg-white/5 rounded-xl overflow-hidden">
+                  {viewingOrder.items?.length > 0 ? (
+                    <table className="w-full">
+                      <thead className="bg-white/5">
+                        <tr>
+                          <th className="text-left p-3 text-xs uppercase tracking-wider text-white/40">Product</th>
+                          <th className="text-center p-3 text-xs uppercase tracking-wider text-white/40">Size</th>
+                          <th className="text-center p-3 text-xs uppercase tracking-wider text-white/40">Color</th>
+                          <th className="text-center p-3 text-xs uppercase tracking-wider text-white/40">Qty</th>
+                          <th className="text-right p-3 text-xs uppercase tracking-wider text-white/40">Price</th>
+                          <th className="text-right p-3 text-xs uppercase tracking-wider text-white/40">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {viewingOrder.items.map((item: any, idx: number) => (
+                          <tr key={idx} className="border-t border-white/5">
+                            <td className="p-3">
+                              <p className="font-medium">{item.title || item.name}</p>
+                              {item.variant && <p className="text-xs text-white/40">{item.variant}</p>}
+                            </td>
+                            <td className="p-3 text-center text-white/60">{item.size || '-'}</td>
+                            <td className="p-3 text-center text-white/60">{item.color || '-'}</td>
+                            <td className="p-3 text-center">{item.quantity}</td>
+                            <td className="p-3 text-right text-white/60">${item.price?.toFixed(2)}</td>
+                            <td className="p-3 text-right font-medium">${(item.price * item.quantity)?.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="p-8 text-center text-white/40">
+                      <p>Item details not available for this order</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Order Summary */}
+              <div className="flex justify-end">
+                <div className="w-full max-w-xs space-y-2">
+                  <div className="flex justify-between text-white/60">
+                    <span>Subtotal</span>
+                    <span>${((viewingOrder.total_amount || 0) * 0.85).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-white/60">
+                    <span>Tax (15%)</span>
+                    <span>${((viewingOrder.total_amount || 0) * 0.15).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-white/60">
+                    <span>Shipping</span>
+                    <span>Free</span>
+                  </div>
+                  <div className="pt-2 border-t border-white/10 flex justify-between text-xl font-bebas italic">
+                    <span>Total</span>
+                    <span className="text-green-400">${viewingOrder.total_amount?.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-4 border-t border-white/10">
+                <button
+                  onClick={() => setViewingOrder(null)}
+                  className="flex-1 py-3 border border-white/20 rounded-lg hover:bg-white/5 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveView('customers');
+                    setViewingOrder(null);
+                  }}
+                  className="flex-1 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition-colors font-bold"
+                >
+                  View Customer History
+                </button>
+              </div>
             </div>
           </div>
         </div>
