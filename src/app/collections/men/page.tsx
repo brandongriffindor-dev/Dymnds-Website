@@ -87,16 +87,48 @@ export default function MenPage() {
 function ProductCard({ product }: { 
   product: Product;
 }) {
+  const donation = (product.price * 0.10).toFixed(2);
+  
   return (
-    <Link href={`/products/${product.slug}`} className="group block">
-      <div className="aspect-[4/5] bg-neutral-900 mb-6 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500 group-hover:scale-[1.02]">
-        <img src="/diamond-white.png" alt="" className="w-12 h-12 opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
+    <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+      {/* Image */}
+      <Link href={`/products/${product.slug}`} className="block">
+        <div className="aspect-square bg-neutral-900 flex items-center justify-center relative group">
+          <img 
+            src="/diamond-white.png" 
+            alt="" 
+            className="w-20 h-20 opacity-20 group-hover:opacity-40 transition-opacity"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      </Link>
+
+      {/* Content */}
+      <div className="p-6">
+        <p className="text-xs tracking-widest uppercase text-white/40 mb-2">{product.category}</p>
+        <Link href={`/products/${product.slug}`}>
+          <h3 className="text-2xl font-bebas italic uppercase tracking-wide mb-2 hover:opacity-70 transition-opacity">{product.title}</h3>
+        </Link>
+        <p className="text-white/60 text-sm mb-4">{product.subtitle}</p>
+
+        {/* Impact */}
+        <div className="flex items-center gap-2 mb-4 text-green-400 text-sm">
+          <div className="w-2 h-2 rounded-full bg-green-400" />
+          <span>${donation} supports survivors</span>
+        </div>
+
+        {/* Price */}
+        <p className="text-2xl font-bebas italic mb-4">${product.price}</p>
+
+        {/* View Product Button */}
+        <Link href={`/products/${product.slug}`}>
+          <button
+            className="w-full py-4 font-bebas italic text-lg tracking-widest uppercase rounded-xl bg-white text-black hover:scale-[1.02] transition-all"
+          >
+            View Product
+          </button>
+        </Link>
       </div>
-      <h3 className="text-xl tracking-wide mb-1" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-        {product.title}
-      </h3>
-      <p className="text-white/40 text-sm mb-2">{product.subtitle}</p>
-      <p className="text-lg">${product.price}</p>
-    </Link>
+    </div>
   );
 }
