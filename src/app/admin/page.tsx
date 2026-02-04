@@ -106,6 +106,14 @@ export default function AdminDashboard() {
   // Order detail view state
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
 
+  // Date range filters
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<'all' | '7days' | '30days' | '90days' | 'custom'>('all');
+  const [analyticsStartDate, setAnalyticsStartDate] = useState('');
+  const [analyticsEndDate, setAnalyticsEndDate] = useState('');
+  const [financeDateRange, setFinanceDateRange] = useState<'all' | '7days' | '30days' | '90days' | 'custom'>('all');
+  const [financeStartDate, setFinanceStartDate] = useState('');
+  const [financeEndDate, setFinanceEndDate] = useState('');
+
   // Auto-generate slug from title
   useEffect(() => {
     if (newProduct.title && !newProduct.slug) {
@@ -173,6 +181,76 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     const auth = getAuthClient();
     if (auth) await signOut(auth);
+  };
+
+  // Helper function to filter orders by date range
+  const filterOrdersByDateRange = (ordersList: Order[], range: string, start?: string, end?: string) => {
+    if (range === 'all') return ordersList;
+    
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    let cutoffDate: Date;
+    switch (range) {
+      case '7days':
+        cutoffDate = new Date(startOfDay.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30days':
+        cutoffDate = new Date(startOfDay.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90days':
+        cutoffDate = new Date(startOfDay.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case 'custom':
+        if (start && end) {
+          const startDate = new Date(start);
+          const endDate = new Date(end);
+          endDate.setHours(23, 59, 59, 999);
+          return ordersList.filter(o => {
+            const orderDate = o.created_at ? new Date(o.created_at) : null;
+            return orderDate && orderDate >= startDate && orderDate <= endDate;
+          });
+        }
+        return ordersList;
+      default:
+        return ordersList;
+    }
+    
+    return ordersList.filter(o => {
+      const orderDate = o.created_at ? new Date(o.created_at) : null;
+      return orderDate && orderDate >= cutoffDate;
+    });
+  };
+
+  // Helper function to filter expenses by date range
+  const filterExpensesByDateRange = (expensesList: any[], range: string, start?: string, end?: string) => {
+    if (range === 'all') return expensesList;
+    
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    let cutoffDate: Date;
+    switch (range) {
+      case '7days':
+        cutoffDate = new Date(startOfDay.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30days':
+        cutoffDate = new Date(startOfDay.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90days':
+        cutoffDate = new Date(startOfDay.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case 'custom':
+        if (start && end) {
+          return expensesList.filter(e => e.date >= start && e.date <= end);
+        }
+        return expensesList;
+      default:
+        return expensesList;
+    }
+    
+    const cutoffStr = cutoffDate.toISOString().split('T')[0];
+    return expensesList.filter(e => e.date >= cutoffStr);
   };
 
   const fetchData = async () => {
@@ -1299,106 +1377,156 @@ export default function AdminDashboard() {
         {/* Analytics View */}
         {activeView === 'analytics' && (
           <div>
-            <h2 className="text-4xl font-bebas italic tracking-wider mb-8">Business Analytics</h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-4xl font-bebas italic tracking-wider">Business Analytics</h2>
+              
+              {/* Date Range Filter */}
+              <div className="flex items-center gap-3">
+                <select
+                  value={analyticsDateRange}
+                  onChange={(e) => setAnalyticsDateRange(e.target.value as any)}
+                  className="bg-black border border-white/20 rounded-lg px-4 py-2 text-sm"
+                >
+                  <option value="all">All Time</option>
+                  <option value="7days">Last 7 Days</option>
+                  <option value="30days">Last 30 Days</option>
+                  <option value="90days">Last 90 Days</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+                
+                {analyticsDateRange === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={analyticsStartDate}
+                      onChange={(e) => setAnalyticsStartDate(e.target.value)}
+                      className="bg-black border border-white/20 rounded-lg px-3 py-2 text-sm"
+                    />
+                    <span className="text-white/40">to</span>
+                    <input
+                      type="date"
+                      value={analyticsEndDate}
+                      onChange={(e) => setAnalyticsEndDate(e.target.value)}
+                      className="bg-black border border-white/20 rounded-lg px-3 py-2 text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
             
-            {/* Key Metrics */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
-              <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
-                <p className="text-xs uppercase tracking-wider text-green-400 mb-2">Total Revenue</p>
-                <p className="text-4xl font-bebas italic text-green-400">
-                  ${stats.totalRevenue.toFixed(2)}
-                </p>
-                <p className="text-white/40 text-sm mt-1">Lifetime</p>
-              </div>
-              <div className="p-6 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-2xl">
-                <p className="text-xs uppercase tracking-wider text-blue-400 mb-2">Total Orders</p>
-                <p className="text-4xl font-bebas italic text-blue-400">
-                  {stats.totalOrders}
-                </p>
-                <p className="text-white/40 text-sm mt-1">All time</p>
-              </div>
-              <div className="p-6 bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-2xl">
-                <p className="text-xs uppercase tracking-wider text-amber-400 mb-2">Avg Order Value</p>
-                <p className="text-4xl font-bebas italic text-amber-400">
-                  ${stats.totalOrders > 0 ? (stats.totalRevenue / stats.totalOrders).toFixed(2) : '0.00'}
-                </p>
-                <p className="text-white/40 text-sm mt-1">Per order</p>
-              </div>
-              <div className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl">
-                <p className="text-xs uppercase tracking-wider text-purple-400 mb-2">Impact Fund</p>
-                <p className="text-4xl font-bebas italic text-purple-400">
-                  ${stats.totalImpact.toFixed(2)}
-                </p>
-                <p className="text-white/40 text-sm mt-1">10% of revenue</p>
-              </div>
-            </div>
+            {(() => {
+              const filteredOrders = filterOrdersByDateRange(orders, analyticsDateRange, analyticsStartDate, analyticsEndDate);
+              const filteredRevenue = filteredOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+              const filteredCount = filteredOrders.length;
+              const filteredImpact = filteredRevenue * 0.10;
+              
+              return (
+                <>
+                  {/* Key Metrics */}
+                  <div className="grid grid-cols-4 gap-4 mb-8">
+                    <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
+                      <p className="text-xs uppercase tracking-wider text-green-400 mb-2">Revenue</p>
+                      <p className="text-4xl font-bebas italic text-green-400">
+                        ${filteredRevenue.toFixed(2)}
+                      </p>
+                      <p className="text-white/40 text-sm mt-1">
+                        {analyticsDateRange === 'all' ? 'Lifetime' : 
+                         analyticsDateRange === '7days' ? 'Last 7 days' :
+                         analyticsDateRange === '30days' ? 'Last 30 days' :
+                         analyticsDateRange === '90days' ? 'Last 90 days' : 'Selected period'}
+                      </p>
+                    </div>
+                    <div className="p-6 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-2xl">
+                      <p className="text-xs uppercase tracking-wider text-blue-400 mb-2">Orders</p>
+                      <p className="text-4xl font-bebas italic text-blue-400">
+                        {filteredCount}
+                      </p>
+                      <p className="text-white/40 text-sm mt-1">
+                        {analyticsDateRange === 'all' ? 'All time' : 'In period'}
+                      </p>
+                    </div>
+                    <div className="p-6 bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-2xl">
+                      <p className="text-xs uppercase tracking-wider text-amber-400 mb-2">Avg Order Value</p>
+                      <p className="text-4xl font-bebas italic text-amber-400">
+                        ${filteredCount > 0 ? (filteredRevenue / filteredCount).toFixed(2) : '0.00'}
+                      </p>
+                      <p className="text-white/40 text-sm mt-1">Per order</p>
+                    </div>
+                    <div className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl">
+                      <p className="text-xs uppercase tracking-wider text-purple-400 mb-2">Impact Fund</p>
+                      <p className="text-4xl font-bebas italic text-purple-400">
+                        ${filteredImpact.toFixed(2)}
+                      </p>
+                      <p className="text-white/40 text-sm mt-1">10% of revenue</p>
+                    </div>
+                  </div>
 
-            {/* Charts Grid */}
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              {/* Revenue by Category */}
-              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                <h3 className="text-lg font-bebas italic tracking-wider mb-4">Sales by Category</h3>
-                <div className="space-y-3">
-                  {['Men', 'Women'].map(category => {
-                    const categoryOrders = orders.filter(o => {
-                      // Check if any items in the order match this category
-                      // For now, simple calculation based on product data we have
-                      return true; // Placeholder - would need order items with category
-                    });
-                    const categoryRevenue = categoryOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0) * 0.5; // Estimated split
-                    const percentage = stats.totalRevenue > 0 ? (categoryRevenue / stats.totalRevenue) * 100 : 0;
-                    
-                    return (
-                      <div key={category}>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>{category}</span>
-                          <span className="text-white/60">${categoryRevenue.toFixed(2)} ({percentage.toFixed(1)}%)</span>
-                        </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full ${category === 'Men' ? 'bg-blue-500' : 'bg-pink-500'}`}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
+                  {/* Charts Grid */}
+                  <div className="grid md:grid-cols-2 gap-6 mb-8">
+                    {/* Revenue by Category */}
+                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                      <h3 className="text-lg font-bebas italic tracking-wider mb-4">Sales by Category</h3>
+                      <div className="space-y-3">
+                        {['Men', 'Women'].map(category => {
+                          const categoryOrders = filteredOrders.filter(o => {
+                            // Check if any items in the order match this category
+                            // For now, simple calculation based on product data we have
+                            return true; // Placeholder - would need order items with category
+                          });
+                          const categoryRevenue = categoryOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0) * 0.5; // Estimated split
+                          const percentage = filteredRevenue > 0 ? (categoryRevenue / filteredRevenue) * 100 : 0;
+                          
+                          return (
+                            <div key={category}>
+                              <div className="flex justify-between text-sm mb-1">
+                                <span>{category}</span>
+                                <span className="text-white/60">${categoryRevenue.toFixed(2)} ({percentage.toFixed(1)}%)</span>
+                              </div>
+                              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full ${category === 'Men' ? 'bg-blue-500' : 'bg-pink-500'}`}
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
+                    </div>
 
-              {/* Order Status Breakdown */}
-              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                <h3 className="text-lg font-bebas italic tracking-wider mb-4">Order Status</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { status: 'pending', label: 'Pending', color: 'bg-yellow-500' },
-                    { status: 'processing', label: 'Processing', color: 'bg-blue-500' },
-                    { status: 'shipped', label: 'Shipped', color: 'bg-purple-500' },
-                    { status: 'delivered', label: 'Delivered', color: 'bg-green-500' },
-                  ].map(({ status, label, color }) => {
-                    const count = orders.filter(o => o.status === status).length;
-                    const percentage = orders.length > 0 ? (count / orders.length) * 100 : 0;
-                    
-                    return (
-                      <div key={status} className="p-4 bg-white/5 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className={`w-3 h-3 rounded-full ${color}`} />
-                          <span className="text-sm text-white/60">{label}</span>
-                        </div>
-                        <p className="text-2xl font-bebas italic">{count}</p>
-                        <p className="text-xs text-white/40">{percentage.toFixed(1)}%</p>
+                    {/* Order Status Breakdown */}
+                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                      <h3 className="text-lg font-bebas italic tracking-wider mb-4">Order Status</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        {[
+                          { status: 'pending', label: 'Pending', color: 'bg-yellow-500' },
+                          { status: 'processing', label: 'Processing', color: 'bg-blue-500' },
+                          { status: 'shipped', label: 'Shipped', color: 'bg-purple-500' },
+                          { status: 'delivered', label: 'Delivered', color: 'bg-green-500' },
+                        ].map(({ status, label, color }) => {
+                          const count = filteredOrders.filter(o => o.status === status).length;
+                          const percentage = filteredCount > 0 ? (count / filteredCount) * 100 : 0;
+                          
+                          return (
+                            <div key={status} className="p-4 bg-white/5 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className={`w-3 h-3 rounded-full ${color}`} />
+                                <span className="text-sm text-white/60">{label}</span>
+                              </div>
+                              <p className="text-2xl font-bebas italic">{count}</p>
+                              <p className="text-xs text-white/40">{percentage.toFixed(1)}%</p>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+                    </div>
+                  </div>
 
-            {/* Top Products */}
-            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-              <h3 className="text-lg font-bebas italic tracking-wider mb-4">Top Performing Products</h3>
-              <div className="grid md:grid-cols-3 gap-4">
-                {products.slice(0, 6).map((product, index) => (
+                  {/* Top Products */}
+                  <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                    <h3 className="text-lg font-bebas italic tracking-wider mb-4">Top Performing Products</h3>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {products.slice(0, 6).map((product, index) => (
                   <div key={product.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg">
                     <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold">
                       #{index + 1}
@@ -1415,8 +1543,11 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
@@ -1650,39 +1781,74 @@ export default function AdminDashboard() {
           <div>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-4xl font-bebas italic tracking-wider">Financial Overview</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFinanceView('daily')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    financeView === 'daily' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
-                  }`}
+              <div className="flex items-center gap-3">
+                {/* Date Range Filter */}
+                <select
+                  value={financeDateRange}
+                  onChange={(e) => setFinanceDateRange(e.target.value as any)}
+                  className="bg-black border border-white/20 rounded-lg px-4 py-2 text-sm"
                 >
-                  Daily P&L
-                </button>
-                <button
-                  onClick={() => setFinanceView('monthly')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    financeView === 'monthly' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setFinanceView('expenses')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    financeView === 'expenses' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
-                  }`}
-                >
-                  Expenses
-                </button>
-                <button
-                  onClick={() => setFinanceView('tax')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    financeView === 'tax' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
-                  }`}
-                >
-                  Tax Prep
-                </button>
+                  <option value="all">All Time</option>
+                  <option value="7days">Last 7 Days</option>
+                  <option value="30days">Last 30 Days</option>
+                  <option value="90days">Last 90 Days</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+                
+                {financeDateRange === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={financeStartDate}
+                      onChange={(e) => setFinanceStartDate(e.target.value)}
+                      className="bg-black border border-white/20 rounded-lg px-3 py-2 text-sm"
+                    />
+                    <span className="text-white/40">to</span>
+                    <input
+                      type="date"
+                      value={financeEndDate}
+                      onChange={(e) => setFinanceEndDate(e.target.value)}
+                      className="bg-black border border-white/20 rounded-lg px-3 py-2 text-sm"
+                    />
+                  </div>
+                )}
+                
+                <div className="w-px h-8 bg-white/10 mx-2" />
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setFinanceView('daily')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      financeView === 'daily' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
+                    }`}
+                  >
+                    Daily P&L
+                  </button>
+                  <button
+                    onClick={() => setFinanceView('monthly')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      financeView === 'monthly' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setFinanceView('expenses')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      financeView === 'expenses' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
+                    }`}
+                  >
+                    Expenses
+                  </button>
+                  <button
+                    onClick={() => setFinanceView('tax')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      financeView === 'tax' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'
+                    }`}
+                  >
+                    Tax Prep
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1691,81 +1857,92 @@ export default function AdminDashboard() {
               <div className="space-y-6">
                 {/* Key Metrics */}
                 {(() => {
-                  const today = new Date().toISOString().split('T')[0];
-                  const todayOrders = orders.filter(o => o.created_at?.split('T')[0] === today);
-                  const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-                  const todayExpenses = expenses.filter(e => e.date === today).reduce((sum, e) => sum + (e.amount || 0), 0);
-                  const todayNet = todayRevenue - todayExpenses;
-                  const todayDonation = todayRevenue * 0.10;
+                  const filteredOrders = filterOrdersByDateRange(orders, financeDateRange, financeStartDate, financeEndDate);
+                  const filteredExpenses = filterExpensesByDateRange(expenses, financeDateRange, financeStartDate, financeEndDate);
+                  const periodRevenue = filteredOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                  const periodExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+                  const periodNet = periodRevenue - periodExpenses;
+                  const periodDonation = periodRevenue * 0.10;
+                  
+                  const periodLabel = financeDateRange === 'all' ? 'All Time' : 
+                                     financeDateRange === '7days' ? 'Last 7 Days' :
+                                     financeDateRange === '30days' ? 'Last 30 Days' :
+                                     financeDateRange === '90days' ? 'Last 90 Days' : 'Selected Period';
                   
                   return (
                     <>
                       <div className="grid grid-cols-5 gap-4">
                         <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
-                          <p className="text-xs uppercase tracking-wider text-green-400 mb-2">Today's Revenue</p>
-                          <p className="text-3xl font-bebas italic text-green-400">${todayRevenue.toFixed(2)}</p>
-                          <p className="text-white/40 text-sm mt-1">{todayOrders.length} orders</p>
+                          <p className="text-xs uppercase tracking-wider text-green-400 mb-2">{periodLabel} Revenue</p>
+                          <p className="text-3xl font-bebas italic text-green-400">${periodRevenue.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{filteredOrders.length} orders</p>
                         </div>
                         <div className="p-6 bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-2xl">
-                          <p className="text-xs uppercase tracking-wider text-red-400 mb-2">Today's Expenses</p>
-                          <p className="text-3xl font-bebas italic text-red-400">${todayExpenses.toFixed(2)}</p>
-                          <p className="text-white/40 text-sm mt-1">{expenses.filter(e => e.date === today).length} transactions</p>
+                          <p className="text-xs uppercase tracking-wider text-red-400 mb-2">{periodLabel} Expenses</p>
+                          <p className="text-3xl font-bebas italic text-red-400">${periodExpenses.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{filteredExpenses.length} transactions</p>
                         </div>
-                        <div className={`p-6 bg-gradient-to-br ${todayNet >= 0 ? 'from-blue-500/10 to-blue-500/5 border-blue-500/20' : 'from-orange-500/10 to-orange-500/5 border-orange-500/20'} border rounded-2xl`}>
-                          <p className={`text-xs uppercase tracking-wider ${todayNet >= 0 ? 'text-blue-400' : 'text-orange-400'} mb-2`}>Net Profit</p>
-                          <p className={`text-3xl font-bebas italic ${todayNet >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>${todayNet.toFixed(2)}</p>
-                          <p className="text-white/40 text-sm mt-1">{todayNet >= 0 ? 'In the green' : 'In the red'}</p>
+                        <div className={`p-6 bg-gradient-to-br ${periodNet >= 0 ? 'from-blue-500/10 to-blue-500/5 border-blue-500/20' : 'from-orange-500/10 to-orange-500/5 border-orange-500/20'} border rounded-2xl`}>
+                          <p className={`text-xs uppercase tracking-wider ${periodNet >= 0 ? 'text-blue-400' : 'text-orange-400'} mb-2`}>Net Profit</p>
+                          <p className={`text-3xl font-bebas italic ${periodNet >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>${periodNet.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{periodNet >= 0 ? 'In the green' : 'In the red'}</p>
                         </div>
                         <div className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl">
                           <p className="text-xs uppercase tracking-wider text-purple-400 mb-2">Impact Fund (10%)</p>
-                          <p className="text-3xl font-bebas italic text-purple-400">${todayDonation.toFixed(2)}</p>
+                          <p className="text-3xl font-bebas italic text-purple-400">${periodDonation.toFixed(2)}</p>
                           <p className="text-white/40 text-sm mt-1">Auto-calculated</p>
                         </div>
                         <div className="p-6 bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-2xl">
                           <p className="text-xs uppercase tracking-wider text-amber-400 mb-2">Margin</p>
                           <p className="text-3xl font-bebas italic text-amber-400">
-                            {todayRevenue > 0 ? ((todayNet / todayRevenue) * 100).toFixed(1) : '0.0'}%
+                            {periodRevenue > 0 ? ((periodNet / periodRevenue) * 100).toFixed(1) : '0.0'}%
                           </p>
                           <p className="text-white/40 text-sm mt-1">Profit margin</p>
                         </div>
                       </div>
 
-                      {/* Today's Activity */}
+                      {/* Period Activity */}
                       <div className="grid md:grid-cols-2 gap-6">
                         <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                          <h3 className="text-lg font-bebas italic tracking-wider mb-4">Today's Orders</h3>
-                          {todayOrders.length === 0 ? (
-                            <p className="text-white/40 text-center py-8">No orders today yet.</p>
+                          <h3 className="text-lg font-bebas italic tracking-wider mb-4">Orders in Period</h3>
+                          {filteredOrders.length === 0 ? (
+                            <p className="text-white/40 text-center py-8">No orders in selected period.</p>
                           ) : (
                             <div className="space-y-3 max-h-64 overflow-y-auto">
-                              {todayOrders.map(order => (
+                              {filteredOrders.slice(0, 20).map(order => (
                                 <div key={order.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
                                   <div>
                                     <p className="font-medium">#{order.id.slice(-6).toUpperCase()}</p>
-                                    <p className="text-white/40 text-xs">{order.customer_name}</p>
+                                    <p className="text-white/40 text-xs">{order.customer_name} • {order.created_at?.split('T')[0]}</p>
                                   </div>
                                   <p className="text-green-400 font-bebas italic text-xl">+${order.total_amount?.toFixed(2)}</p>
                                 </div>
                               ))}
+                              {filteredOrders.length > 20 && (
+                                <p className="text-center text-white/40 text-sm py-2">+{filteredOrders.length - 20} more orders</p>
+                              )}
                             </div>
                           )}
                         </div>
                         
                         <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                          <h3 className="text-lg font-bebas italic tracking-wider mb-4">Today's Expenses</h3>
-                          {expenses.filter(e => e.date === today).length === 0 ? (
-                            <p className="text-white/40 text-center py-8">No expenses recorded today.</p>
+                          <h3 className="text-lg font-bebas italic tracking-wider mb-4">Expenses in Period</h3>
+                          {filteredExpenses.length === 0 ? (
+                            <p className="text-white/40 text-center py-8">No expenses in selected period.</p>
                           ) : (
                             <div className="space-y-3 max-h-64 overflow-y-auto">
-                              {expenses.filter(e => e.date === today).map(expense => (
+                              {filteredExpenses.slice(0, 20).map(expense => (
                                 <div key={expense.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
                                   <div>
                                     <p className="font-medium">{expense.description}</p>
-                                    <p className="text-white/40 text-xs">{expense.category}</p>
+                                    <p className="text-white/40 text-xs">{expense.category} • {expense.date}</p>
                                   </div>
                                   <p className="text-red-400 font-bebas italic text-xl">-${expense.amount?.toFixed(2)}</p>
                                 </div>
                               ))}
+                              {filteredExpenses.length > 20 && (
+                                <p className="text-center text-white/40 text-sm py-2">+{filteredExpenses.length - 20} more expenses</p>
+                              )}
                             </div>
                           )}
                         </div>
@@ -1780,43 +1957,57 @@ export default function AdminDashboard() {
             {financeView === 'monthly' && (
               <div className="space-y-6">
                 {(() => {
-                  const currentMonth = new Date().toISOString().slice(0, 7); // "2026-02"
-                  const monthlyOrders = orders.filter(o => o.created_at?.startsWith(currentMonth));
-                  const monthlyRevenue = monthlyOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-                  const monthlyExpenses = expenses.filter(e => e.date?.startsWith(currentMonth)).reduce((sum, e) => sum + (e.amount || 0), 0);
-                  const monthlyNet = monthlyRevenue - monthlyExpenses;
-                  const monthlyDonation = monthlyRevenue * 0.10;
-                  const monthlyGst = expenses.filter(e => e.date?.startsWith(currentMonth) && e.hasGst).reduce((sum, e) => sum + (e.gstAmount || 0), 0);
+                  const filteredOrders = filterOrdersByDateRange(orders, financeDateRange, financeStartDate, financeEndDate);
+                  const filteredExpenses = filterExpensesByDateRange(expenses, financeDateRange, financeStartDate, financeEndDate);
                   
-                  // Get last 6 months for chart
+                  const periodRevenue = filteredOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                  const periodExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+                  const periodNet = periodRevenue - periodExpenses;
+                  const periodGst = filteredExpenses.filter(e => e.hasGst).reduce((sum, e) => sum + (e.gstAmount || 0), 0);
+                  
+                  // Get last 6 months for chart (or use selected period)
                   const months: string[] = [];
-                  for (let i = 5; i >= 0; i--) {
-                    const d = new Date();
-                    d.setMonth(d.getMonth() - i);
-                    months.push(d.toISOString().slice(0, 7));
+                  if (financeDateRange === 'all') {
+                    for (let i = 5; i >= 0; i--) {
+                      const d = new Date();
+                      d.setMonth(d.getMonth() - i);
+                      months.push(d.toISOString().slice(0, 7));
+                    }
+                  } else {
+                    // Generate months from filtered data
+                    const uniqueMonths = Array.from(new Set([
+                      ...filteredOrders.map(o => o.created_at?.slice(0, 7)),
+                      ...filteredExpenses.map(e => e.date?.slice(0, 7))
+                    ])).filter(Boolean).sort();
+                    months.push(...uniqueMonths.slice(-6));
                   }
+                  
+                  const periodLabel = financeDateRange === 'all' ? 'All Time' : 
+                                     financeDateRange === '7days' ? 'Last 7 Days' :
+                                     financeDateRange === '30days' ? 'Last 30 Days' :
+                                     financeDateRange === '90days' ? 'Last 90 Days' : 'Selected Period';
                   
                   return (
                     <>
                       <div className="grid grid-cols-4 gap-4">
                         <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl">
-                          <p className="text-xs uppercase tracking-wider text-green-400 mb-2">{currentMonth} Revenue</p>
-                          <p className="text-4xl font-bebas italic text-green-400">${monthlyRevenue.toFixed(2)}</p>
-                          <p className="text-white/40 text-sm mt-1">{monthlyOrders.length} orders</p>
+                          <p className="text-xs uppercase tracking-wider text-green-400 mb-2">{periodLabel} Revenue</p>
+                          <p className="text-4xl font-bebas italic text-green-400">${periodRevenue.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{filteredOrders.length} orders</p>
                         </div>
                         <div className="p-6 bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-2xl">
-                          <p className="text-xs uppercase tracking-wider text-red-400 mb-2">{currentMonth} Expenses</p>
-                          <p className="text-4xl font-bebas italic text-red-400">${monthlyExpenses.toFixed(2)}</p>
-                          <p className="text-white/40 text-sm mt-1">{expenses.filter(e => e.date?.startsWith(currentMonth)).length} transactions</p>
+                          <p className="text-xs uppercase tracking-wider text-red-400 mb-2">{periodLabel} Expenses</p>
+                          <p className="text-4xl font-bebas italic text-red-400">${periodExpenses.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">{filteredExpenses.length} transactions</p>
                         </div>
-                        <div className={`p-6 bg-gradient-to-br ${monthlyNet >= 0 ? 'from-blue-500/10 to-blue-500/5 border-blue-500/20' : 'from-orange-500/10 to-orange-500/5 border-orange-500/20'} border rounded-2xl`}>
-                          <p className={`text-xs uppercase tracking-wider ${monthlyNet >= 0 ? 'text-blue-400' : 'text-orange-400'} mb-2`}>Net Profit</p>
-                          <p className={`text-4xl font-bebas italic ${monthlyNet >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>${monthlyNet.toFixed(2)}</p>
-                          <p className="text-white/40 text-sm mt-1">This month</p>
+                        <div className={`p-6 bg-gradient-to-br ${periodNet >= 0 ? 'from-blue-500/10 to-blue-500/5 border-blue-500/20' : 'from-orange-500/10 to-orange-500/5 border-orange-500/20'} border rounded-2xl`}>
+                          <p className={`text-xs uppercase tracking-wider ${periodNet >= 0 ? 'text-blue-400' : 'text-orange-400'} mb-2`}>Net Profit</p>
+                          <p className={`text-4xl font-bebas italic ${periodNet >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>${periodNet.toFixed(2)}</p>
+                          <p className="text-white/40 text-sm mt-1">In period</p>
                         </div>
                         <div className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl">
                           <p className="text-xs uppercase tracking-wider text-purple-400 mb-2">GST Paid</p>
-                          <p className="text-4xl font-bebas italic text-purple-400">${monthlyGst.toFixed(2)}</p>
+                          <p className="text-4xl font-bebas italic text-purple-400">${periodGst.toFixed(2)}</p>
                           <p className="text-white/40 text-sm mt-1">Input tax credits</p>
                         </div>
                       </div>
