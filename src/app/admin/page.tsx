@@ -744,6 +744,14 @@ export default function AdminDashboard() {
       // Add colors or stock/images (not both)
       if (colorsData) {
         productData.colors = colorsData;
+        // Calculate total stock from all colors for the main product stock
+        const totalStock = { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+        colorsData.forEach((color: any) => {
+          ['XS', 'S', 'M', 'L', 'XL', 'XXL'].forEach((size) => {
+            totalStock[size as keyof typeof totalStock] += (color.stock[size] || 0);
+          });
+        });
+        productData.stock = totalStock;
       } else {
         productData.stock = newProduct.stock;
         productData.images = newProduct.images.length > 0 ? newProduct.images : (newProduct.imageUrl ? [newProduct.imageUrl] : []);
@@ -3327,7 +3335,9 @@ export default function AdminDashboard() {
                 {newProduct.colors.length === 0 ? (
                   <p className="text-white/40 text-sm mb-4">No colors added. Add colors to manage different variants with separate images and stock.</p>
                 ) : (
-                  <div className="space-y-4">
+                  <>
+                    <p className="text-green-400/80 text-xs mb-4">✓ Inventory is managed per color. Stock will be automatically totaled across all colors.</p>
+                    <div className="space-y-4">
                     {/* Color Tabs */}
                     <div className="flex gap-2 flex-wrap">
                       {newProduct.colors.map((color, idx) => (
@@ -3478,6 +3488,7 @@ export default function AdminDashboard() {
                       </div>
                     )}
                   </div>
+                </>
                 )}
               </div>
 
@@ -3566,27 +3577,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Initial Stock */}
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Initial Stock</label>
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                  {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
-                    <div key={size}>
-                      <span className="text-xs text-white/40 block text-center mb-1">{size}</span>
-                      <input
-                        type="number"
-                        min="0"
-                        value={(newProduct.stock as Record<string, number>)[size]}
-                        onChange={(e) => setNewProduct({
-                          ...newProduct, 
-                          stock: {...newProduct.stock, [size]: parseInt(e.target.value) || 0}
-                        })}
-                        className="w-full text-center bg-black border border-white/20 rounded px-2 py-2 text-sm focus:border-white/50 focus:outline-none"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
             <div className="flex gap-4 mt-8">
