@@ -45,7 +45,7 @@ export default function CollectionsPage() {
     : products.filter(p => p.category === selectedCategory);
 
   return (
-    <main className="min-h-screen bg-black text-white font-mono">
+    <main className="min-h-screen bg-black text-white">
       <Navbar />
 
       {/* Hero */}
