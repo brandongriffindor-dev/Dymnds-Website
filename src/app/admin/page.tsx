@@ -1698,7 +1698,7 @@ export default function AdminDashboard() {
                   const monthlyGst = expenses.filter(e => e.date?.startsWith(currentMonth) && e.hasGst).reduce((sum, e) => sum + (e.gstAmount || 0), 0);
                   
                   // Get last 6 months for chart
-                  const months = [];
+                  const months: string[] = [];
                   for (let i = 5; i >= 0; i--) {
                     const d = new Date();
                     d.setMonth(d.getMonth() - i);
