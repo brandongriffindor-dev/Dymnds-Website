@@ -126,6 +126,24 @@ export default function AdminDashboard() {
   const [viewingCustomer, setViewingCustomer] = useState<{email: string, name: string} | null>(null);
   const [customerNotes, setCustomerNotes] = useState('');
 
+  // Theme state
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // Load theme preference on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('admin-theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    }
+  }, []);
+
+  // Save theme preference
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    localStorage.setItem('admin-theme', newTheme ? 'dark' : 'light');
+  };
+
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
@@ -861,7 +879,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono">
+    <div className={`min-h-screen font-mono transition-colors duration-300 ${isDarkMode ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-neutral-950 border-b border-white/10 z-50 flex items-center justify-between px-4">
         <div>
@@ -999,6 +1017,17 @@ export default function AdminDashboard() {
           >
             <span className="text-sm tracking-wider uppercase">Finance</span>
           </button>
+          
+          {/* Theme Toggle */}
+          <div className="pt-4 mt-4 border-t border-white/10">
+            <button
+              onClick={toggleTheme}
+              className="w-full text-left px-4 py-3 rounded-lg text-white/60 hover:bg-white/5 transition-all flex items-center gap-2"
+            >
+              <span className="text-lg">{isDarkMode ? '🌙' : '☀️'}</span>
+              <span className="text-sm tracking-wider uppercase">{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
+            </button>
+          </div>
           <button
             onClick={() => { setActiveView('audit'); setMobileMenuOpen(false); }}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
