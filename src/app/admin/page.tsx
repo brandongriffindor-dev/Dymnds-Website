@@ -96,6 +96,13 @@ export default function AdminDashboard() {
   });
   const [financeView, setFinanceView] = useState<'daily' | 'monthly' | 'expenses' | 'tax'>('daily');
 
+  // Search state
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [productSearch, setProductSearch] = useState('');
+  const [orderSearch, setOrderSearch] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+
   // Auto-generate slug from title
   useEffect(() => {
     if (newProduct.title && !newProduct.slug) {
@@ -120,6 +127,23 @@ export default function AdminDashboard() {
       }
     });
     return () => unsubscribe();
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + K for global search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowGlobalSearch(true);
+      }
+      // Escape to close search
+      if (e.key === 'Escape') {
+        setShowGlobalSearch(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -858,15 +882,28 @@ export default function AdminDashboard() {
           <div>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-4xl font-bebas italic tracking-wider">Inventory Commander</h2>
-              <button
-                onClick={() => {
-                  setShowAddProduct(true);
-                  setAddError('');
-                }}
-                className="px-6 py-3 bg-white text-black text-sm font-bold tracking-wider uppercase rounded-lg hover:bg-white/90 transition-colors"
-              >
-                + Add Product
-              </button>
+              <div className="flex items-center gap-4">
+                {/* Search */}
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">🔍</span>
+                  <input
+                    type="text"
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Search products..."
+                    className="pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-white/30 w-64"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    setShowAddProduct(true);
+                    setAddError('');
+                  }}
+                  className="px-6 py-3 bg-white text-black text-sm font-bold tracking-wider uppercase rounded-lg hover:bg-white/90 transition-colors"
+                >
+                  + Add Product
+                </button>
+              </div>
             </div>
             
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-x-auto">
@@ -887,7 +924,14 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((product) => (
+                  {products
+                    .filter(p => 
+                      !productSearch || 
+                      p.title?.toLowerCase().includes(productSearch.toLowerCase()) ||
+                      p.slug?.toLowerCase().includes(productSearch.toLowerCase()) ||
+                      p.category?.toLowerCase().includes(productSearch.toLowerCase())
+                    )
+                    .map((product) => (
                     <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="p-4 text-center">
                         <input
@@ -966,6 +1010,17 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-4xl font-bebas italic tracking-wider">Order Fulfillment</h2>
               <div className="flex gap-4">
+                {/* Search */}
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">🔍</span>
+                  <input
+                    type="text"
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    placeholder="Search orders..."
+                    className="pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-white/30 w-48"
+                  />
+                </div>
                 <select 
                   className="bg-black border border-white/20 rounded-lg px-4 py-2 text-sm"
                   onChange={(e) => {
@@ -1029,7 +1084,14 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ) : (
-                    orders.map((order) => (
+                    orders
+                      .filter(o => 
+                        !orderSearch ||
+                        o.id?.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                        o.customer_name?.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                        o.customer_email?.toLowerCase().includes(orderSearch.toLowerCase())
+                      )
+                      .map((order) => (
                       <tr key={order.id} className="border-b border-white/5 hover:bg-white/5">
                         <td className="p-4">
                           <span className="font-mono text-sm">#{order.id.slice(-6).toUpperCase()}</span>
@@ -1096,7 +1158,20 @@ export default function AdminDashboard() {
         {/* Customers View */}
         {activeView === 'customers' && (
           <div>
-            <h2 className="text-4xl font-bebas italic tracking-wider mb-8">Customer Database</h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-4xl font-bebas italic tracking-wider">Customer Database</h2>
+              {/* Search */}
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">🔍</span>
+                <input
+                  type="text"
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  placeholder="Search customers..."
+                  className="pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-white/30 w-64"
+                />
+              </div>
+            </div>
             
             {/* Customer Stats */}
             <div className="grid grid-cols-4 gap-4 mb-8">
@@ -1153,51 +1228,60 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ) : (
-                    Array.from(new Set(orders.map(o => o.customer_email))).map(email => {
-                      const customerOrders = orders.filter(o => o.customer_email === email);
-                      const totalSpent = customerOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-                      const orderCount = customerOrders.length;
-                      const lastOrder = customerOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-                      const isVIP = totalSpent > 500;
-                      const isActive = lastOrder && new Date(lastOrder.created_at) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-                      
-                      return (
-                        <tr key={email} className="border-b border-white/5 hover:bg-white/5">
-                          <td className="p-4">
-                            <p className="font-medium">{customerOrders[0]?.customer_name || 'Unknown'}</p>
-                            <p className="text-white/40 text-xs">{email}</p>
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className="px-3 py-1 bg-white/10 rounded-full text-sm">{orderCount}</span>
-                          </td>
-                          <td className="p-4 text-right font-medium">
-                            ${totalSpent.toFixed(2)}
-                          </td>
-                          <td className="p-4 text-center">
-                            <div className="flex gap-1 justify-center">
-                              {isVIP && (
-                                <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full" title="VIP: Spent over $500">
-                                  VIP
-                                </span>
-                              )}
-                              {isActive && (
-                                <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full" title="Active: Ordered in last 30 days">
-                                  Active
-                                </span>
-                              )}
-                              {!isVIP && !isActive && (
-                                <span className="px-2 py-1 bg-white/10 text-white/40 text-xs rounded-full">
-                                  Regular
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-4 text-center text-white/60 text-sm">
-                            {lastOrder?.created_at ? new Date(lastOrder.created_at).toLocaleDateString() : 'N/A'}
-                          </td>
-                        </tr>
-                      );
-                    })
+                    Array.from(new Set(orders.map(o => o.customer_email)))
+                      .filter(email => {
+                        if (!customerSearch) return true;
+                        const customer = orders.find(o => o.customer_email === email);
+                        return (
+                          email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                          customer?.customer_name?.toLowerCase().includes(customerSearch.toLowerCase())
+                        );
+                      })
+                      .map(email => {
+                        const customerOrders = orders.filter(o => o.customer_email === email);
+                        const totalSpent = customerOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                        const orderCount = customerOrders.length;
+                        const lastOrder = customerOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+                        const isVIP = totalSpent > 500;
+                        const isActive = lastOrder && new Date(lastOrder.created_at) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                        
+                        return (
+                          <tr key={email} className="border-b border-white/5 hover:bg-white/5">
+                            <td className="p-4">
+                              <p className="font-medium">{customerOrders[0]?.customer_name || 'Unknown'}</p>
+                              <p className="text-white/40 text-xs">{email}</p>
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className="px-3 py-1 bg-white/10 rounded-full text-sm">{orderCount}</span>
+                            </td>
+                            <td className="p-4 text-right font-medium">
+                              ${totalSpent.toFixed(2)}
+                            </td>
+                            <td className="p-4 text-center">
+                              <div className="flex gap-1 justify-center">
+                                {isVIP && (
+                                  <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full" title="VIP: Spent over $500">
+                                    VIP
+                                  </span>
+                                )}
+                                {isActive && (
+                                  <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full" title="Active: Ordered in last 30 days">
+                                    Active
+                                  </span>
+                                )}
+                                {!isVIP && !isActive && (
+                                  <span className="px-2 py-1 bg-white/10 text-white/40 text-xs rounded-full">
+                                    Regular
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-4 text-center text-white/60 text-sm">
+                              {lastOrder?.created_at ? new Date(lastOrder.created_at).toLocaleDateString() : 'N/A'}
+                            </td>
+                          </tr>
+                        );
+                      })
                   )}
                 </tbody>
               </table>
@@ -2125,6 +2209,168 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* Global Search Modal */}
+      {showGlobalSearch && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-start justify-center pt-32 p-4">
+          <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden">
+            {/* Search Input */}
+            <div className="p-4 border-b border-white/10 flex items-center gap-3">
+              <span className="text-white/40 text-xl">🔍</span>
+              <input
+                type="text"
+                autoFocus
+                value={globalSearchQuery}
+                onChange={(e) => setGlobalSearchQuery(e.target.value)}
+                placeholder="Search products, orders, customers..."
+                className="flex-1 bg-transparent text-lg focus:outline-none text-white placeholder:text-white/40"
+              />
+              <span className="px-2 py-1 bg-white/10 rounded text-xs text-white/40">ESC</span>
+            </div>
+            
+            {/* Search Results */}
+            <div className="max-h-96 overflow-y-auto">
+              {globalSearchQuery.length < 2 ? (
+                <div className="p-8 text-center text-white/40">
+                  <p className="mb-2">Start typing to search...</p>
+                  <p className="text-sm">Try: product name, order ID, customer email</p>
+                </div>
+              ) : (
+                <>
+                  {/* Products Results */}
+                  {products.filter(p => 
+                    p.title?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                    p.slug?.toLowerCase().includes(globalSearchQuery.toLowerCase())
+                  ).length > 0 && (
+                    <div className="p-2">
+                      <p className="px-3 py-2 text-xs uppercase tracking-wider text-white/40">Products</p>
+                      {products
+                        .filter(p => 
+                          p.title?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                          p.slug?.toLowerCase().includes(globalSearchQuery.toLowerCase())
+                        )
+                        .slice(0, 5)
+                        .map(product => (
+                          <button
+                            key={product.id}
+                            onClick={() => {
+                              setShowGlobalSearch(false);
+                              setGlobalSearchQuery('');
+                              setActiveView('inventory');
+                              setEditingProduct(product);
+                            }}
+                            className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 flex items-center gap-3"
+                          >
+                            <span className="text-2xl">📦</span>
+                            <div className="flex-1">
+                              <p className="font-medium">{product.title}</p>
+                              <p className="text-sm text-white/40">${product.price} • {product.category}</p>
+                            </div>
+                            <span className="text-white/20 text-sm">Edit →</span>
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                  
+                  {/* Orders Results */}
+                  {orders.filter(o => 
+                    o.id?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                    o.customer_name?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                    o.customer_email?.toLowerCase().includes(globalSearchQuery.toLowerCase())
+                  ).length > 0 && (
+                    <div className="p-2 border-t border-white/5">
+                      <p className="px-3 py-2 text-xs uppercase tracking-wider text-white/40">Orders</p>
+                      {orders
+                        .filter(o => 
+                          o.id?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                          o.customer_name?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                          o.customer_email?.toLowerCase().includes(globalSearchQuery.toLowerCase())
+                        )
+                        .slice(0, 5)
+                        .map(order => (
+                          <button
+                            key={order.id}
+                            onClick={() => {
+                              setShowGlobalSearch(false);
+                              setGlobalSearchQuery('');
+                              setActiveView('orders');
+                            }}
+                            className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 flex items-center gap-3"
+                          >
+                            <span className="text-2xl">🛒</span>
+                            <div className="flex-1">
+                              <p className="font-medium">Order #{order.id.slice(-6).toUpperCase()}</p>
+                              <p className="text-sm text-white/40">{order.customer_name} • ${order.total_amount?.toFixed(2)}</p>
+                            </div>
+                            <span className="text-white/20 text-sm">View →</span>
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                  
+                  {/* Customers Results */}
+                  {(() => {
+                    const uniqueCustomers = Array.from(new Set(orders.map(o => o.customer_email)));
+                    const filteredCustomers = uniqueCustomers.filter(email => 
+                      email?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                      orders.find(o => o.customer_email === email)?.customer_name?.toLowerCase().includes(globalSearchQuery.toLowerCase())
+                    );
+                    return filteredCustomers.length > 0 ? (
+                      <div className="p-2 border-t border-white/5">
+                        <p className="px-3 py-2 text-xs uppercase tracking-wider text-white/40">Customers</p>
+                        {filteredCustomers.slice(0, 5).map(email => {
+                          const customer = orders.find(o => o.customer_email === email);
+                          const orderCount = orders.filter(o => o.customer_email === email).length;
+                          return (
+                            <button
+                              key={email}
+                              onClick={() => {
+                                setShowGlobalSearch(false);
+                                setGlobalSearchQuery('');
+                                setActiveView('customers');
+                              }}
+                              className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 flex items-center gap-3"
+                            >
+                              <span className="text-2xl">👤</span>
+                              <div className="flex-1">
+                                <p className="font-medium">{customer?.customer_name || 'Unknown'}</p>
+                                <p className="text-sm text-white/40">{email} • {orderCount} orders</p>
+                              </div>
+                              <span className="text-white/20 text-sm">View →</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null;
+                  })()}
+                  
+                  {/* No Results */}
+                  {products.filter(p => 
+                    p.title?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                    p.slug?.toLowerCase().includes(globalSearchQuery.toLowerCase())
+                  ).length === 0 &&
+                  orders.filter(o => 
+                    o.id?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                    o.customer_name?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                    o.customer_email?.toLowerCase().includes(globalSearchQuery.toLowerCase())
+                  ).length === 0 &&
+                  (() => {
+                    const uniqueCustomers = Array.from(new Set(orders.map(o => o.customer_email)));
+                    return uniqueCustomers.filter(email => 
+                      email?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+                      orders.find(o => o.customer_email === email)?.customer_name?.toLowerCase().includes(globalSearchQuery.toLowerCase())
+                    ).length === 0;
+                  })() && (
+                    <div className="p-8 text-center text-white/40">
+                      <p>No results found for "{globalSearchQuery}"</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Product Modal */}
       {showAddProduct && (
