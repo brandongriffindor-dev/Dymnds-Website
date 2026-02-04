@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { db, storage, getAuthClient, signInWithEmailAndPassword, signOut, onAuthStateChanged, type User } from '@/lib/firebase';
 import { 
   collection, 
@@ -12,7 +12,8 @@ import {
   deleteDoc,
   query, 
   orderBy,
-  addDoc
+  addDoc,
+  onSnapshot
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Product, Order, WaitlistEntry, DashboardStats } from '@/lib/firebase';
@@ -99,6 +100,11 @@ export default function AdminDashboard() {
   // Search state
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
 
+  // Real-time order notifications
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [lastOrderCount, setLastOrderCount] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   // Bulk actions state
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
@@ -165,6 +171,62 @@ export default function AdminDashboard() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Request notification permission on load
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      setNotificationsEnabled(true);
+    }
+  }, []);
+
+  // Real-time order listener
+  useEffect(() => {
+    if (!user) return;
+
+    // Create audio element for cha-ching sound
+    audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjGH0fPTgjMGHm7A7+OZSA0PVanu87plHQUuh9Dz2YU2Bhxqv+zplkcODVGm5O+4ZSAEMYrO89GFNwYdcfDr4plIDQtPp+XysWUeBjiOz/PShjYGHG7A7+SaSQ0MTqjl8bJkHwU2jc7zzYU1Bhxwv+zmm0gNC1Gn5fGzZSAFNo/M89CEMwYccPDs4ppIDQtQp+TwxWUeBTiOz/PPhjUGG3Dw7OKbSA0LUqjl8cVlHwU3jM7z0YU1Bxtw8OzhmUgNC1Ko5fHFZSAFOI7O89CEMwYccPDs4plIDQtQp+TwxWUeBTiOz/PPhjUGG3Dw7OKaSA0LUqjl8cVlIAU3jM7z0YU1Bxtw8OzhmUgNC1Ko5fHFZSAF');
+
+    // Set up real-time listener for orders
+    const ordersQuery = query(collection(db, 'orders'), orderBy('created_at', 'desc'));
+    const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+      const newOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+      
+      // Check for new orders
+      if (lastOrderCount > 0 && newOrders.length > lastOrderCount) {
+        const newOrderCount = newOrders.length - lastOrderCount;
+        
+        // Play cha-ching sound
+        if (audioRef.current) {
+          audioRef.current.play().catch(() => {});
+        }
+        
+        // Show browser notification
+        if (notificationsEnabled && 'Notification' in window) {
+          new Notification('New Order!', {
+            body: `${newOrderCount} new order${newOrderCount > 1 ? 's' : ''} received`,
+            icon: '/favicon.ico',
+            badge: '/favicon.ico',
+          });
+        }
+      }
+      
+      setOrders(newOrders);
+      setLastOrderCount(newOrders.length);
+    }, (error) => {
+      console.error('Error listening to orders:', error);
+    });
+
+    return () => unsubscribe();
+  }, [user, notificationsEnabled, lastOrderCount]);
+
+  const enableNotifications = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        setNotificationsEnabled(true);
+      }
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -919,7 +981,33 @@ export default function AdminDashboard() {
         {/* CEO Overview */}
         {activeView === 'overview' && (
           <div>
-            <h2 className="text-4xl font-bebas italic tracking-wider mb-8">CEO Overview</h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-4xl font-bebas italic tracking-wider">CEO Overview</h2>
+              
+              {/* Notification Toggle */}
+              {'Notification' in window && (
+                <button
+                  onClick={enableNotifications}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all ${
+                    notificationsEnabled
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                      : 'bg-white/10 text-white/60 hover:bg-white/20 border border-white/10'
+                  }`}
+                >
+                  {notificationsEnabled ? (
+                    <>
+                      <span>🔔</span>
+                      <span>Notifications On</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🔕</span>
+                      <span>Enable Notifications</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Impact Fund Card */}
