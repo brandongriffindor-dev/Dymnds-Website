@@ -1272,29 +1272,10 @@ export default function AdminDashboard() {
               <table className="w-full min-w-[600px] lg:min-w-[900px]">
                 <thead className="bg-white/5 border-b border-white/10">
                   <tr>
-                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">
-                      <input
-                        type="checkbox"
-                        checked={selectedProducts.length === products.filter(p => !productSearch || p.title?.toLowerCase().includes(productSearch.toLowerCase()) || p.slug?.toLowerCase().includes(productSearch.toLowerCase()) || p.category?.toLowerCase().includes(productSearch.toLowerCase())).length && products.filter(p => !productSearch || p.title?.toLowerCase().includes(productSearch.toLowerCase()) || p.slug?.toLowerCase().includes(productSearch.toLowerCase()) || p.category?.toLowerCase().includes(productSearch.toLowerCase())).length > 0}
-                        onChange={(e) => {
-                          const filtered = products.filter(p => 
-                            !productSearch || 
-                            p.title?.toLowerCase().includes(productSearch.toLowerCase()) ||
-                            p.slug?.toLowerCase().includes(productSearch.toLowerCase()) ||
-                            p.category?.toLowerCase().includes(productSearch.toLowerCase())
-                          );
-                          if (e.target.checked) {
-                            setSelectedProducts(filtered.map(p => p.id));
-                          } else {
-                            setSelectedProducts([]);
-                          }
-                        }}
-                        className="w-4 h-4 rounded border-white/20 bg-black"
-                      />
-                    </th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Select</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">#</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">⭐</th>
-                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product</th>
+                    <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product / Color</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Type</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XS</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">S</th>
@@ -1306,96 +1287,207 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {products
-                    .filter(p => 
-                      !productSearch || 
-                      p.title?.toLowerCase().includes(productSearch.toLowerCase()) ||
-                      p.slug?.toLowerCase().includes(productSearch.toLowerCase()) ||
-                      p.category?.toLowerCase().includes(productSearch.toLowerCase())
-                    )
-                    .map((product) => (
-                    <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
-                      <td className="p-4 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedProducts.includes(product.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedProducts([...selectedProducts, product.id]);
-                            } else {
-                              setSelectedProducts(selectedProducts.filter(id => id !== product.id));
-                            }
-                          }}
-                          className="w-4 h-4 rounded border-white/20 bg-black"
-                        />
-                      </td>
-                      <td className="p-4 text-center">
-                        <input
-                          type="number"
-                          min={1}
-                          value={product.displayOrder || 1}
-                          onChange={(e) => updateDisplayOrder(product.id, parseInt(e.target.value) || 1)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              updateDisplayOrder(product.id, parseInt((e.target as HTMLInputElement).value) || 1);
-                            }
-                          }}
-                          className="w-12 text-center bg-black border border-white/20 rounded px-2 py-1 text-sm focus:border-white/50 focus:outline-none"
-                          title="Click to change position (Enter to save)"
-                        />
-                      </td>
-                      <td className="p-4 text-center">
-                        <button
-                          onClick={() => toggleFeatured(product)}
-                          className={`text-xl transition-colors ${
-                            product.featured ? 'text-yellow-400 hover:text-yellow-300' : 'text-white/20 hover:text-white/40'
-                          }`}
-                          title={product.featured ? 'Remove from spotlight' : 'Add to spotlight (max 3 per category)'}
-                        >
-                          {product.featured ? '⭐' : '☆'}
-                        </button>
-                      </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => setEditingProduct(product)}
-                          className="text-left hover:text-white/70 transition-colors"
-                        >
-                          <p className="font-medium">{product.title}</p>
-                          <p className="text-white/40 text-xs">${product.price} • {product.category}</p>
-                        </button>
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className="text-white/60 text-xs">{(product as any).productType || 'N/A'}</span>
-                      </td>
-                      {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
-                        const totalStock = (product.stock as Record<string, number>)?.[size] || 0;
+                  {(() => {
+                    // Flatten products with colors into multiple rows
+                    const rows: any[] = [];
+                    products
+                      .filter(p => 
+                        !productSearch || 
+                        p.title?.toLowerCase().includes(productSearch.toLowerCase()) ||
+                        p.slug?.toLowerCase().includes(productSearch.toLowerCase()) ||
+                        p.category?.toLowerCase().includes(productSearch.toLowerCase())
+                      )
+                      .forEach((product) => {
                         const colors = product.colors || [];
-                        const hasColors = colors.length > 0;
-                        
-                        // Calculate lowest stock across all colors for this size
-                        let lowestColorStock = Infinity;
-                        let lowestColorName = '';
-                        if (hasColors) {
-                          colors.forEach((color: any) => {
-                            const colorStock = color.stock?.[size] || 0;
-                            if (colorStock < lowestColorStock) {
-                              lowestColorStock = colorStock;
-                              lowestColorName = color.name;
-                            }
+                        if (colors.length > 0) {
+                          // Add product header row
+                          rows.push({ type: 'header', product });
+                          // Add a row for each color
+                          colors.forEach((color: any, idx: number) => {
+                            rows.push({ type: 'color', product, color, colorIndex: idx });
                           });
+                        } else {
+                          // No colors - just add the product row
+                          rows.push({ type: 'product', product });
                         }
-                        const isLow = hasColors ? lowestColorStock < 5 : totalStock < 5;
-                        const isCritical = hasColors ? lowestColorStock === 0 : totalStock === 0;
-                        
+                      });
+                    
+                    return rows.map((row, idx) => {
+                      if (row.type === 'header') {
+                        const product = row.product;
                         return (
-                          <td key={size} className="p-4">
-                            {hasColors ? (
-                              <div className="relative group">
+                          <tr key={`${product.id}-header`} className="border-b border-white/10 bg-white/5">
+                            <td className="p-4 text-center">
+                              <input
+                                type="checkbox"
+                                checked={selectedProducts.includes(product.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedProducts([...selectedProducts, product.id]);
+                                  } else {
+                                    setSelectedProducts(selectedProducts.filter(id => id !== product.id));
+                                  }
+                                }}
+                                className="w-4 h-4 rounded border-white/20 bg-black"
+                              />
+                            </td>
+                            <td className="p-4 text-center">
+                              <input
+                                type="number"
+                                min={1}
+                                value={product.displayOrder || 1}
+                                onChange={(e) => updateDisplayOrder(product.id, parseInt(e.target.value) || 1)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    updateDisplayOrder(product.id, parseInt((e.target as HTMLInputElement).value) || 1);
+                                  }
+                                }}
+                                className="w-12 text-center bg-black border border-white/20 rounded px-2 py-1 text-sm focus:border-white/50 focus:outline-none"
+                              />
+                            </td>
+                            <td className="p-4 text-center">
+                              <button
+                                onClick={() => toggleFeatured(product)}
+                                className={`text-xl transition-colors ${
+                                  product.featured ? 'text-yellow-400 hover:text-yellow-300' : 'text-white/20 hover:text-white/40'
+                                }`}
+                              >
+                                {product.featured ? '⭐' : '☆'}
+                              </button>
+                            </td>
+                            <td className="p-4" colSpan={9}>
+                              <button
+                                onClick={() => setEditingProduct(product)}
+                                className="text-left hover:text-white/70 transition-colors"
+                              >
+                                <p className="font-medium text-lg">{product.title}</p>
+                                <p className="text-white/40 text-xs">${product.price} • {product.category} • {product.colors?.length || 0} colors</p>
+                              </button>
+                            </td>
+                            <td className="p-4 text-center">
+                              <button
+                                onClick={() => deleteProduct(product.id)}
+                                className="px-3 py-1.5 bg-red-500/20 text-red-400 text-xs font-medium rounded hover:bg-red-500/30 transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      }
+                      
+                      if (row.type === 'color') {
+                        const { product, color } = row;
+                        return (
+                          <tr key={`${product.id}-color-${color.name}`} className="border-b border-white/5 hover:bg-white/5">
+                            <td className="p-4 text-center">
+                              <div className="w-4 h-4 rounded-full border border-white/20 mx-auto" style={{ backgroundColor: color.hex }} />
+                            </td>
+                            <td className="p-4 text-center" colSpan={2}>
+                              <span className="text-white/60 text-sm">{color.name}</span>
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className="text-white/40 text-xs">Color Variant</span>
+                            </td>
+                            {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
+                              const stock = color.stock?.[size] || 0;
+                              const isLow = stock < 5;
+                              const isCritical = stock === 0;
+                              
+                              return (
+                                <td key={size} className="p-4">
+                                  <button
+                                    onClick={() => {
+                                      setStockChangeProduct(product);
+                                      setStockChangeSize(size);
+                                      setStockChangeAmount(stock);
+                                      setStockChangeReason(`Updating ${color.name}`);
+                                      setShowStockChangeModal(true);
+                                    }}
+                                    className={`w-16 text-center bg-black border rounded px-2 py-1 text-sm hover:border-white/40 transition-colors ${
+                                      isCritical ? 'text-red-400 border-red-500/50' :
+                                      isLow ? 'text-yellow-400 border-yellow-500/30' :
+                                      'border-white/20'
+                                    }`}
+                                  >
+                                    {stock}
+                                  </button>
+                                </td>
+                              );
+                            })}
+                            <td className="p-4 text-center">
+                              <span className="text-white/20 text-xs">—</span>
+                            </td>
+                          </tr>
+                        );
+                      }
+                      
+                      // Regular product without colors
+                      const product = row.product;
+                      return (
+                        <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
+                          <td className="p-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedProducts.includes(product.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedProducts([...selectedProducts, product.id]);
+                                } else {
+                                  setSelectedProducts(selectedProducts.filter(id => id !== product.id));
+                                }
+                              }}
+                              className="w-4 h-4 rounded border-white/20 bg-black"
+                            />
+                          </td>
+                          <td className="p-4 text-center">
+                            <input
+                              type="number"
+                              min={1}
+                              value={product.displayOrder || 1}
+                              onChange={(e) => updateDisplayOrder(product.id, parseInt(e.target.value) || 1)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  updateDisplayOrder(product.id, parseInt((e.target as HTMLInputElement).value) || 1);
+                                }
+                              }}
+                              className="w-12 text-center bg-black border border-white/20 rounded px-2 py-1 text-sm focus:border-white/50 focus:outline-none"
+                            />
+                          </td>
+                          <td className="p-4 text-center">
+                            <button
+                              onClick={() => toggleFeatured(product)}
+                              className={`text-xl transition-colors ${
+                                product.featured ? 'text-yellow-400 hover:text-yellow-300' : 'text-white/20 hover:text-white/40'
+                              }`}
+                            >
+                              {product.featured ? '⭐' : '☆'}
+                            </button>
+                          </td>
+                          <td className="p-4">
+                            <button
+                              onClick={() => setEditingProduct(product)}
+                              className="text-left hover:text-white/70 transition-colors"
+                            >
+                              <p className="font-medium">{product.title}</p>
+                              <p className="text-white/40 text-xs">${product.price} • {product.category}</p>
+                            </button>
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className="text-white/60 text-xs">{(product as any).productType || 'N/A'}</span>
+                          </td>
+                          {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
+                            const stock = (product.stock as Record<string, number>)?.[size] || 0;
+                            const isLow = stock < 5;
+                            const isCritical = stock === 0;
+                            
+                            return (
+                              <td key={size} className="p-4">
                                 <button
                                   onClick={() => {
                                     setStockChangeProduct(product);
                                     setStockChangeSize(size);
-                                    setStockChangeAmount(totalStock);
+                                    setStockChangeAmount(stock);
                                     setStockChangeReason('');
                                     setShowStockChangeModal(true);
                                   }}
@@ -1404,59 +1496,24 @@ export default function AdminDashboard() {
                                     isLow ? 'text-yellow-400 border-yellow-500/30' :
                                     'border-white/20'
                                   }`}
-                                  title={`${colors.length} colors. Lowest: ${lowestColorName} (${lowestColorStock})`}
                                 >
-                                  {totalStock}
+                                  {stock}
                                 </button>
-                                {/* Color breakdown tooltip */}
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-neutral-900 border border-white/20 rounded-lg p-3 z-50 whitespace-nowrap">
-                                  <p className="text-xs text-white/60 mb-2">Color Breakdown:</p>
-                                  {colors.map((color: any) => (
-                                    <div key={color.name} className="flex items-center gap-2 text-sm">
-                                      <div 
-                                        className="w-3 h-3 rounded-full border border-white/20" 
-                                        style={{ backgroundColor: color.hex }}
-                                      />
-                                      <span className="text-white/80">{color.name}:</span>
-                                      <span className={color.stock?.[size] < 5 ? 'text-yellow-400' : 'text-white'}>
-                                        {color.stock?.[size] || 0}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setStockChangeProduct(product);
-                                  setStockChangeSize(size);
-                                  setStockChangeAmount(totalStock);
-                                  setStockChangeReason('');
-                                  setShowStockChangeModal(true);
-                                }}
-                                className={`w-16 text-center bg-black border rounded px-2 py-1 text-sm hover:border-white/40 transition-colors ${
-                                  isCritical ? 'text-red-400 border-red-500/50' :
-                                  isLow ? 'text-yellow-400 border-yellow-500/30' :
-                                  'border-white/20'
-                                }`}
-                              >
-                                {totalStock}
-                              </button>
-                            )}
+                              </td>
+                            );
+                          })}
+                          <td className="p-4 text-center">
+                            <button
+                              onClick={() => deleteProduct(product.id)}
+                              className="px-3 py-1.5 bg-red-500/20 text-red-400 text-xs font-medium rounded hover:bg-red-500/30 transition-colors"
+                            >
+                              Delete
+                            </button>
                           </td>
-                        );
-                      })}
-                      <td className="p-4 text-center">
-                        <button
-                          onClick={() => deleteProduct(product.id)}
-                          className="px-3 py-1.5 bg-red-500/20 text-red-400 text-xs font-medium rounded hover:bg-red-500/30 transition-colors"
-                          title="Delete product"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </tr>
+                      );
+                    });
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -3488,8 +3545,10 @@ export default function AdminDashboard() {
                   <button
                     type="button"
                     onClick={() => {
+                      const colorNames = ['Black', 'White', 'Navy', 'Gray', 'Red', 'Blue', 'Green'];
+                      const defaultName = colorNames[newProduct.colors.length] || `Color ${newProduct.colors.length + 1}`;
                       const newColor = {
-                        name: `Color ${newProduct.colors.length + 1}`,
+                        name: defaultName,
                         hex: '#000000',
                         images: [] as string[],
                         stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 }
