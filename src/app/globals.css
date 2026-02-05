@@ -303,12 +303,16 @@ html {
   width: 100%;
 }
 
-/* Diamond Logo Dance Animation - Jump Left, Jump Right */
+/* Diamond Logo Dance Animation - Tilt around bottom point */
 @keyframes diamond-dance {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-10px); }
-  50% { transform: translateX(0); }
-  75% { transform: translateX(10px); }
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-15deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(15deg); }
+}
+
+img[src="/diamond-white.png"] {
+  transform-origin: bottom center;
 }
 
 .diamond-dance:hover {
