@@ -3563,6 +3563,31 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Stock (for products without colors) */}
+              {newProduct.colors.length === 0 && (
+                <div className="border-t border-white/10 pt-6 mt-6">
+                  <h4 className="text-sm font-medium text-white/60 mb-4">Stock by Size</h4>
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
+                      <div key={size}>
+                        <label className="block text-[10px] text-white/40 text-center mb-1">{size}</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={newProduct.stock[size] || 0}
+                          onChange={(e) => {
+                            const newStock = { ...newProduct.stock };
+                            newStock[size as keyof typeof newStock] = parseInt(e.target.value) || 0;
+                            setNewProduct({ ...newProduct, stock: newStock });
+                          }}
+                          className="w-full bg-black border border-white/20 rounded-lg px-2 py-2 text-center text-sm focus:border-white/50 focus:outline-none"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Colors Management */}
               <div className="border-t border-white/10 pt-6 mt-6">
                 <div className="flex items-center justify-between mb-4">
