@@ -502,8 +502,9 @@ export default function AdminDashboard() {
       
       // Refresh inventory logs
       fetchInventoryLogs();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating stock:', error);
+      alert('Failed to update stock: ' + (error?.message || 'Unknown error'));
     }
   };
 
