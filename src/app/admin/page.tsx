@@ -124,6 +124,7 @@ export default function AdminDashboard() {
   const [stockChangeSize, setStockChangeSize] = useState('');
   const [stockChangeAmount, setStockChangeAmount] = useState(0);
   const [stockChangeReason, setStockChangeReason] = useState('');
+  const [stockChangeColor, setStockChangeColor] = useState<string | null>(null);
 
   // Customer 360° view state
   const [viewingCustomer, setViewingCustomer] = useState<{email: string, name: string} | null>(null);
@@ -423,36 +424,81 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  const updateStock = async (productId: string, size: string, newStock: number, reason?: string) => {
+  const updateStock = async (productId: string, size: string, newStock: number, reason?: string, colorName?: string) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
-    const oldStock = (product.stock as Record<string, number>)?.[size] || 0;
-    const updatedStock = { ...product.stock, [size]: newStock };
-    
     try {
-      // Update product stock
-      await updateDoc(doc(db, 'products', productId), {
-        stock: updatedStock,
-        updated_at: new Date().toISOString()
-      });
-      
-      // Log the inventory change
-      await addDoc(collection(db, 'inventory_logs'), {
-        product_id: productId,
-        product_name: product.title,
-        size: size,
-        old_stock: oldStock,
-        new_stock: newStock,
-        change: newStock - oldStock,
-        reason: reason || 'Manual adjustment',
-        user_email: user?.email || 'unknown',
-        created_at: new Date().toISOString()
-      });
-      
-      setProducts(products.map(p => 
-        p.id === productId ? { ...p, stock: updatedStock } : p
-      ));
+      if (colorName && product.colors) {
+        // Update stock for a specific color
+        const colorIndex = product.colors.findIndex((c: any) => c.name === colorName);
+        if (colorIndex === -1) return;
+
+        const oldStock = product.colors[colorIndex].stock?.[size] || 0;
+        const updatedColors = [...product.colors];
+        updatedColors[colorIndex] = {
+          ...updatedColors[colorIndex],
+          stock: { ...updatedColors[colorIndex].stock, [size]: newStock }
+        };
+
+        // Calculate new total stock across all colors
+        const totalStock = { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+        updatedColors.forEach((color: any) => {
+          ['XS', 'S', 'M', 'L', 'XL', 'XXL'].forEach((s) => {
+            totalStock[s as keyof typeof totalStock] += (color.stock?.[s] || 0);
+          });
+        });
+
+        await updateDoc(doc(db, 'products', productId), {
+          colors: updatedColors,
+          stock: totalStock,
+          updated_at: new Date().toISOString()
+        });
+
+        // Log the inventory change
+        await addDoc(collection(db, 'inventory_logs'), {
+          product_id: productId,
+          product_name: product.title,
+          color: colorName,
+          size: size,
+          old_stock: oldStock,
+          new_stock: newStock,
+          change: newStock - oldStock,
+          reason: reason || 'Manual adjustment',
+          user_email: user?.email || 'unknown',
+          created_at: new Date().toISOString()
+        });
+
+        setProducts(products.map(p => 
+          p.id === productId ? { ...p, colors: updatedColors, stock: totalStock } : p
+        ));
+      } else {
+        // Update main product stock (for products without colors)
+        const oldStock = (product.stock as Record<string, number>)?.[size] || 0;
+        const updatedStock = { ...product.stock, [size]: newStock };
+        
+        await updateDoc(doc(db, 'products', productId), {
+          stock: updatedStock,
+          updated_at: new Date().toISOString()
+        });
+        
+        // Log the inventory change
+        await addDoc(collection(db, 'inventory_logs'), {
+          product_id: productId,
+          product_name: product.title,
+          size: size,
+          old_stock: oldStock,
+          new_stock: newStock,
+          change: newStock - oldStock,
+          reason: reason || 'Manual adjustment',
+          user_email: user?.email || 'unknown',
+          created_at: new Date().toISOString()
+        });
+        
+        setProducts(products.map(p => 
+          p.id === productId ? { ...p, stock: updatedStock } : p
+        ));
+      }
       
       // Refresh inventory logs
       fetchInventoryLogs();
@@ -1445,6 +1491,7 @@ export default function AdminDashboard() {
                                       setStockChangeProduct(product);
                                       setStockChangeSize(size);
                                       setStockChangeAmount(stock);
+                                      setStockChangeColor(null);
                                       setStockChangeReason('');
                                       setShowStockChangeModal(true);
                                     }}
@@ -1515,6 +1562,7 @@ export default function AdminDashboard() {
                                           setStockChangeProduct(product);
                                           setStockChangeSize(size);
                                           setStockChangeAmount(stock);
+                                          setStockChangeColor(color.name);
                                           setStockChangeReason(`Updating ${color.name}`);
                                           setShowStockChangeModal(true);
                                         }}
@@ -4148,6 +4196,9 @@ export default function AdminDashboard() {
               <div className="p-4 bg-white/5 rounded-lg">
                 <p className="text-white/40 text-sm">Product</p>
                 <p className="font-medium">{stockChangeProduct.title}</p>
+                {stockChangeColor && (
+                  <p className="text-sm text-amber-400 mt-1">Color: {stockChangeColor}</p>
+                )}
               </div>
               
               <div className="p-4 bg-white/5 rounded-lg">
@@ -4185,6 +4236,7 @@ export default function AdminDashboard() {
                   setShowStockChangeModal(false);
                   setStockChangeProduct(null);
                   setStockChangeReason('');
+                  setStockChangeColor(null);
                 }}
                 className="flex-1 py-3 border border-white/20 rounded-lg hover:bg-white/5 transition-colors"
               >
@@ -4192,10 +4244,11 @@ export default function AdminDashboard() {
               </button>
               <button
                 onClick={async () => {
-                  await updateStock(stockChangeProduct.id, stockChangeSize, stockChangeAmount, stockChangeReason);
+                  await updateStock(stockChangeProduct.id, stockChangeSize, stockChangeAmount, stockChangeReason, stockChangeColor || undefined);
                   setShowStockChangeModal(false);
                   setStockChangeProduct(null);
                   setStockChangeReason('');
+                  setStockChangeColor(null);
                 }}
                 className="flex-1 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition-colors font-bold"
               >
