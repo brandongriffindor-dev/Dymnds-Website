@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import type { Product } from '@/lib/firebase';
 
 export default function NewArrivalsPage() {
@@ -15,8 +15,12 @@ export default function NewArrivalsPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Get products sorted by createdAt (newest first)
-        const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+        // Get products marked as new arrivals
+        const q = query(
+          collection(db, 'products'), 
+          where('newArrival', '==', true),
+          orderBy('displayOrder', 'asc')
+        );
         const snapshot = await getDocs(q);
         const productsData = snapshot.docs.map(doc => ({ 
           id: doc.id, 
@@ -25,8 +29,8 @@ export default function NewArrivalsPage() {
         setProducts(productsData);
       } catch (err: any) {
         console.error('Query error:', err.message);
-        // Fallback to displayOrder
-        const fallbackQ = query(collection(db, 'products'), orderBy('displayOrder', 'asc'));
+        // Fallback: get all products sorted by createdAt (newest first)
+        const fallbackQ = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
         const fallbackSnap = await getDocs(fallbackQ);
         const productsData = fallbackSnap.docs.map(doc => ({ 
           id: doc.id, 
