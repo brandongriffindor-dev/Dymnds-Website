@@ -1,225 +1,100 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useCart } from '@/components/CartContext';
-import { useState, useEffect } from 'react';
-
-interface ShopifyVariant {
-  id: string;
-  title: string;
-  price: string;
-  inventory_quantity: number;
-}
-
-interface ShopifyProduct {
-  id: string;
-  title: string;
-  handle: string;
-  description: string;
-  product_type: string;
-  tags: string;
-  variants: ShopifyVariant[];
-  images: { src: string }[];
-}
-
-const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import type { Product } from '@/lib/firebase';
 
 export default function ShopPage() {
-  const [activeCategory, setActiveCategory] = useState<'all' | 'men' | 'women'>('all');
-  const { addToCart, cart, subtotal } = useCart();
-  const [showCart, setShowCart] = useState(false);
-  const [products, setProducts] = useState<ShopifyProduct[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch real products from Shopify
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const q = query(collection(db, 'products'), orderBy('displayOrder', 'asc'));
+        const snapshot = await getDocs(q);
+        const productsData = snapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        } as Product));
+        setProducts(productsData);
+      } catch (err: any) {
+        console.error('Query error:', err.message);
+        const fallbackQ = query(collection(db, 'products'));
+        const fallbackSnap = await getDocs(fallbackQ);
+        const productsData = fallbackSnap.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        } as Product));
+        productsData.sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999));
+        setProducts(productsData);
+      }
+      setLoading(false);
+    };
+
     fetchProducts();
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('https://dymnds.myshopify.com/api/2024-01/products.json?limit=50', {
-        headers: {
-          'X-Shopify-Storefront-Access-Token': 'your-storefront-token-here'
-        }
-      });
-      
-      // For now, use the Storefront API or fetch from our admin API
-      // Since we need to handle CORS, let's use a simpler approach
-      const data = await fetch('/api/storefront/products').then(r => r.json()).catch(() => null);
-      
-      if (data?.products) {
-        setProducts(data.products);
-      } else {
-        // Fallback: fetch from admin API through a proxy
-        const adminData = await fetch('https://dymnds-admin.vercel.app/api/products').then(r => r.json()).catch(() => null);
-        if (adminData?.products) {
-          setProducts(adminData.products);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch products:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Filter products by category
-  const getCategory = (product: ShopifyProduct) => {
-    const type = product.product_type?.toLowerCase() || '';
-    const tags = product.tags?.toLowerCase() || '';
-    if (type.includes('men') || tags.includes('men')) return 'men';
-    if (type.includes('women') || tags.includes('women')) return 'women';
-    return 'men'; // default
-  };
-
-  const filteredProducts = activeCategory === 'all' 
+  const filteredProducts = selectedCategory === 'All' 
     ? products 
-    : products.filter(p => getCategory(p) === activeCategory);
-
-  const handleCheckout = () => {
-    window.location.href = 'https://dymnds.myshopify.com/cart';
-  };
+    : products.filter(p => p.category === selectedCategory);
 
   return (
     <main className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <section className="pt-32 pb-24 px-6">
+      {/* Hero */}
+      <section className="pt-32 pb-16 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Products Column */}
-            <div className="lg:col-span-2">
-              {/* Header */}
-              <div className="mb-12">
-                <h1 className="text-5xl md:text-6xl font-light tracking-tight mb-4" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                  Shop
-                </h1>
-                <p className="text-white/50">Premium activewear. Real impact.</p>
-                {loading && <p className="text-white/30 mt-2">Loading products...</p>}
-              </div>
-
-              {/* Category Filter */}
-              <div className="flex gap-4 mb-10">
-                {[
-                  { key: 'all', label: 'All' },
-                  { key: 'men', label: 'Men' },
-                  { key: 'women', label: 'Women' },
-                ].map((cat) => (
-                  <button
-                    key={cat.key}
-                    onClick={() => setActiveCategory(cat.key as 'all' | 'men' | 'women')}
-                    className={`px-6 py-3 text-xs tracking-[0.2em] uppercase transition-all ${
-                      activeCategory === cat.key
-                        ? 'bg-white text-black'
-                        : 'border border-white/20 text-white/60 hover:text-white hover:border-white/40'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Products Grid */}
-              {products.length === 0 && !loading ? (
-                <div className="text-center py-16">
-                  <p className="text-white/40">No products available</p>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 gap-8">
-                  {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Cart/Checkout Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-32 border border-white/10 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl tracking-wide" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                    Your Cart
-                  </h2>
-                  <span className="text-sm text-white/50">
-                    {cart.length} {cart.length === 1 ? 'item' : 'items'}
-                  </span>
-                </div>
-
-                {cart.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-white/40 mb-4">Your cart is empty</p>
-                    <p className="text-white/30 text-sm">Add items to make an impact</p>
-                    <div className="mt-6 p-4 bg-white/5 border border-white/10 rounded-lg">
-                      <p className="text-xs text-white/50">
-                        💎 Every $89 funds 1 hour of survivor therapy
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
-                      {cart.map((item) => (
-                        <div key={item.id} className="flex justify-between items-center py-3 border-b border-white/5">
-                          <div>
-                            <p className="text-sm">{item.name}</p>
-                            <p className="text-xs text-white/40">Size: {item.size} × {item.quantity}</p>
-                          </div>
-                          <p className="text-sm">${item.price * item.quantity}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="border-t border-white/10 pt-4 mb-4">
-                      <div className="flex justify-between mb-2">
-                        <span className="text-white/60">Subtotal</span>
-                        <span>${subtotal}</span>
-                      </div>
-                    </div>
-
-                    {/* Impact Calculator */}
-                    <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-lg">💎</span>
-                        <span className="text-sm font-medium text-green-400">Your Impact</span>
-                      </div>
-                      <p className="text-2xl font-light text-white mb-1" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                        {(subtotal * 0.1 / 89 * 60).toFixed(0)} minutes
-                      </p>
-                      <p className="text-xs text-white/60">
-                        of trauma therapy funded for survivors
-                      </p>
-                      <div className="mt-3 pt-3 border-t border-green-500/20">
-                        <p className="text-xs text-white/40">
-                          ${(subtotal * 0.1).toFixed(2)} donated • 10% of every order
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="border-t border-white/10 pt-4 mb-6">
-                      <div className="flex justify-between text-lg">
-                        <span>Total</span>
-                        <span>${subtotal}</span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={handleCheckout}
-                      className="w-full py-4 bg-white text-black text-xs tracking-[0.2em] uppercase hover:bg-white/90 transition-all"
-                    >
-                      Checkout
-                    </button>
-
-                    <p className="text-center text-white/30 text-xs mt-4">
-                      When you wear Dymnds, you help others shine
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
+          <div className="text-center mb-12">
+            <p className="text-xs tracking-[0.3em] uppercase text-white/50 mb-4">Premium Activewear</p>
+            <h1 className="text-6xl md:text-8xl font-bebas italic tracking-tight uppercase mb-6">
+              All Products
+            </h1>
+            <p className="text-lg text-white/40 max-w-2xl mx-auto italic">
+              Every piece engineered for performance. 10% of every order supports survivors.
+            </p>
           </div>
+
+          {/* Category Filter */}
+          <div className="flex justify-center gap-4 mb-12">
+            {['All', 'Men', 'Women'].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-6 py-3 text-sm tracking-widest uppercase rounded-xl transition-all ${
+                  selectedCategory === cat
+                    ? 'bg-white text-black'
+                    : 'border border-white/20 text-white/60 hover:text-white hover:border-white/40'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Products Grid */}
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-white/40 text-xl mb-4">No products yet</p>
+              <p className="text-white/30">Add products in the admin dashboard</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -228,77 +103,50 @@ export default function ShopPage() {
   );
 }
 
-function ProductCard({ product, onAddToCart }: { 
-  product: ShopifyProduct; 
-  onAddToCart: (item: { id: string; name: string; price: number; quantity: number; size: string }) => void;
+function ProductCard({ product }: { 
+  product: Product;
 }) {
-  const [selectedSize, setSelectedSize] = useState('M');
-  const [added, setAdded] = useState(false);
-
-  const handleAdd = () => {
-    const price = parseFloat(product.variants?.[0]?.price || '0');
-    onAddToCart({
-      id: `${product.id}-${selectedSize}`,
-      name: product.title,
-      price: price,
-      quantity: 1,
-      size: selectedSize,
-    });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
-  };
-
-  const price = parseFloat(product.variants?.[0]?.price || '0');
-  const imageUrl = product.images?.[0]?.src || '/diamond-white.png';
+  const donation = (product.price * 0.10).toFixed(2);
 
   return (
-    <div className="group">
-      <div className="aspect-[4/5] bg-neutral-900 mb-5 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500 overflow-hidden">
-        {product.images?.[0]?.src ? (
+    <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+      {/* Image Placeholder */}
+      <Link href={`/products/${product.slug}`} className="block">
+        <div className="aspect-square bg-neutral-900 flex items-center justify-center relative group">
           <img 
-            src={imageUrl} 
-            alt={product.title}
-            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+            src="/diamond-white.png" 
+            alt="" 
+            className="w-20 h-20 opacity-20 group-hover:opacity-40 transition-opacity"
           />
-        ) : (
-          <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-15 group-hover:opacity-40 transition-opacity duration-500" />
-        )}
-      </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      </Link>
 
-      <div className="space-y-3">
-        <p className="text-[10px] tracking-[0.3em] uppercase text-white/30">{product.product_type || 'Apparel'}</p>
-        <h3 className="text-xl tracking-wide" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-          {product.title}
-        </h3>
-        <p className="text-white/40 text-sm line-clamp-2">{product.description?.replace(/<[^>]*>/g, '').slice(0, 100) || 'Premium activewear'}</p>
-        <p className="text-lg">${price}</p>
+      {/* Content */}
+      <div className="p-6">
+        <p className="text-xs tracking-widest uppercase text-white/40 mb-2">{product.category}</p>
+        <Link href={`/products/${product.slug}`}>
+          <h3 className="text-2xl font-bebas italic uppercase tracking-wide mb-2 hover:opacity-70 transition-opacity">{product.title}</h3>
+        </Link>
+        <p className="text-white/60 text-sm mb-4">{product.subtitle}</p>
 
-        <div className="flex gap-2 pt-2">
-          {sizes.map((size) => (
-            <button
-              key={size}
-              onClick={() => setSelectedSize(size)}
-              className={`w-10 h-10 flex items-center justify-center text-xs transition-all ${
-                selectedSize === size
-                  ? 'bg-white text-black'
-                  : 'border border-white/20 text-white/50 hover:text-white hover:border-white/40'
-              }`}
-            >
-              {size}
-            </button>
-          ))}
+        {/* Impact */}
+        <div className="flex items-center gap-2 mb-4 text-green-400 text-sm">
+          <div className="w-2 h-2 rounded-full bg-green-400" />
+          <span>${donation} supports survivors</span>
         </div>
 
-        <button
-          onClick={handleAdd}
-          className={`w-full py-4 mt-3 text-xs tracking-[0.2em] uppercase transition-all ${
-            added 
-              ? 'bg-green-500 text-white' 
-              : 'bg-white text-black hover:bg-white/90'
-          }`}
-        >
-          {added ? 'Added ✓' : 'Add to Cart'}
-        </button>
+        {/* Price */}
+        <p className="text-2xl font-bebas italic mb-4">${product.price}</p>
+
+        {/* View Product Button */}
+        <Link href={`/products/${product.slug}`}>
+          <button
+            className="w-full py-4 font-bebas italic text-lg tracking-widest uppercase rounded-xl bg-white text-black hover:scale-[1.02] transition-all"
+          >
+            View Product
+          </button>
+        </Link>
       </div>
     </div>
   );
