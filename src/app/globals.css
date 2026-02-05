@@ -306,22 +306,26 @@ html {
 /* Diamond Logo Dance Animation */
 @keyframes diamond-dance {
   0%, 100% { transform: rotate(0deg) scale(1); }
-  10% { transform: rotate(-15deg) scale(1.1); }
-  20% { transform: rotate(15deg) scale(1.1); }
-  30% { transform: rotate(-10deg) scale(1.1); }
-  40% { transform: rotate(10deg) scale(1.1); }
-  50% { transform: rotate(0deg) scale(1.05); }
-  60% { transform: rotate(-5deg) scale(1.1); }
-  70% { transform: rotate(5deg) scale(1.1); }
-  80% { transform: rotate(0deg) scale(1.05); }
-  90% { transform: rotate(-3deg) scale(1.02); }
+  10% { transform: rotate(-20deg) scale(1.15); }
+  20% { transform: rotate(20deg) scale(1.15); }
+  30% { transform: rotate(-15deg) scale(1.15); }
+  40% { transform: rotate(15deg) scale(1.15); }
+  50% { transform: rotate(0deg) scale(1.1); }
+  60% { transform: rotate(-10deg) scale(1.15); }
+  70% { transform: rotate(10deg) scale(1.15); }
+  80% { transform: rotate(0deg) scale(1.1); }
+  90% { transform: rotate(-5deg) scale(1.05); }
 }
 
 .diamond-dance:hover {
   animation: diamond-dance 0.8s ease-in-out;
+  cursor: pointer;
 }
 
-/* Auto-apply dance animation to all diamond logos */
-img[src="/diamond-white.png"]:hover {
+/* Auto-apply dance animation to all diamond logos - high specificity */
+main img[src="/diamond-white.png"]:hover,
+nav img[src="/diamond-white.png"]:hover,
+footer img[src="/diamond-white.png"]:hover,
+.diamond-dance:hover {
   animation: diamond-dance 0.8s ease-in-out;
 }
