@@ -74,6 +74,8 @@ export interface Product {
   };
   displayOrder: number;
   featured: boolean;
+  newArrival?: boolean;
+  bestSeller?: boolean;
   is_active: boolean;
   created_at: string;
   updated_at: string;

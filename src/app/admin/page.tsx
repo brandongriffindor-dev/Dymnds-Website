@@ -52,6 +52,8 @@ export default function AdminDashboard() {
     productType: 'Tops',
     displayOrder: 1,
     featured: false,
+    newArrival: false,
+    bestSeller: false,
     description: '',
     features: [] as string[],
     modelSize: '',
@@ -584,6 +586,46 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleNewArrival = async (product: Product) => {
+    const newState = !product.newArrival;
+    
+    try {
+      await updateDoc(doc(db, 'products', product.id), {
+        newArrival: newState,
+        updated_at: new Date().toISOString()
+      });
+      
+      setProducts(products.map(p => 
+        p.id === product.id ? { ...p, newArrival: newState } : p
+      ));
+      
+      alert(newState ? '✅ Added to New Arrivals' : 'Removed from New Arrivals');
+    } catch (error) {
+      console.error('Error toggling new arrival:', error);
+      alert('Failed to update New Arrival status');
+    }
+  };
+
+  const toggleBestSeller = async (product: Product) => {
+    const newState = !product.bestSeller;
+    
+    try {
+      await updateDoc(doc(db, 'products', product.id), {
+        bestSeller: newState,
+        updated_at: new Date().toISOString()
+      });
+      
+      setProducts(products.map(p => 
+        p.id === product.id ? { ...p, bestSeller: newState } : p
+      ));
+      
+      alert(newState ? '✅ Added to Best Sellers' : 'Removed from Best Sellers');
+    } catch (error) {
+      console.error('Error toggling best seller:', error);
+      alert('Failed to update Best Seller status');
+    }
+  };
+
   const updateProductDetails = async (product: Product) => {
     try {
       await updateDoc(doc(db, 'products', product.id), {
@@ -729,6 +771,8 @@ export default function AdminDashboard() {
         productType: newProduct.productType,
         displayOrder: targetOrder,
         featured: newProduct.featured,
+        newArrival: newProduct.newArrival,
+        bestSeller: newProduct.bestSeller,
         description: newProduct.description,
         features: newProduct.features.filter(f => f.trim()),
         modelSize: newProduct.modelSize,
@@ -1276,6 +1320,8 @@ export default function AdminDashboard() {
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Select</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">#</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">⭐</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">New</th>
+                    <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Top</th>
                     <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Product / Color</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">Type</th>
                     <th className="text-center p-4 text-xs uppercase tracking-wider text-white/40">XS</th>
@@ -1349,6 +1395,28 @@ export default function AdminDashboard() {
                                 }`}
                               >
                                 {product.featured ? '⭐' : '☆'}
+                              </button>
+                            </td>
+                            <td className="p-4 text-center">
+                              <button
+                                onClick={() => toggleNewArrival(product)}
+                                className={`text-sm font-bold transition-colors ${
+                                  product.newArrival ? 'text-green-400 hover:text-green-300' : 'text-white/20 hover:text-white/40'
+                                }`}
+                                title="New Arrival"
+                              >
+                                {product.newArrival ? 'NEW' : '—'}
+                              </button>
+                            </td>
+                            <td className="p-4 text-center">
+                              <button
+                                onClick={() => toggleBestSeller(product)}
+                                className={`text-sm font-bold transition-colors ${
+                                  product.bestSeller ? 'text-amber-400 hover:text-amber-300' : 'text-white/20 hover:text-white/40'
+                                }`}
+                                title="Best Seller"
+                              >
+                                {product.bestSeller ? 'TOP' : '—'}
                               </button>
                             </td>
                             <td className="p-4">
