@@ -825,6 +825,8 @@ export default function AdminDashboard() {
         productType: 'Tops',
         displayOrder: 1,
         featured: false,
+        newArrival: false,
+        bestSeller: false,
         description: '',
         features: [],
         modelSize: '',
