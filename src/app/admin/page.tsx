@@ -434,7 +434,7 @@ export default function AdminDashboard() {
         const colorIndex = product.colors.findIndex((c: any) => c.name === colorName);
         if (colorIndex === -1) return;
 
-        const oldStock = product.colors[colorIndex].stock?.[size] || 0;
+        const oldStock = product.colors[colorIndex].stock?.[size as keyof typeof product.colors[0]['stock']] || 0;
         const updatedColors = [...product.colors];
         updatedColors[colorIndex] = {
           ...updatedColors[colorIndex],
@@ -3622,7 +3622,7 @@ export default function AdminDashboard() {
                         <input
                           type="number"
                           min={0}
-                          value={newProduct.stock[size] || 0}
+                          value={newProduct.stock[size as keyof typeof newProduct.stock] || 0}
                           onChange={(e) => {
                             const newStock = { ...newProduct.stock };
                             newStock[size as keyof typeof newStock] = parseInt(e.target.value) || 0;
