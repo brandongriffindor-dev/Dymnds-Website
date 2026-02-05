@@ -15,28 +15,19 @@ export default function NewArrivalsPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Get products marked as new arrivals
-        const q = query(
-          collection(db, 'products'), 
-          where('newArrival', '==', true),
-          orderBy('displayOrder', 'asc')
-        );
+        // Get products marked as new arrivals (simple query to avoid index issues)
+        const q = query(collection(db, 'products'), where('newArrival', '==', true));
         const snapshot = await getDocs(q);
-        const productsData = snapshot.docs.map(doc => ({ 
+        let productsData = snapshot.docs.map(doc => ({ 
           id: doc.id, 
           ...doc.data() 
         } as Product));
+        // Sort by displayOrder in memory
+        productsData.sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999));
         setProducts(productsData);
       } catch (err: any) {
         console.error('Query error:', err.message);
-        // Fallback: get all products sorted by createdAt (newest first)
-        const fallbackQ = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-        const fallbackSnap = await getDocs(fallbackQ);
-        const productsData = fallbackSnap.docs.map(doc => ({ 
-          id: doc.id, 
-          ...doc.data() 
-        } as Product));
-        setProducts(productsData);
+        setProducts([]);
       }
       setLoading(false);
     };

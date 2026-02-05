@@ -15,28 +15,19 @@ export default function BestSellersPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Get products marked as best sellers
-        const q = query(
-          collection(db, 'products'), 
-          where('bestSeller', '==', true),
-          orderBy('displayOrder', 'asc')
-        );
+        // Get products marked as best sellers (simple query to avoid index issues)
+        const q = query(collection(db, 'products'), where('bestSeller', '==', true));
         const snapshot = await getDocs(q);
-        const productsData = snapshot.docs.map(doc => ({ 
+        let productsData = snapshot.docs.map(doc => ({ 
           id: doc.id, 
           ...doc.data() 
         } as Product));
+        // Sort by displayOrder in memory
+        productsData.sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999));
         setProducts(productsData);
       } catch (err: any) {
         console.error('Query error:', err.message);
-        // Fallback: get all products if bestSeller filter fails
-        const fallbackQ = query(collection(db, 'products'), orderBy('displayOrder', 'asc'));
-        const fallbackSnap = await getDocs(fallbackQ);
-        const productsData = fallbackSnap.docs.map(doc => ({ 
-          id: doc.id, 
-          ...doc.data() 
-        } as Product));
-        setProducts(productsData);
+        setProducts([]);
       }
       setLoading(false);
     };
