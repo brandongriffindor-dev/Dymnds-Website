@@ -29,6 +29,7 @@ export const metadata: Metadata = {
 
 import CursorEffect from '@/components/CursorEffect';
 import { CartProvider } from '@/components/CartContext';
+import { CurrencyProvider } from '@/components/CurrencyContext';
 
 export default function RootLayout({
   children,
@@ -40,10 +41,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <CartProvider>
-          <CursorEffect />
-          {children}
-        </CartProvider>
+        <CurrencyProvider>
+          <CartProvider>
+            <CursorEffect />
+            {children}
+          </CartProvider>
+        </CurrencyProvider>
       </body>
     </html>
   );

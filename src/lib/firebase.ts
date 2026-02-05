@@ -48,7 +48,8 @@ export interface Product {
   slug: string;
   title: string;
   subtitle: string;
-  price: number;
+  price: number; // Keep for backward compatibility, will store CAD
+  price_cad?: number; // Explicit CAD price
   stock: {
     XS: number;
     S: number;

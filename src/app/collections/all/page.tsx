@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useCurrency, convertPrice, formatPrice, getCadPrice } from '@/components/CurrencyContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { db } from '@/lib/firebase';
@@ -106,7 +107,10 @@ export default function CollectionsPage() {
 function ProductCard({ product }: { 
   product: Product;
 }) {
-  const donation = (product.price * 0.10).toFixed(2);
+  const { currency } = useCurrency();
+  const cadPrice = getCadPrice(product);
+  const displayPrice = convertPrice(cadPrice, currency);
+  const donation = (displayPrice * 0.10).toFixed(2);
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
@@ -137,7 +141,7 @@ function ProductCard({ product }: {
         </div>
 
         {/* Price */}
-        <p className="text-2xl font-bebas italic mb-4">${product.price}</p>
+        <p className="text-2xl font-bebas italic mb-4">{formatPrice(displayPrice, currency)}</p>
 
         {/* View Product Button */}
         <Link href={`/products/${product.slug}`}>
