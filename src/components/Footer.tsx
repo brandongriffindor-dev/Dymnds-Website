@@ -48,7 +48,7 @@ export default function Footer() {
                 { name: 'Men', href: '/collections/men' },
                 { name: 'Women', href: '/collections/women' },
                 { name: 'New Arrivals', href: '/collections/new-arrivals' },
-                { name: 'Best Sellers', href: '/collections/all' },
+                { name: 'Best Sellers', href: '/collections/best-sellers' },
               ].map((link) => (
                 <li key={link.name}>
                   <Link 
