@@ -83,8 +83,8 @@ export default function BestSellersPage() {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {products.map((product, index) => (
-                <ProductCard key={product.id} product={product} rank={index + 1} />
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
@@ -96,9 +96,8 @@ export default function BestSellersPage() {
   );
 }
 
-function ProductCard({ product, rank }: { 
+function ProductCard({ product }: { 
   product: Product;
-  rank: number;
 }) {
   const donation = (product.price * 0.10).toFixed(2);
 
@@ -113,11 +112,6 @@ function ProductCard({ product, rank }: {
             className="w-20 h-20 opacity-20 group-hover:opacity-40 transition-opacity"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          
-          {/* Rank Badge */}
-          <div className="absolute top-4 left-4 w-10 h-10 bg-amber-500 text-black font-bold text-lg rounded-full flex items-center justify-center">
-            #{rank}
-          </div>
         </div>
       </Link>
 
