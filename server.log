@@ -128,3 +128,6 @@ This typically indicates that your device does not have a healthy Internet conne
  GET /apple-touch-icon.png 404 in 555ms (compile: 509ms, render: 46ms)
  GET / 200 in 36ms (compile: 4ms, proxy.ts: 4ms, render: 29ms)
 [2026-02-11T20:26:35.010Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x403eef9d error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+[2026-02-11T21:26:35.160Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x403eef9e error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
+[2026-02-11T21:27:12.250Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x403eef9f error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+ GET / 200 in 115ms (compile: 4ms, proxy.ts: 3ms, render: 107ms)
