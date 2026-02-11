@@ -45,13 +45,13 @@ export default function ImpactPage() {
             <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/50 mb-4">Our Impact</p>
           </ScrollReveal>
 
-          <ScrollReveal animation="fade-up" delay={100} duration={800}>
+          <ScrollReveal animation="blur-up" delay={100} duration={1200}>
             <h1 className="tracking-tight mb-6 font-bebas leading-[0.85]" style={{ fontSize: 'clamp(4rem, 12vw, 10rem)' }}>
               Your Purchase<br />Has Power
             </h1>
           </ScrollReveal>
 
-          <ScrollReveal animation="fade-up" delay={200} duration={800}>
+          <ScrollReveal animation="slide-right" delay={200} duration={800}>
             <p className="text-xl text-white/50 max-w-2xl mx-auto">
               Every piece of DYMNDS gear helps a survivor take their first step toward healing.
             </p>
@@ -62,10 +62,8 @@ export default function ImpactPage() {
       {/* Divider */}
       <div className="h-px bg-gradient-to-r from-transparent via-[var(--accent)]/10 to-transparent" />
 
-      <div className="h-20" />
-
       {/* The 10% Promise */}
-      <section className="py-24 px-6 bg-neutral-950">
+      <section className="py-28 md:py-40 px-6 bg-neutral-950">
         <div className="max-w-4xl mx-auto">
           <ScrollReveal animation="scale" delay={0} duration={1000} threshold={0.3}>
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 mb-16">
@@ -79,7 +77,7 @@ export default function ImpactPage() {
             </div>
           </ScrollReveal>
 
-          <StaggerReveal staggerDelay={100} animation="fade-up" duration={800} threshold={0.2}>
+          <StaggerReveal staggerDelay={120} animation="blur-up" duration={900} threshold={0.2}>
             <div className="grid md:grid-cols-3 gap-8 text-center">
               {impactAreas.map((area, i) => (
                 <div key={i} className="card-premium p-8 border border-white/10 bg-neutral-900/50">
@@ -97,7 +95,7 @@ export default function ImpactPage() {
       <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
       {/* The Story */}
-      <section className="py-24 px-6 bg-black border-y border-white/5">
+      <section className="py-32 md:py-44 px-6 bg-black border-y border-white/5">
         <div className="max-w-3xl mx-auto text-center">
           <ScrollReveal animation="fade-up" delay={0} duration={800}>
             <h2 className="text-4xl md:text-5xl tracking-tight mb-8 font-bebas">
@@ -106,19 +104,19 @@ export default function ImpactPage() {
           </ScrollReveal>
 
           <div className="space-y-6 text-lg text-white/50 leading-relaxed">
-            <ScrollReveal animation="fade-up" delay={100} duration={800}>
+            <ScrollReveal animation="slide-left" delay={100} duration={900}>
               <p>
                 Sexual abuse affects 1 in 3 women and 1 in 6 men. The journey to healing is long, expensive, and often isolating. Many survivors never get the support they need.
               </p>
             </ScrollReveal>
 
-            <ScrollReveal animation="fade-up" delay={200} duration={800}>
+            <ScrollReveal animation="fade-up" delay={100} duration={800}>
               <p>
                 We started DYMNDS because we believe in the power of community. When you wear our gear, you&apos;re not just investing in premium activewear—you&apos;re joining a movement of people who believe in lifting others as we lift ourselves.
               </p>
             </ScrollReveal>
 
-            <ScrollReveal animation="fade-up" delay={300} duration={800}>
+            <ScrollReveal animation="blur-up" delay={100} duration={1000}>
               <p className="text-white">
                 Every purchase creates a ripple effect. Your $89 Compression Tee funds a therapy session. Your $149 Heavy Hoodie provides a night of safe housing. Your choice to wear DYMNDS helps someone reclaim their strength.
               </p>
@@ -131,7 +129,7 @@ export default function ImpactPage() {
       <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
       {/* The Pledge */}
-      <section className="py-24 px-6 bg-neutral-950">
+      <section className="py-20 md:py-28 px-6 bg-neutral-950">
         <div className="max-w-4xl mx-auto text-center">
           <ScrollReveal animation="fade-up" delay={0} duration={800}>
             <h2 className="text-3xl md:text-4xl tracking-tight mb-4 font-bebas">
@@ -153,7 +151,7 @@ export default function ImpactPage() {
       </section>
 
       {/* The Commitment */}
-      <section className="py-24 px-6 bg-neutral-950">
+      <section className="py-28 md:py-36 px-6 bg-neutral-950">
         <div className="max-w-5xl mx-auto">
           <ScrollReveal animation="fade-up" delay={0} duration={800}>
             <h2 className="text-3xl md:text-4xl tracking-tight mb-12 text-center font-bebas">
@@ -191,13 +189,10 @@ export default function ImpactPage() {
         </div>
       </section>
 
-      {/* Divider */}
-      <div className="h-20" />
-
       {/* CTA */}
-      <section className="py-32 px-6 bg-neutral-950">
+      <section className="py-36 md:py-48 px-6 bg-neutral-950">
         <div className="max-w-2xl mx-auto text-center">
-          <ScrollReveal animation="fade-up" delay={0} duration={800}>
+          <ScrollReveal animation="blur-up" delay={0} duration={1000}>
             <h2 className="text-4xl md:text-5xl tracking-tight mb-4 font-bebas">
               Join The Movement
             </h2>
@@ -206,7 +201,7 @@ export default function ImpactPage() {
             </p>
           </ScrollReveal>
 
-          <ScrollReveal animation="fade-up" delay={200} duration={800}>
+          <ScrollReveal animation="scale" delay={200} duration={800}>
             <Link
               href="/shop"
               className="btn-premium inline-block px-12 py-5 bg-[var(--accent)] text-black text-xs tracking-[0.2em] uppercase hover:bg-[var(--accent-light)] transition-all"

@@ -157,7 +157,7 @@ export default function ContactPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-16">
             {/* Contact Form */}
-            <ScrollReveal animation="fade-up" delay={0} duration={800}>
+            <ScrollReveal animation="slide-left" delay={0} duration={900}>
               <div>
                 <h2 className="text-2xl tracking-wider mb-8 font-bebas">
                   Send Us A Message
@@ -267,7 +267,7 @@ export default function ContactPage() {
             </ScrollReveal>
 
             {/* Contact Info */}
-            <ScrollReveal animation="fade-up" delay={100} duration={800}>
+            <ScrollReveal animation="slide-right" delay={100} duration={900}>
               <div>
                 <h2 className="text-2xl tracking-wider mb-8 font-bebas">
                   Other Ways To Reach Us
@@ -302,9 +302,9 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ Teaser */}
-      <section className="py-16 px-6 bg-black border-t border-white/10">
+      <section className="py-20 md:py-28 px-6 bg-black border-t border-white/10">
         <div className="max-w-4xl mx-auto text-center">
-          <ScrollReveal animation="fade-up" delay={0} duration={800}>
+          <ScrollReveal animation="blur-up" delay={0} duration={1000}>
             <h2 className="text-2xl tracking-wider mb-4 font-bebas">
               Common Questions?
             </h2>

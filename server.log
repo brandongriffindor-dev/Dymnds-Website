@@ -105,3 +105,20 @@ This typically indicates that your device does not have a healthy Internet conne
  GET / 200 in 521ms (compile: 131ms, proxy.ts: 5ms, render: 385ms)
  GET / 200 in 25ms (compile: 1793µs, proxy.ts: 2ms, render: 21ms)
 [2026-02-11T18:24:56.645Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x74cc74a9 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+[2026-02-11T19:24:56.721Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x74cc74aa error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
+[DYMNDS] Missing env vars (non-fatal in dev):
+  - NEXT_PUBLIC_FIREBASE_API_KEY
+  - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+  - NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+  - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+  - NEXT_PUBLIC_FIREBASE_APP_ID
+[DYMNDS] FIREBASE_SERVICE_ACCOUNT_KEY not set (non-fatal in dev). Server-side Firestore operations will fail until configured.
+[DYMNDS] STRIPE_SECRET_KEY not set (non-fatal in dev). Checkout will fail until configured.
+[DYMNDS] STRIPE_WEBHOOK_SECRET not set (non-fatal in dev). Webhook processing will fail until configured.
+[DYMNDS] NEXT_PUBLIC_APP_URL not set (non-fatal in dev). Stripe checkout redirects will use undefined URLs.
+[DYMNDS] EXCHANGE_RATE_API_KEY not set. Currency conversion will use fallback rates that may drift from real values.
+[2026-02-11T19:25:51.038Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x403eef9b error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+[2026-02-11T19:25:51.038Z]  @firebase/firestore: Firestore (12.8.0): Could not reach Cloud Firestore backend. Connection failed 1 times. Most recent error: FirebaseError: [code=invalid-argument]: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+This typically indicates that your device does not have a healthy Internet connection at the moment. The client will operate in offline mode until it is able to successfully connect to the backend.
+ GET / 200 in 400ms (compile: 115ms, proxy.ts: 1384µs, render: 283ms)

@@ -1,110 +1,102 @@
-# DYMNDS — Landing.love Audit Prompt
-
-Drop this entire prompt into a fresh Cowork chat with the DYMNDS folder selected.
+# LANDING.LOVE AUDIT PROMPT
+## Paste everything below the line into a fresh Cowork chat with the same folder mounted.
 
 ---
 
-## THE PROMPT
+You are a Landing.love curator with 5 years of experience reviewing dark-theme luxury e-commerce sites. You have featured sites like Represent Clo, Fear of God, Satisfy Running, Kith, and Frost. You reject 95% of submissions.
 
-You are a senior creative director and front-end architect with a portfolio of sites featured on Landing.love, Awwwards, and Land-book. You've shipped award-winning dark-theme e-commerce sites for brands like Represent, Satisfy Running, and Fear of God.
+## YOUR TASK
 
-Your mission: audit the DYMNDS website codebase in the selected folder and produce a prioritized, actionable list of specific changes that would make this site good enough to be featured on Landing.love.
+Audit every front-end file in this Next.js codebase against Landing.love feature standards. This is a premium athletic wear brand called DYMNDS — gold (#C8A97E) on black, diamond metaphor, 10% of every order funds survivor healing.
 
-### ABOUT DYMNDS
+**The site currently has NO product photography and NO hero video.** Judge the code-only experience. Photography and video are coming later.
 
-DYMNDS is a premium athletic wear e-commerce brand. The tagline is "Pressure Creates Diamonds." The core differentiator: 10% of every order funds survivor healing (therapy, safe housing, support programs for abuse survivors). The brand is dark, premium, purpose-driven.
+## FILES TO READ (read ALL of these before writing a single word)
 
-### TECH STACK (already implemented)
+Read these files in full:
+- `src/components/HomeClient.tsx` — the entire homepage
+- `src/components/ClientLayout.tsx` — root wrapper (scroll progress, loading sequence, page transitions)
+- `src/components/Footer.tsx`
+- `src/components/Navbar.tsx`
+- `src/app/globals.css` — all animations, keyframes, CSS variables
+- `src/app/layout.tsx` — fonts, metadata
+- `src/app/about/page.tsx`
+- `src/app/impact/page.tsx`
+- `src/app/contact/page.tsx`
+- `src/app/faq/page.tsx`
+- `src/app/not-found.tsx`
+- `src/components/ScrollReveal.tsx`
+- `src/components/StaggerReveal.tsx`
+- `src/lib/animation.ts`
 
-- Next.js 16 (App Router, Server Components, ISR)
-- React 19 with TypeScript strict mode
-- Tailwind CSS 4
-- Framer Motion 12 (scroll animations, parallax, word reveals, page transitions)
-- Zustand (cart + currency stores)
-- Firebase (Firestore, Auth, Storage)
-- Stripe (payments)
-- Lenis (smooth scrolling)
-- Custom cursor effect (desktop)
-- Grain texture overlay
+## SCORING DIMENSIONS (rate each 1-10)
 
-### DESIGN SYSTEM (recently overhauled)
+1. **0.3-Second Test** — Would a curator keep scrolling or bounce?
+2. **Scroll Pacing** — Is there rhythm variation? Tension and release?
+3. **Layout Variety** — Asymmetry, container breaks, compositional tension
+4. **Typography System** — Scale range (whisper to shout), tracking, leading
+5. **Animation Choreography** — Are animations differentiated or all identical fade-ups?
+6. **Micro-Interactions** — Cursor, hover states, feedback loops
+7. **Color Narrative** — Contrast peaks, accent restraint, pure-white moments
+8. **Negative Space** — Intentional voids vs uniform padding
+9. **Mobile Execution** — Touch targets, responsive type, mobile menu
+10. **Page Transitions** — Does navigation feel continuous?
+11. **Page Identity** — Does each page have a visual signature?
+12. **Loading & Error States** — Are they design moments?
+13. **Navigation & Wayfinding** — Does the nav feel aware?
+14. **Conversion UX** — Dead ends, quick actions, upsell paths
+15. **Screenshot Test** — How many moments are send-to-a-designer-friend tier?
 
-- Accent color: #C8A97E (warm gold/champagne) with lighter variant #DFC08A
-- Ambient glow hero with CSS radial gradients
-- Bento grid section (Frost Bento-inspired asymmetric card layout)
-- Editorial product grid (7-col hero + 5-col supporting, mirrored for women's)
-- Accent-tinted hover states, gradient text, glowing borders
-- Page transitions via AnimatePresence keyed to pathname
-- Grain overlay fixed at z-30
-- Bebas Neue (headlines) + Inter (body) typography
+**Total out of 150. Landing.love feature bar is 120+ (code-only realistic max without photography is ~115).**
 
-### WHAT HAS ALREADY BEEN FIXED (do not re-suggest these)
+## WHAT HAS ALREADY BEEN IMPLEMENTED (do not re-suggest these)
 
-- Placeholder "personalize your story" copy on About page — replaced with real copy
-- $0 donation counter and 0 orders counter on Impact page — removed, replaced with "Day One" pledge
-- Empty "Partner Organizations TBA" section — removed
-- Diamond icon overuse (was 30+ instances per visit) — cut by ~80%, replaced with accent lines
-- Grain overlay z-index was 9999 blocking modals — moved to z-30
-- No accent color (was pure black/white) — gold accent system added throughout
-- Hero was empty black void — ambient glow background added
-- No page transitions — AnimatePresence added to ClientLayout
-- Buttons were generic white — accent fill-slide hover animations added
-- Product cards had no accent integration — accent hover lines, tinted prices added
+- Hero: Nuclear typography at clamp(4.5rem, 18vw, 16rem) with asymmetric left/right layout — each word on its own line, CTAs right-aligned
+- The Void: 80vh statement section with blur-to-sharp animation between marquee and bento
+- Bento stagger: Three different entrance animations (scale, slide-right, scale+blur)
+- Product section: Hero product scale entrance, supporting products slide from sides with stagger
+- Horizontal scroll band: Giant ghost-opacity brand values scrolling infinitely
+- Scroll progress: 2px gold accent bar with spring physics
+- First-visit loading sequence: Choreographed diamond + DYMNDS + accent line + tagline
+- Secondary page title scale: About 13rem, Impact 10rem, Contact 11rem, FAQ 9rem
+- Footer: 14rem DYMNDS watermark, fused newsletter input+button
+- Page transitions with AnimatePresence + blur
+- Lenis smooth scrolling
+- Custom cursor effect
+- Grain overlay
+- Word-by-word hero reveal
+- Gold accent color system throughout
 
-### YOUR AUDIT FRAMEWORK
+## OUTPUT FORMAT
 
-Evaluate every page and component against what Landing.love curators actually look for:
+### Part 1: Scorecard
+Table with dimension, score, and one-line verdict.
 
-1. **First-impression impact** — Does the hero make someone stop scrolling in under 0.5 seconds?
-2. **Visual rhythm** — Is there a deliberate alternation between dense content and breathing room?
-3. **Typographic distinction** — Does the type system feel ownable, or is it a common pairing?
-4. **Animation choreography** — Do animations feel intentional and connected, or random?
-5. **Micro-interactions** — Do hover states, focus states, and transitions feel polished?
-6. **Color storytelling** — Does the accent color serve the brand narrative?
-7. **Editorial layout** — Are there unexpected layout moments, or is it all centered text + grid?
-8. **Mobile execution** — Does every section work beautifully at 375px?
-9. **Page-to-page cohesion** — Does the entire site feel like one continuous experience?
-10. **Loading & performance** — Do skeleton states, image loading, and transitions feel premium?
+### Part 2: What's Already Feature-Quality
+List elements that would pass curation as-is. No inflation.
 
-### WHAT TO AUDIT
+### Part 3: Remaining Gaps (if any)
+For each gap:
+- The problem (with exact file and line reference)
+- What a featured site does differently
+- The exact fix (specific CSS values, animation properties, structural changes)
+- Effort estimate
+- Points gained
 
-Read every file in these directories and evaluate:
+### Part 4: Honest Assessment
+Would you feature this site on Landing.love today (code-only, no photography)?
+What specific score would you give?
+What is the single highest-leverage remaining change?
 
-- `src/components/HomeClient.tsx` — The homepage (most critical page)
-- `src/components/Navbar.tsx` — Navigation
-- `src/components/Footer.tsx` — Footer
-- `src/components/ProductCard.tsx` — Product cards
-- `src/components/CartDrawer.tsx` — Cart experience
-- `src/app/about/page.tsx` — About page
-- `src/app/impact/page.tsx` — Impact/mission page
-- `src/app/contact/page.tsx` — Contact page
-- `src/app/faq/page.tsx` — FAQ page
-- `src/app/products/[slug]/page.tsx` — Product detail page
-- `src/app/collections/` — All collection pages
-- `src/app/globals.css` — Design system
-- `src/app/layout.tsx` — Root layout
-- `src/components/ClientLayout.tsx` — Client wrapper
-- `src/app/not-found.tsx` — 404 page
-- `src/app/loading.tsx` — Loading state
-- `src/app/error.tsx` — Error boundary
+### Part 5: Photography Integration Readiness
+Is the codebase properly architected to absorb hero video and product photography when they arrive? Any structural changes needed before assets drop?
 
-### OUTPUT FORMAT
-
-Deliver your findings as a ranked list, ordered by impact on Landing.love submission quality. For each item:
-
-1. **The problem** — What specifically is weak and where (file + line range)
-2. **Why it matters for Landing.love** — What curators will notice
-3. **The exact fix** — Specific code changes, not vague suggestions. Include the component structure, CSS values, animation parameters, or copy rewrites needed.
-4. **Effort level** — Quick (under 30 min), Medium (1-2 hours), Heavy (half-day+)
-
-### RULES
-
-- Do NOT suggest photography or product image changes (those are handled separately)
-- Do NOT re-suggest anything from the "already fixed" list above
-- Be ruthless. If something is mediocre, say it's mediocre
-- Prioritize changes that create the most visual impact with the least code
-- Think about what makes someone screenshot a site and share it — that's the Landing.love bar
-- If you'd ship it as-is in a specific area, say so and move on
-- Focus on what the top 0.1% of dark-theme e-commerce sites do that this site doesn't yet
-
-After the audit, ask me which items I want you to implement first, then start coding.
+## RULES
+- Be ruthless. Do not inflate scores to be nice.
+- Reference specific files and line numbers.
+- If something is weak, say it's weak.
+- If something is genuinely good, acknowledge it without hedging.
+- Compare against ACTUAL currently featured sites, not theoretical standards.
+- Do not suggest changes that require product photography (it doesn't exist yet).
+- Focus on what can be changed in code/CSS/animation only.
+- After the audit, ask which items I want implemented first, then start coding.

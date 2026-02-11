@@ -88,7 +88,7 @@ export default function FAQPage() {
       {/* FAQ List */}
       <section className="py-16 px-6">
         <div className="max-w-3xl mx-auto">
-          <StaggerReveal staggerDelay={50} animation="fade-up" duration={800} threshold={0.2}>
+          <StaggerReveal staggerDelay={60} animation="slide-right" duration={700} threshold={0.2}>
             <div className="space-y-0">
               {faqs.map((faq, index) => (
                 <div key={index} className="border-b border-white/8">
@@ -151,15 +151,15 @@ export default function FAQPage() {
       <div className="h-px bg-gradient-to-r from-transparent via-[var(--accent)]/10 to-transparent" />
 
       {/* Quick Links */}
-      <section className="py-16 px-6 bg-neutral-950 border-b border-white/10">
+      <section className="py-20 md:py-28 px-6 bg-neutral-950 border-b border-white/10">
         <div className="max-w-4xl mx-auto">
-          <ScrollReveal animation="fade-up" delay={0} duration={800}>
+          <ScrollReveal animation="blur-up" delay={0} duration={900}>
             <h2 className="text-2xl font-bebas tracking-wider mb-8 text-center">
               Quick Links
             </h2>
           </ScrollReveal>
 
-          <StaggerReveal staggerDelay={100} animation="fade-up" duration={800} threshold={0.2}>
+          <StaggerReveal staggerDelay={100} animation="scale" duration={800} threshold={0.2}>
             <div className="grid md:grid-cols-3 gap-6">
               {quickLinks.map((link, i) => (
                 <Link

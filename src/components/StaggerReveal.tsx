@@ -5,7 +5,7 @@ import { observe } from '@/lib/shared-observer';
 
 interface StaggerRevealProps {
   staggerDelay?: number;
-  animation?: 'fade-up' | 'fade-in' | 'scale';
+  animation?: 'fade-up' | 'fade-in' | 'scale' | 'slide-left' | 'slide-right' | 'blur-up';
   duration?: number;
   threshold?: number;
   className?: string;
@@ -62,11 +62,25 @@ export default function StaggerReveal({
       opacity: '0',
       transform: 'scale(0.96)',
     },
+    'slide-left': {
+      opacity: '0',
+      transform: 'translateX(-30px)',
+    },
+    'slide-right': {
+      opacity: '0',
+      transform: 'translateX(30px)',
+    },
+    'blur-up': {
+      opacity: '0',
+      transform: 'translateY(20px)',
+      filter: 'blur(8px)',
+    },
   };
 
   const visibleStyles: Record<string, string> = {
     opacity: '1',
-    transform: 'translateY(0) scale(1)',
+    transform: 'translateY(0) translateX(0) scale(1)',
+    filter: 'blur(0px)',
   };
 
   const currentInitial = initialStyles[animation] || initialStyles['fade-up'];
@@ -83,8 +97,8 @@ export default function StaggerReveal({
           key={i}
           style={{
             ...(isVisible ? visibleStyles : currentInitial),
-            willChange: isVisible ? 'auto' : 'transform, opacity',
-            transitionProperty: 'opacity, transform',
+            willChange: isVisible ? 'auto' : 'transform, opacity, filter',
+            transitionProperty: 'opacity, transform, filter',
             transitionDuration: `${duration}ms`,
             transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
             transitionDelay: `${isVisible ? i * staggerDelay : 0}ms`,

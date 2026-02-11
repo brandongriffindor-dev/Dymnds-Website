@@ -78,7 +78,7 @@ export default function AboutPage() {
             </ScrollReveal>
           </div>
           <div className="md:col-span-7">
-            <ScrollReveal animation="fade-up" delay={200} duration={800}>
+            <ScrollReveal animation="slide-right" delay={200} duration={800}>
               <p className="text-xl md:text-2xl text-white/50 leading-relaxed">
                 DYMNDS was born from a simple belief: pressure creates diamonds. And every struggle can become strength.
               </p>
@@ -101,13 +101,13 @@ export default function AboutPage() {
             </ScrollReveal>
 
             <div className="space-y-6 text-lg opacity-80 leading-relaxed border-l-2 border-[var(--accent)]/30 pl-8">
-              <ScrollReveal animation="fade-up" delay={100} duration={800}>
+              <ScrollReveal animation="slide-left" delay={100} duration={900}>
                 <p className="italic text-white/70">
                   &ldquo;I started DYMNDS because I was tired of fitness brands that were all surface and no substance. I wanted to build something where every purchase actually meant something—where the pressure we all face could be turned into something beautiful.&rdquo;
                 </p>
               </ScrollReveal>
 
-              <ScrollReveal animation="fade-up" delay={200} duration={800}>
+              <ScrollReveal animation="slide-left" delay={200} duration={900}>
                 <p className="text-white/50">
                   The gym was always more than a gym for me. It was where I processed everything — the wins, the losses, the days I didn&apos;t want to get out of bed. And I realized that if gear could be part of that identity, it should carry weight beyond the fabric.
                 </p>
@@ -116,25 +116,25 @@ export default function AboutPage() {
           </div>
 
           <div className="space-y-8 text-lg opacity-80 leading-relaxed">
-            <ScrollReveal animation="fade-up" delay={300} duration={800}>
+            <ScrollReveal animation="slide-right" delay={100} duration={800}>
               <p>
                 We started DYMNDS because we were tired of fitness brands that were all surface and no substance. Brands that talked about &ldquo;crushing it&rdquo; but never addressed the real pressures people face.
               </p>
             </ScrollReveal>
 
-            <ScrollReveal animation="fade-up" delay={400} duration={800}>
+            <ScrollReveal animation="fade-up" delay={150} duration={800}>
               <p>
                 The truth is, real strength isn&apos;t just about lifting weights. It&apos;s about getting back up when life knocks you down. It&apos;s about turning your struggles into your superpowers.
               </p>
             </ScrollReveal>
 
-            <ScrollReveal animation="fade-up" delay={500} duration={800}>
+            <ScrollReveal animation="slide-right" delay={100} duration={800}>
               <p>
                 That&apos;s why we chose the diamond as our symbol. Diamonds aren&apos;t born beautiful—they&apos;re forged under immense pressure, deep in the earth. They emerge transformed, brilliant, unbreakable.
               </p>
             </ScrollReveal>
 
-            <ScrollReveal animation="fade-up" delay={600} duration={800}>
+            <ScrollReveal animation="blur-up" delay={100} duration={1000}>
               <p>
                 And that&apos;s why 10% of everything we make goes to supporting survivors of sexual abuse. Because we believe in helping others discover their own diamond strength.
               </p>
@@ -143,10 +143,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <div className="h-20" />
-
       {/* Core Commitments */}
-      <section className="py-28 px-6 bg-black">
+      <section className="py-24 md:py-32 px-6 bg-black">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <ScrollReveal animation="fade-up" delay={0} duration={800}>
@@ -157,7 +155,7 @@ export default function AboutPage() {
             </ScrollReveal>
           </div>
 
-          <StaggerReveal staggerDelay={100} animation="fade-up" duration={800} threshold={0.2}>
+          <StaggerReveal staggerDelay={120} animation="scale" duration={900} threshold={0.2}>
             <div className="grid md:grid-cols-3 gap-8">
               {coreCommitments.map((commitment, i) => (
                 <div key={i} className="card-premium p-8 bg-neutral-900 border border-white/5 hover:border-white/20 transition-all duration-500">
@@ -176,7 +174,7 @@ export default function AboutPage() {
       <div className="h-px bg-gradient-to-r from-transparent via-[var(--accent)]/10 to-transparent" />
 
       {/* Values */}
-      <section className="py-28 px-6 bg-black">
+      <section className="py-32 md:py-44 px-6 bg-black">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <ScrollReveal animation="fade-up" delay={0} duration={800}>
@@ -187,7 +185,7 @@ export default function AboutPage() {
             </ScrollReveal>
           </div>
 
-          <StaggerReveal staggerDelay={100} animation="fade-up" duration={800} threshold={0.2}>
+          <StaggerReveal staggerDelay={80} animation="blur-up" duration={900} threshold={0.2}>
             <div className="grid md:grid-cols-3 gap-8">
               {values.map((value, i) => (
                 <div key={i} className="card-premium p-8 bg-neutral-900 border border-white/5 hover:border-white/20 transition-all duration-500">
@@ -203,12 +201,10 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <div className="h-20" />
-
       {/* The Vision */}
-      <section className="py-28 px-6 bg-neutral-950">
+      <section className="py-36 md:py-52 px-6 bg-neutral-950">
         <div className="max-w-4xl mx-auto text-center">
-          <ScrollReveal animation="fade-up" delay={0} duration={800}>
+          <ScrollReveal animation="blur-up" delay={0} duration={1200}>
             <p className="text-xs tracking-[0.3em] uppercase text-white/50 mb-4">Where We&apos;re Going</p>
             <h2 className="text-4xl md:text-6xl tracking-wider mb-8 font-bebas">
               Our Vision
@@ -244,9 +240,9 @@ export default function AboutPage() {
       <div className="h-px bg-gradient-to-r from-transparent via-[var(--accent)]/10 to-transparent" />
 
       {/* Join Us CTA */}
-      <section className="py-32 px-6 bg-black relative overflow-hidden">
+      <section className="py-36 md:py-48 px-6 bg-black relative overflow-hidden">
         <div className="max-w-3xl mx-auto text-center relative z-10">
-          <ScrollReveal animation="fade-up" delay={0} duration={800}>
+          <ScrollReveal animation="blur-up" delay={0} duration={1000}>
             <h2 className="text-4xl md:text-6xl tracking-wider mb-6 font-bebas">
               Join The Movement
             </h2>
@@ -255,7 +251,7 @@ export default function AboutPage() {
             </p>
           </ScrollReveal>
 
-          <ScrollReveal animation="fade-up" delay={200} duration={800}>
+          <ScrollReveal animation="scale" delay={200} duration={800}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/collections/all"

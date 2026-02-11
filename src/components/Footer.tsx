@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from 'next/navigation';
 import { getCSRFToken } from '@/lib/get-csrf-token';
+import ScrollReveal from '@/components/ScrollReveal';
 
 const SHOP_LINKS = [
   { name: 'All Products', href: '/shop' },
@@ -224,11 +225,13 @@ export default function Footer() {
           </nav>
         </div>
 
-        {/* Oversized ghost DYMNDS watermark */}
+        {/* Oversized ghost DYMNDS watermark — animated entrance */}
         <div className="mt-12 pt-8 text-center overflow-hidden">
-          <p className="font-bebas text-white/[0.04] leading-none tracking-tight whitespace-nowrap" style={{ fontSize: 'clamp(5rem, 15vw, 14rem)' }}>
-            DYMNDS
-          </p>
+          <ScrollReveal animation="scale" delay={0} duration={1200} threshold={0.1}>
+            <p className="font-bebas text-white/[0.04] leading-none tracking-tight whitespace-nowrap" style={{ fontSize: 'clamp(5rem, 15vw, 14rem)' }}>
+              DYMNDS
+            </p>
+          </ScrollReveal>
         </div>
       </div>
     </footer>

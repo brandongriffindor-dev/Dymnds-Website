@@ -425,7 +425,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       </section>
 
       {/* ═══════ STORY — Split-Panel Editorial Manifesto ═══════ */}
-      <section className="py-32 md:py-44 px-6 bg-neutral-950 relative overflow-hidden">
+      <section className="py-40 md:py-56 px-6 bg-neutral-950 relative overflow-hidden">
         {/* Accent glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[var(--accent)]/[0.03] rounded-full blur-[120px]" />
 
@@ -615,10 +615,10 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </>
       )}
 
-      {/* ═══════ IMPACT — Bento-Style Stats ═══════ */}
-      <section className="py-32 md:py-44 px-6 bg-black border-y border-[var(--accent)]/[0.06] relative overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--accent)]/[0.02] rounded-full blur-[120px]" />
+      {/* ═══════ IMPACT — Gold Accent Section (Contrast Reversal) ═══════ */}
+      <section className="py-36 md:py-52 px-6 bg-[var(--accent)] relative overflow-hidden">
+        {/* Subtle dark vignette for depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_30%,rgba(0,0,0,0.08)_100%)]" />
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <motion.div
@@ -627,8 +627,8 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="border-accent-glow inline-flex flex-col md:flex-row items-center gap-8 md:gap-14 px-10 md:px-20 py-14 transition-all duration-500">
-              <span className="text-7xl md:text-8xl font-bebas text-accent-gradient">
+            <div className="inline-flex flex-col md:flex-row items-center gap-8 md:gap-14 px-10 md:px-20 py-14">
+              <span className="text-7xl md:text-8xl font-bebas text-black">
                 <AnimatedCounter
                   end={10}
                   suffix="%"
@@ -636,18 +636,18 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                 />
               </span>
               <div className="text-left">
-                <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-2">
+                <p className="text-[10px] tracking-[0.4em] uppercase text-black/40 mb-2">
                   Of Every Order From Day One
                 </p>
-                <p className="text-lg md:text-xl leading-relaxed">
+                <p className="text-lg md:text-xl leading-relaxed text-black/70">
                   Funds therapy, safe housing, and healing programs for survivors
                 </p>
               </div>
             </div>
           </motion.div>
 
-          {/* Impact cards */}
-          <div className="mt-24 grid md:grid-cols-3 gap-[1px] bg-white/[0.04] max-w-3xl mx-auto">
+          {/* Impact cards — dark cards on gold */}
+          <div className="mt-24 grid md:grid-cols-3 gap-[1px] bg-black/[0.1] max-w-3xl mx-auto">
             {[
               {
                 title: 'Therapy',
@@ -664,7 +664,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             ].map((card, i) => (
               <motion.div
                 key={card.title}
-                className="p-8 text-center bg-[#0a0a0a] hover:bg-[#0f0f0f] transition-colors duration-500"
+                className="p-8 text-center bg-black hover:bg-neutral-900 transition-colors duration-500"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -688,7 +688,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           >
             <Link
               href="/impact"
-              className="group inline-flex items-center gap-2 mt-16 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/50 hover:text-[var(--accent)] transition-colors duration-500 border-b border-[var(--accent)]/15 pb-1"
+              className="group inline-flex items-center gap-2 mt-16 text-[11px] tracking-[0.2em] uppercase text-black/50 hover:text-black transition-colors duration-500 border-b border-black/20 pb-1"
             >
               Learn More
               <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
@@ -700,7 +700,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       </section>
 
       {/* ═══════ HORIZONTAL SCROLL — Brand Values ═══════ */}
-      <section className="py-4 bg-black overflow-hidden relative">
+      <section className="py-8 bg-black overflow-hidden relative">
         <div className="flex whitespace-nowrap">
           <motion.div
             className="flex items-center gap-0"
@@ -728,7 +728,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       </section>
 
       {/* ═══════ FOUNDER'S QUOTE — Parallax ═══════ */}
-      <section className="py-32 md:py-44 px-6 bg-neutral-950 relative overflow-hidden">
+      <section className="py-24 md:py-32 px-6 bg-neutral-950 relative overflow-hidden">
         {/* Giant decorative quotation mark with accent */}
         <span
           className="absolute -top-10 left-1/2 -translate-x-1/2 text-[14rem] md:text-[20rem] font-serif text-[var(--accent)]/[0.03] leading-none select-none pointer-events-none"
@@ -789,7 +789,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       </motion.section>
 
       {/* ═══════ FINAL CTA ═══════ */}
-      <section className="py-36 md:py-48 px-6 bg-black relative">
+      <section className="py-40 md:py-56 px-6 bg-black relative">
         {/* Accent gradient line */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/15 to-transparent" />
 

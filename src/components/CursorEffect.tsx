@@ -4,10 +4,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 export default function CursorEffect() {
   const [hasPointer, setHasPointer] = useState(false);
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const trailRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const dotRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
-  const posRef = useRef({ x: 0, y: 0 });
+  const posRef = useRef({ x: -100, y: -100 });
+  const ringPosRef = useRef({ x: -100, y: -100 });
   const hoveringRef = useRef(false);
 
   useEffect(() => {
@@ -22,16 +23,31 @@ export default function CursorEffect() {
 
   const updateCursor = useCallback(() => {
     const { x, y } = posRef.current;
-    const cursor = cursorRef.current;
-    const trail = trailRef.current;
+    const ring = ringRef.current;
+    const dot = dotRef.current;
 
-    if (cursor) {
-      cursor.style.transform = `translate3d(${x - 16}px, ${y - 16}px, 0) scale(${hoveringRef.current ? 1.5 : 1})`;
-      cursor.style.opacity = hoveringRef.current ? '0.6' : '0.3';
+    // Smooth trailing for outer ring (lerp)
+    ringPosRef.current.x += (x - ringPosRef.current.x) * 0.15;
+    ringPosRef.current.y += (y - ringPosRef.current.y) * 0.15;
+
+    const isHovering = hoveringRef.current;
+    const ringSize = isHovering ? 56 : 36;
+    const ringOffset = ringSize / 2;
+
+    if (ring) {
+      ring.style.transform = `translate3d(${ringPosRef.current.x - ringOffset}px, ${ringPosRef.current.y - ringOffset}px, 0)`;
+      ring.style.width = `${ringSize}px`;
+      ring.style.height = `${ringSize}px`;
+      ring.style.borderColor = isHovering
+        ? 'rgba(200, 169, 126, 0.6)'
+        : 'rgba(255, 255, 255, 0.35)';
     }
-    if (trail) {
-      trail.style.transform = `translate3d(${x - 4}px, ${y - 4}px, 0)`;
+    if (dot) {
+      dot.style.transform = `translate3d(${x - 3}px, ${y - 3}px, 0)`;
+      dot.style.opacity = isHovering ? '0' : '1';
     }
+
+    rafRef.current = requestAnimationFrame(updateCursor);
   }, []);
 
   useEffect(() => {
@@ -39,8 +55,6 @@ export default function CursorEffect() {
 
     const handleMouseMove = (e: MouseEvent) => {
       posRef.current = { x: e.clientX, y: e.clientY };
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(updateCursor);
     };
 
     const handleMouseOver = (e: MouseEvent) => {
@@ -61,6 +75,9 @@ export default function CursorEffect() {
     document.addEventListener('mouseover', handleMouseOver, { passive: true });
     document.addEventListener('mouseout', handleMouseOut, { passive: true });
 
+    // Start the animation loop
+    rafRef.current = requestAnimationFrame(updateCursor);
+
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseover', handleMouseOver);
@@ -73,23 +90,32 @@ export default function CursorEffect() {
 
   return (
     <>
+      {/* Outer ring — mix-blend-mode: difference for inversion effect */}
       <div
-        ref={cursorRef}
-        className="fixed top-0 left-0 w-8 h-8 pointer-events-none z-50"
+        ref={ringRef}
+        className="fixed top-0 left-0 pointer-events-none z-50"
         style={{
-          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%)',
+          width: '36px',
+          height: '36px',
+          border: '1.5px solid rgba(255, 255, 255, 0.35)',
           borderRadius: '50%',
-          filter: 'blur(1px)',
-          willChange: 'transform',
-          transition: 'opacity 200ms ease-out',
+          mixBlendMode: 'difference',
+          willChange: 'transform, width, height, border-color',
+          transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1), height 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease',
         }}
       />
+      {/* Inner dot — precise position indicator */}
       <div
-        ref={trailRef}
-        className="fixed top-0 left-0 w-2 h-2 bg-white/20 rounded-full pointer-events-none z-50"
+        ref={dotRef}
+        className="fixed top-0 left-0 pointer-events-none z-50"
         style={{
-          willChange: 'transform',
-          transition: 'transform 500ms ease-out',
+          width: '6px',
+          height: '6px',
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          borderRadius: '50%',
+          mixBlendMode: 'difference',
+          willChange: 'transform, opacity',
+          transition: 'opacity 0.2s ease',
         }}
       />
     </>
