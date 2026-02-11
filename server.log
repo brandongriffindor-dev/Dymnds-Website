@@ -122,3 +122,9 @@ This typically indicates that your device does not have a healthy Internet conne
 [2026-02-11T19:25:51.038Z]  @firebase/firestore: Firestore (12.8.0): Could not reach Cloud Firestore backend. Connection failed 1 times. Most recent error: FirebaseError: [code=invalid-argument]: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
 This typically indicates that your device does not have a healthy Internet connection at the moment. The client will operate in offline mode until it is able to successfully connect to the backend.
  GET / 200 in 400ms (compile: 115ms, proxy.ts: 1384µs, render: 283ms)
+[2026-02-11T19:36:18.080Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x403eef9c error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+ GET / 200 in 134ms (compile: 9ms, proxy.ts: 6ms, render: 120ms)
+ GET /apple-touch-icon-precomposed.png 404 in 567ms (compile: 542ms, render: 25ms)
+ GET /apple-touch-icon.png 404 in 555ms (compile: 509ms, render: 46ms)
+ GET / 200 in 36ms (compile: 4ms, proxy.ts: 4ms, render: 29ms)
+[2026-02-11T20:26:35.010Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x403eef9d error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
