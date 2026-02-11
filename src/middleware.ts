@@ -148,14 +148,13 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     'max-age=63072000; includeSubDomains; preload'
   );
 
-  // SEC-014: 'unsafe-inline' is ignored in CSP3 browsers when 'strict-dynamic' is present.
-  // Older browsers (pre-CSP3) will honor 'unsafe-inline' but ignore 'strict-dynamic'.
-  // For full protection on legacy browsers, consider nonce-based CSP in a future iteration.
+  // SEC-014: Removed 'strict-dynamic' to allow Next.js inline scripts to execute.
+  // 'unsafe-inline' allows inline scripts; future iteration should use nonces for stricter security.
   response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com 'strict-dynamic'",
+      "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' https://firebasestorage.googleapis.com data: blob:",
       "font-src 'self'",
