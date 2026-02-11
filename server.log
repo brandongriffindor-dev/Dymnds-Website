@@ -9,7 +9,7 @@
 
 ✓ Starting...
 ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
-✓ Ready in 421ms
+✓ Ready in 397ms
 [DYMNDS] Missing env vars (non-fatal in dev):
   - NEXT_PUBLIC_FIREBASE_API_KEY
   - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
@@ -22,38 +22,7 @@
 [DYMNDS] STRIPE_WEBHOOK_SECRET not set (non-fatal in dev). Webhook processing will fail until configured.
 [DYMNDS] NEXT_PUBLIC_APP_URL not set (non-fatal in dev). Stripe checkout redirects will use undefined URLs.
 [DYMNDS] EXCHANGE_RATE_API_KEY not set. Currency conversion will use fallback rates that may drift from real values.
-[2026-02-11T06:11:54.121Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x4d9a4010 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
-[2026-02-11T06:11:54.124Z]  @firebase/firestore: Firestore (12.8.0): Could not reach Cloud Firestore backend. Connection failed 1 times. Most recent error: FirebaseError: [code=invalid-argument]: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+[2026-02-11T07:13:18.405Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x3324cc91 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+[2026-02-11T07:13:18.408Z]  @firebase/firestore: Firestore (12.8.0): Could not reach Cloud Firestore backend. Connection failed 1 times. Most recent error: FirebaseError: [code=invalid-argument]: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
 This typically indicates that your device does not have a healthy Internet connection at the moment. The client will operate in offline mode until it is able to successfully connect to the backend.
- GET / 200 in 2.4s (compile: 2.0s, proxy.ts: 42ms, render: 370ms)
-✓ Compiled in 198ms
-
------
-[1m[31mFATAL[39m[0m: An unexpected Turbopack error occurred. A panic log has been written to /var/folders/bg/6_s9rk9j2cb_3n1d_kgwx8tw0000gn/T/next-panic-7c53952316750d8671d3457566dd3b60.log.
-
-To help make Turbopack better, report this error by clicking here: https://github.com/vercel/next.js/discussions/new?category=turbopack-error-report&title=Turbopack%20Error%3A%20reading%20directory%20item%20in%20%2FUsers%2Fclawdminimac%2FDesktop%2FDymnds-Claude%2Fsrc%2Fapp%2Fapi%2Fhealth%202&body=Turbopack%20version%3A%20%6023c464985%60%0ANext.js%20version%3A%20%600.0.0%60%0A%0AError%20message%3A%0A%60%60%60%0ATurbopack%20Error%3A%20reading%20directory%20item%20in%20%2FUsers%2Fclawdminimac%2FDesktop%2FDymnds-Claude%2Fsrc%2Fapp%2Fapi%2Fhealth%202%0A%60%60%60&labels=Turbopack,Turbopack%20Panic%20Backtrace
------
-
-Error [TurbopackInternalError]: reading directory item in /Users/clawdminimac/Desktop/Dymnds-Claude/src/app/api/health 2
-
-Caused by:
-- Resource deadlock avoided (os error 11)
-
-Debug info:
-- Execution of get_entrypoints_with_issues_operation failed
-- Execution of EntrypointsOperation::new failed
-- Execution of Project::entrypoints failed
-- Execution of AppProject::routes failed
-- Execution of get_entrypoints failed
-- Execution of *directory_tree_to_entrypoints failed
-- Execution of get_directory_tree failed
-- Execution of get_directory_tree failed
-- Execution of get_directory_tree failed
-- Execution of read_dir failed
-- Execution of <DiskFileSystem as FileSystem>::raw_read_dir failed
-- reading directory item in /Users/clawdminimac/Desktop/Dymnds-Claude/src/app/api/health 2
-- Resource deadlock avoided (os error 11)
-    at <unknown> (TurbopackInternalError: reading directory item in /Users/clawdminimac/Desktop/Dymnds-Claude/src/app/api/health 2) {
-  location: undefined
-}
-[?25h
+ GET / 200 in 2.5s (compile: 2.0s, proxy.ts: 45ms, render: 408ms)
