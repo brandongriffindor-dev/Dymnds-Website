@@ -53,3 +53,10 @@ Caused by:
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 ○ Compiling /_error ...
 Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+⨯ Error: ENOENT: no such file or directory, open '/Users/clawdminimac/Desktop/Dymnds-Claude/.next/dev/server/app/page/build-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/clawdminimac/Desktop/Dymnds-Claude/.next/dev/server/app/page/build-manifest.json'
+}
