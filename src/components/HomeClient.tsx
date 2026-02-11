@@ -13,8 +13,8 @@ import { useCurrency, convertPrice, formatPrice, getCadPrice, type Currency } fr
 
 /**
  * Landing.love-tier homepage.
- * Framer Motion animations, parallax scroll, editorial product layout,
- * infinite marquee, grain overlay, word-by-word reveals.
+ * Frost Bento-inspired bento grids, ambient hero, accent color system,
+ * Framer Motion animations, parallax scroll, editorial product layout.
  */
 interface HomeClientProps {
   menFeatured: Product[];
@@ -88,21 +88,21 @@ function Parallax({
 /** Infinite horizontal marquee band */
 function Marquee() {
   return (
-    <div className="py-5 border-y border-white/[0.06] overflow-hidden bg-black relative select-none">
+    <div className="py-5 border-y border-[var(--accent)]/[0.08] overflow-hidden bg-black relative select-none">
       <div className="flex animate-marquee whitespace-nowrap">
         {[...Array(6)].map((_, i) => (
           <span
             key={i}
-            className="flex items-center gap-10 mx-10 font-bebas text-[15px] tracking-[0.35em] uppercase text-white/15"
+            className="flex items-center gap-10 mx-10 font-bebas text-[15px] tracking-[0.35em] uppercase text-[var(--accent)]/20"
           >
             <span>Pressure Creates Diamonds</span>
-            <Image src="/diamond-white.png" alt="" width={10} height={10} className="opacity-20" />
+            <span className="text-[var(--accent)]/40">&#9670;</span>
             <span>Wear The Change</span>
-            <Image src="/diamond-white.png" alt="" width={10} height={10} className="opacity-20" />
+            <span className="text-[var(--accent)]/40">&#9670;</span>
             <span>Premium Activewear</span>
-            <Image src="/diamond-white.png" alt="" width={10} height={10} className="opacity-20" />
+            <span className="text-[var(--accent)]/40">&#9670;</span>
             <span>10% Funds Healing</span>
-            <Image src="/diamond-white.png" alt="" width={10} height={10} className="opacity-20" />
+            <span className="text-[var(--accent)]/40">&#9670;</span>
           </span>
         ))}
       </div>
@@ -137,17 +137,19 @@ function EditorialProductCard({
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent animate-shimmer" />
-            <Image src="/diamond-white.png" alt="" width={48} height={48} className="opacity-10" />
+            <span className="text-[var(--accent)]/20 text-4xl font-bebas">DYMNDS</span>
           </div>
         )}
-        {/* Hover gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        {/* Hover gradient with accent tint */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        {/* Accent line on hover */}
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--accent)] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-left" />
       </div>
-      <h3 className={`${large ? 'text-2xl' : 'text-lg'} tracking-wide mb-1 font-bebas`}>
+      <h3 className={`${large ? 'text-2xl' : 'text-lg'} tracking-wide mb-1 font-bebas group-hover:text-[var(--accent)] transition-colors duration-300`}>
         {product.title}
       </h3>
       <p className="text-white/25 text-sm mb-2">{product.subtitle}</p>
-      <p className={large ? 'text-lg' : 'text-base'}>
+      <p className={`${large ? 'text-lg' : 'text-base'} text-[var(--accent)]`}>
         {formatPrice(convertPrice(getCadPrice(product), currency), currency)}
       </p>
     </Link>
@@ -183,7 +185,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
   return (
     <main
       id="main-content"
-      className="min-h-screen bg-black text-white overflow-x-hidden selection:bg-white selection:text-black"
+      className="min-h-screen bg-black text-white overflow-x-hidden selection:bg-[var(--accent)]/15 selection:text-white"
     >
       {/* Grain texture overlay */}
       <div className="grain-overlay" aria-hidden="true" />
@@ -194,13 +196,14 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       />
       <Navbar />
 
-      {/* ═══════ HERO — Full Viewport Immersive ═══════ */}
+      {/* ═══════ HERO — Full Viewport Immersive with Ambient Glow ═══════ */}
       <section
         ref={heroRef}
         className="hero-height w-full flex flex-col items-center justify-center px-6 relative overflow-hidden"
       >
-        {/* Subtle radial gradient background */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(255,255,255,0.04),transparent)]" />
+        {/* Ambient glow background — replaces empty black void */}
+        <div className="hero-ambient" aria-hidden="true" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(200,169,126,0.06),transparent)]" />
 
         <motion.div
           style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
@@ -222,21 +225,13 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             />
           </motion.div>
 
-          {/* Diamond icon */}
+          {/* Accent line */}
           <motion.div
-            initial={{ opacity: 0, y: 20, rotate: -180 }}
-            animate={{ opacity: 0.25, y: 0, rotate: 0 }}
-            transition={{ duration: 1.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <Image
-              src="/diamond-white.png"
-              alt=""
-              width={24}
-              height={24}
-              priority
-              className="h-6 w-auto mx-auto mb-14 animate-hero-breathe"
-            />
-          </motion.div>
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="w-16 h-[1px] bg-[var(--accent)] mx-auto mb-14 origin-center"
+          />
 
           {/* Headline — word-by-word reveal */}
           <div className="overflow-hidden mb-6">
@@ -264,10 +259,10 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             transition={{ duration: 0.8, delay: 1.1, ease: [0.16, 1, 0.3, 1] }}
             className="text-[11px] md:text-[13px] text-white/35 mb-16 tracking-[0.3em] max-w-md mx-auto uppercase"
           >
-            Premium activewear &middot; 10% funds survivor healing
+            Forged in struggle &middot; Built for comebacks &middot; <span className="text-[var(--accent)]/60">10% heals</span>
           </motion.p>
 
-          {/* CTA Buttons — slide-fill hover effect */}
+          {/* CTA Buttons — accent color integration */}
           <motion.div
             className="flex flex-col sm:flex-row gap-5 justify-center"
             initial={{ opacity: 0, y: 30 }}
@@ -276,21 +271,21 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           >
             <Link
               href="/collections/men"
-              className="group relative px-12 py-5 border border-white/25 text-white text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500 hover:border-white"
+              className="group relative px-12 py-5 border border-[var(--accent)]/25 text-white text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500 hover:border-[var(--accent)]"
             >
               <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
                 Shop Men
               </span>
-              <span className="absolute inset-0 bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+              <span className="absolute inset-0 bg-[var(--accent)] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
             </Link>
             <Link
               href="/collections/women"
-              className="group relative px-12 py-5 bg-white text-black text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500"
+              className="group relative px-12 py-5 bg-[var(--accent)] text-black text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500"
             >
-              <span className="relative z-10 transition-colors duration-500 group-hover:text-white">
+              <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
                 Shop Women
               </span>
-              <span className="absolute inset-0 bg-black transform translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+              <span className="absolute inset-0 bg-[var(--accent-light)] transform translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
             </Link>
           </motion.div>
         </motion.div>
@@ -302,49 +297,119 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           animate={{ opacity: 0.25 }}
           transition={{ delay: 2.2, duration: 1.2 }}
         >
-          <span className="text-[9px] tracking-[0.5em] uppercase">Scroll</span>
+          <span className="text-[9px] tracking-[0.5em] uppercase text-[var(--accent)]/50">Scroll</span>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="w-4 h-4 text-[var(--accent)]/40" />
           </motion.div>
         </motion.div>
       </section>
 
-      {/* ═══════ MARQUEE — Infinite Movement Band ═══════ */}
+      {/* ═══════ MARQUEE ═══════ */}
       <Marquee />
 
-      {/* ═══════ STORY — Brand Manifesto ═══════ */}
-      <section className="py-36 md:py-48 px-6 bg-black relative">
-        <div className="max-w-3xl mx-auto text-center">
-          <Parallax speed={-0.2}>
-            <motion.div
-              initial={{ opacity: 0, rotate: -90 }}
-              whileInView={{ opacity: 0.12, rotate: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.2 }}
-            >
-              <Image
-                src="/diamond-white.png"
-                alt=""
-                width={32}
-                height={32}
-                loading="lazy"
-                className="h-8 w-auto mx-auto mb-16"
-              />
-            </motion.div>
-          </Parallax>
+      {/* ═══════ BENTO GRID — Frost-Inspired Brand Pillars ═══════ */}
+      <section className="py-0 bg-black">
+        <div className="max-w-7xl mx-auto px-6 py-28 md:py-40">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-3">
+              The DYMNDS Standard
+            </p>
+            <h2 className="text-5xl md:text-7xl tracking-tight font-bebas">
+              Built Different
+            </h2>
+          </motion.div>
 
+          {/* Bento Grid — asymmetric card layout */}
+          <div className="bento-grid grid-cols-1 md:grid-cols-3 md:grid-rows-2">
+            {/* Large feature card — spans 2 cols */}
+            <motion.div
+              className="bento-card md:col-span-2 md:row-span-2 flex flex-col justify-between min-h-[300px] md:min-h-[500px]"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="relative z-10">
+                <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--accent)]/50 mb-4">Core Mission</p>
+                <h3 className="text-4xl md:text-5xl font-bebas tracking-tight mb-6">
+                  <span className="text-accent-gradient">10%</span> of Every Order<br />
+                  Funds Survivor Healing
+                </h3>
+                <p className="text-white/40 text-lg leading-relaxed max-w-lg">
+                  Not a pledge. Not a goal. From order one, 10% goes directly to therapy,
+                  safe housing, and support programs. The price of your gear literally heals.
+                </p>
+              </div>
+              <Link
+                href="/impact"
+                className="group inline-flex items-center gap-2 mt-8 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/60 hover:text-[var(--accent)] transition-colors duration-500 w-fit"
+              >
+                See The Impact
+                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+              </Link>
+            </motion.div>
+
+            {/* Top-right card */}
+            <motion.div
+              className="bento-card flex flex-col justify-between min-h-[200px]"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="relative z-10">
+                <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--accent)]/50 mb-3">Materials</p>
+                <h3 className="text-2xl font-bebas tracking-tight mb-3">Zero Shortcuts</h3>
+                <p className="text-white/30 text-sm leading-relaxed">
+                  Premium compression fabrics, moisture-wicking tech, reinforced seams. Tested in the gym, not just the boardroom.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Bottom-right card */}
+            <motion.div
+              className="bento-card flex flex-col justify-between min-h-[200px]"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.9, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="relative z-10">
+                <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--accent)]/50 mb-3">Community</p>
+                <h3 className="text-2xl font-bebas tracking-tight mb-3">For the Comeback</h3>
+                <p className="text-white/30 text-sm leading-relaxed">
+                  Built for the mornings you don&rsquo;t feel like showing up. For when being here is the victory.
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════ STORY — Brand Manifesto (Streamlined) ═══════ */}
+      <section className="py-32 md:py-44 px-6 bg-neutral-950 relative overflow-hidden">
+        {/* Accent glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[var(--accent)]/[0.03] rounded-full blur-[120px]" />
+
+        <div className="max-w-3xl mx-auto text-center relative z-10">
           <AnimatedHeading
-            text="Pressure Creates Diamonds"
+            text="Forged Under Pressure"
             className="text-5xl md:text-7xl lg:text-8xl tracking-tight mb-16 font-bebas"
           />
 
-          <div className="space-y-12 text-lg md:text-xl text-white/35 leading-relaxed">
+          <div className="space-y-10 text-lg md:text-xl text-white/35 leading-relaxed">
             {[
-              'Just like a diamond forms under intense heat and pressure, strength emerges from struggle.',
-              "Our gear is built for your hardest workouts \u2014 and your comeback stories. For the mornings you don\u2019t feel like showing up. For the moments when simply being here is the victory.",
+              'Diamonds aren\u2019t born brilliant. They\u2019re crushed, heated, and transformed under pressure most things can\u2019t survive.',
+              "Your gear should match your story. Built for the hardest sets, the longest runs, the days when quitting sounds reasonable but you don\u2019t.",
             ].map((text, i) => (
               <motion.p
                 key={i}
@@ -364,22 +429,12 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
               className="text-white/60"
             >
-              And because we believe in lifting others as we lift ourselves,
-              <span className="text-white font-semibold"> 10% of every purchase</span> supports
-              survivors on their journey from darkness to light.
+              And because we believe in lifting others as we lift ourselves,{' '}
+              <span className="text-[var(--accent)] font-semibold">10% of every purchase</span>{' '}
+              supports survivors turning their darkest chapters into diamond strength.
             </motion.p>
           </div>
         </div>
-
-        {/* Decorative gradient line */}
-        <motion.div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-px h-24 bg-gradient-to-b from-white/10 to-transparent"
-          initial={{ scaleY: 0 }}
-          whileInView={{ scaleY: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.2 }}
-          style={{ transformOrigin: 'top' }}
-        />
       </section>
 
       {/* ═══════ COLLECTIONS — Editorial Grid Layout ═══════ */}
@@ -387,7 +442,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         <>
           {/* Men's Collection */}
           {menFeatured.length > 0 && (
-            <section id="men" className="py-28 md:py-40 px-6 bg-neutral-950">
+            <section id="men" className="py-28 md:py-40 px-6 bg-black">
               <div className="max-w-7xl mx-auto">
                 {/* Section header */}
                 <motion.div
@@ -398,14 +453,14 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <div>
-                    <p className="text-[10px] tracking-[0.4em] uppercase text-white/20 mb-3">
+                    <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/30 mb-3">
                       The Collection
                     </p>
                     <h2 className="text-6xl md:text-7xl tracking-tight font-bebas">For Him</h2>
                   </div>
                   <Link
                     href="/collections/men"
-                    className="group flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-white/25 hover:text-white transition-colors duration-500 pb-1"
+                    className="group flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/40 hover:text-[var(--accent)] transition-colors duration-500 pb-1"
                   >
                     View All
                     <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
@@ -455,7 +510,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
 
           {/* Women's Collection — mirrored layout */}
           {womenFeatured.length > 0 && (
-            <section id="women" className="py-28 md:py-40 px-6 bg-black">
+            <section id="women" className="py-28 md:py-40 px-6 bg-neutral-950">
               <div className="max-w-7xl mx-auto">
                 <motion.div
                   className="flex items-end justify-between mb-16"
@@ -465,14 +520,14 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <div>
-                    <p className="text-[10px] tracking-[0.4em] uppercase text-white/20 mb-3">
+                    <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/30 mb-3">
                       The Collection
                     </p>
                     <h2 className="text-6xl md:text-7xl tracking-tight font-bebas">For Her</h2>
                   </div>
                   <Link
                     href="/collections/women"
-                    className="group flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-white/25 hover:text-white transition-colors duration-500 pb-1"
+                    className="group flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/40 hover:text-[var(--accent)] transition-colors duration-500 pb-1"
                   >
                     View All
                     <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
@@ -520,10 +575,10 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </>
       )}
 
-      {/* ═══════ IMPACT — The 10% Promise ═══════ */}
-      <section className="py-32 md:py-44 px-6 bg-neutral-950 border-y border-white/[0.04] relative overflow-hidden">
+      {/* ═══════ IMPACT — Bento-Style Stats ═══════ */}
+      <section className="py-32 md:py-44 px-6 bg-black border-y border-[var(--accent)]/[0.06] relative overflow-hidden">
         {/* Background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/[0.015] rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--accent)]/[0.02] rounded-full blur-[120px]" />
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <motion.div
@@ -532,8 +587,8 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="inline-flex flex-col md:flex-row items-center gap-8 md:gap-14 px-10 md:px-20 py-14 border border-white/[0.08]">
-              <span className="text-7xl md:text-8xl font-bebas">
+            <div className="border-accent-glow inline-flex flex-col md:flex-row items-center gap-8 md:gap-14 px-10 md:px-20 py-14 transition-all duration-500">
+              <span className="text-7xl md:text-8xl font-bebas text-accent-gradient">
                 <AnimatedCounter
                   end={10}
                   suffix="%"
@@ -541,8 +596,8 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                 />
               </span>
               <div className="text-left">
-                <p className="text-[10px] tracking-[0.4em] uppercase text-white/30 mb-2">
-                  Of Every Order Day One
+                <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-2">
+                  Of Every Order From Day One
                 </p>
                 <p className="text-lg md:text-xl leading-relaxed">
                   Funds therapy, safe housing, and healing programs for survivors
@@ -552,7 +607,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           </motion.div>
 
           {/* Impact cards */}
-          <div className="mt-24 grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+          <div className="mt-24 grid md:grid-cols-3 gap-[1px] bg-white/[0.04] max-w-3xl mx-auto">
             {[
               {
                 title: 'Therapy',
@@ -569,7 +624,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             ].map((card, i) => (
               <motion.div
                 key={card.title}
-                className="p-8 text-center border border-white/[0.06] hover:border-white/[0.12] transition-colors duration-500"
+                className="p-8 text-center bg-[#0a0a0a] hover:bg-[#0f0f0f] transition-colors duration-500"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -579,7 +634,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                   ease: [0.16, 1, 0.3, 1],
                 }}
               >
-                <p className="text-3xl mb-3 font-bebas">{card.title}</p>
+                <p className="text-3xl mb-3 font-bebas text-[var(--accent)]">{card.title}</p>
                 <p className="text-white/30 text-sm leading-relaxed">{card.desc}</p>
               </motion.div>
             ))}
@@ -591,13 +646,9 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            <p className="mt-16 text-white/30 leading-relaxed max-w-2xl mx-auto text-lg">
-              When you choose Dymnds, you&rsquo;re not just buying premium gear &mdash; you&rsquo;re
-              helping someone take their first step toward recovery.
-            </p>
             <Link
               href="/impact"
-              className="group inline-flex items-center gap-2 mt-8 text-[11px] tracking-[0.2em] uppercase text-white/35 hover:text-white transition-colors duration-500 border-b border-white/15 pb-1"
+              className="group inline-flex items-center gap-2 mt-16 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/50 hover:text-[var(--accent)] transition-colors duration-500 border-b border-[var(--accent)]/15 pb-1"
             >
               Learn More
               <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
@@ -609,10 +660,10 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       </section>
 
       {/* ═══════ FOUNDER'S QUOTE — Parallax ═══════ */}
-      <section className="py-32 md:py-44 px-6 bg-black relative overflow-hidden">
-        {/* Giant decorative quotation mark */}
+      <section className="py-32 md:py-44 px-6 bg-neutral-950 relative overflow-hidden">
+        {/* Giant decorative quotation mark with accent */}
         <span
-          className="absolute -top-10 left-1/2 -translate-x-1/2 text-[14rem] md:text-[20rem] font-serif text-white/[0.02] leading-none select-none pointer-events-none"
+          className="absolute -top-10 left-1/2 -translate-x-1/2 text-[14rem] md:text-[20rem] font-serif text-[var(--accent)]/[0.03] leading-none select-none pointer-events-none"
           aria-hidden="true"
         >
           &ldquo;
@@ -625,30 +676,24 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             viewport={{ once: true }}
             transition={{ duration: 1.2 }}
           >
-            <Image
-              src="/diamond-white.png"
-              alt=""
-              width={20}
-              height={20}
-              loading="lazy"
-              className="h-5 w-auto mx-auto mb-14 opacity-10"
-            />
+            {/* Accent line instead of diamond icon */}
+            <div className="w-12 h-[1px] bg-[var(--accent)]/30 mx-auto mb-14" />
 
             <blockquote className="text-2xl md:text-3xl lg:text-4xl font-light italic leading-relaxed mb-12 text-white/70">
               &ldquo;We started Dymnds because we were tired of fitness brands that were all
               surface and no substance. We wanted to build something where every purchase actually
               meant something &mdash; where pressure truly creates diamonds.&rdquo;
             </blockquote>
-            <cite className="text-[11px] text-white/25 not-italic tracking-[0.3em] uppercase">
-              &mdash; The Dymnds Team
+            <cite className="text-[11px] text-[var(--accent)]/40 not-italic tracking-[0.3em] uppercase">
+              &mdash; Brandon, Founder
             </cite>
           </motion.div>
         </Parallax>
       </section>
 
-      {/* ═══════ APP TEASER ═══════ */}
+      {/* ═══════ APP TEASER — With accent border ═══════ */}
       <motion.section
-        className="py-16 md:py-20 px-6 bg-neutral-950 border-y border-white/[0.04]"
+        className="py-16 md:py-20 px-6 bg-black border-y border-[var(--accent)]/[0.06]"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -656,7 +701,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       >
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-green-400/80 mb-2">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--accent)]/60 mb-2">
               Coming Soon &mdash; Free For Everyone
             </p>
             <p className="text-xl md:text-2xl font-bebas">
@@ -668,7 +713,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           </div>
           <Link
             href="/app"
-            className="group relative px-8 py-3 border border-white/15 text-white text-[11px] tracking-[0.2em] uppercase overflow-hidden transition-all duration-500 hover:border-white/40 whitespace-nowrap"
+            className="group relative px-8 py-3 border border-[var(--accent)]/20 text-[var(--accent)] text-[11px] tracking-[0.2em] uppercase overflow-hidden transition-all duration-500 hover:border-[var(--accent)]/50 whitespace-nowrap"
           >
             <span className="relative z-10">Learn More</span>
           </Link>
@@ -677,25 +722,18 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
 
       {/* ═══════ FINAL CTA ═══════ */}
       <section className="py-36 md:py-48 px-6 bg-black relative">
-        {/* Subtle top gradient line */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        {/* Accent gradient line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/15 to-transparent" />
 
         <div className="max-w-2xl mx-auto text-center">
+          {/* Accent line instead of diamond */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, scaleX: 0 }}
+            whileInView={{ opacity: 1, scaleX: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-          >
-            <Image
-              src="/diamond-white.png"
-              alt=""
-              width={36}
-              height={36}
-              loading="lazy"
-              className="h-9 w-auto mx-auto mb-12 opacity-15"
-            />
-          </motion.div>
+            className="w-12 h-[1px] bg-[var(--accent)]/30 mx-auto mb-12"
+          />
 
           <AnimatedHeading
             text="Wear The Change"
@@ -721,21 +759,21 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           >
             <Link
               href="/collections/men"
-              className="group relative px-12 py-5 border border-white/25 text-white text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500 hover:border-white"
+              className="group relative px-12 py-5 border border-[var(--accent)]/25 text-white text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500 hover:border-[var(--accent)]"
             >
               <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
                 Shop Men
               </span>
-              <span className="absolute inset-0 bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+              <span className="absolute inset-0 bg-[var(--accent)] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
             </Link>
             <Link
               href="/collections/women"
-              className="group relative px-12 py-5 bg-white text-black text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500"
+              className="group relative px-12 py-5 bg-[var(--accent)] text-black text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500"
             >
-              <span className="relative z-10 transition-colors duration-500 group-hover:text-white">
+              <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
                 Shop Women
               </span>
-              <span className="absolute inset-0 bg-black transform translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+              <span className="absolute inset-0 bg-[var(--accent-light)] transform translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
             </Link>
           </motion.div>
         </div>

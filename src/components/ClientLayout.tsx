@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import Lenis from 'lenis';
 import { useIsCartOpen, useCartStore } from '@/lib/stores/cart-store';
 import { useCurrencyStore } from '@/lib/stores/currency-store';
@@ -16,6 +18,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const isCartOpen = useIsCartOpen();
   const closeCart = useCartStore(s => s.closeCart);
   const lenisRef = useRef<Lenis | null>(null);
+  const pathname = usePathname();
 
   // Initialize currency detection on mount
   const initCurrency = useCurrencyStore(s => s.init);
@@ -59,7 +62,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <>
       <CursorEffect />
-      {children}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={pathname}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {children}
+        </motion.div>
+      </AnimatePresence>
       <CartDrawer isOpen={isCartOpen} onClose={closeCart} />
     </>
   );

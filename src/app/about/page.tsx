@@ -114,7 +114,7 @@ export default function AboutPage() {
               </h2>
             </ScrollReveal>
 
-            <div className="space-y-6 text-lg opacity-80 leading-relaxed border-l-2 border-white/20 pl-8">
+            <div className="space-y-6 text-lg opacity-80 leading-relaxed border-l-2 border-[var(--accent)]/30 pl-8">
               <ScrollReveal animation="fade-up" delay={100} duration={800}>
                 <p className="italic text-white/70">
                   &ldquo;I started DYMNDS because I was tired of fitness brands that were all surface and no substance. I wanted to build something where every purchase actually meant something—where the pressure we all face could be turned into something beautiful.&rdquo;
@@ -122,10 +122,9 @@ export default function AboutPage() {
               </ScrollReveal>
 
               <ScrollReveal animation="fade-up" delay={200} duration={800}>
-                <div className="mt-8 p-6 bg-white/5 border border-white/10 rounded">
-                  <p className="text-white/50 text-sm mb-2">PERSONALIZE YOUR STORY</p>
-                  <p className="text-white/40 text-sm">This is your space, Brandon. Share what drove you to start DYMNDS. Your personal journey, your turning point, your vision. Authentic founder stories convert higher—your customers want to know the real you.</p>
-                </div>
+                <p className="text-white/50">
+                  The gym was always more than a gym for me. It was where I processed everything — the wins, the losses, the days I didn&apos;t want to get out of bed. And I realized that if gear could be part of that identity, it should carry weight beyond the fabric.
+                </p>
               </ScrollReveal>
             </div>
           </div>

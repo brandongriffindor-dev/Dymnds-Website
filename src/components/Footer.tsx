@@ -178,7 +178,7 @@ export default function Footer() {
                 <button
                   type="submit"
                   disabled={status === 'submitting'}
-                  className="btn-premium px-6 py-3 bg-white text-black text-sm tracking-wider uppercase font-semibold hover:bg-white/90 transition-all duration-300 disabled:opacity-50"
+                  className="btn-accent px-6 py-3 text-sm tracking-wider uppercase font-semibold disabled:opacity-50"
                 >
                   {status === 'submitting' ? '...' : 'Subscribe'}
                 </button>

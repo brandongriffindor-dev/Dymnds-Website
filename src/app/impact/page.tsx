@@ -137,48 +137,31 @@ export default function ImpactPage() {
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       </div>
 
-      {/* Real Impact - So Far */}
+      {/* The Pledge */}
       <section className="py-24 px-6 bg-neutral-950">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-4xl mx-auto text-center">
           <ScrollReveal animation="fade-up" delay={0} duration={800}>
-            <h2 className="text-3xl md:text-4xl tracking-tight mb-4 text-center font-bebas">
-              So Far
+            <h2 className="text-3xl md:text-4xl tracking-tight mb-4 font-bebas">
+              The Pledge
             </h2>
-            <p className="text-center text-white/50 mb-12">The real numbers. No inflated claims. Every dollar accounted for.</p>
+            <p className="text-white/50 mb-12 max-w-2xl mx-auto">
+              Every single order contributes to survivor healing from day one. No minimum threshold, no waiting period, no exceptions.
+            </p>
           </ScrollReveal>
 
-          <StaggerReveal staggerDelay={100} animation="scale" duration={1000} threshold={0.3}>
-            <div className="grid md:grid-cols-2 gap-8 text-center mb-8">
-              <div className="card-premium p-12 border border-white/10 bg-neutral-900/30">
-                <p className="text-6xl md:text-7xl font-bebas mb-3">
-                  <AnimatedCounter end={0} prefix="$" duration={2000} className="font-bebas" />
-                </p>
-                <p className="text-white/60 font-medium mb-2">Total Donated</p>
-                <p className="text-white/30 text-sm">Every order moves this number</p>
-              </div>
-
-              <div className="card-premium p-12 border border-white/10 bg-neutral-900/30">
-                <p className="text-6xl md:text-7xl font-bebas mb-3">
-                  <AnimatedCounter end={0} duration={2000} className="font-bebas" />
-                </p>
-                <p className="text-white/60 font-medium mb-2">Orders Placed</p>
-                <p className="text-white/30 text-sm">Each one creates real healing support</p>
-              </div>
+          <ScrollReveal animation="scale" delay={100} duration={1000} threshold={0.3}>
+            <div className="border-accent-glow p-12 text-center max-w-lg mx-auto">
+              <p className="text-5xl md:text-6xl font-bebas mb-3 text-accent-gradient">Day One</p>
+              <p className="text-white/60 font-medium mb-2">Impact Starts Immediately</p>
+              <p className="text-white/30 text-sm">Your first order funds healing. Your second compounds it. Every purchase after that builds a movement.</p>
             </div>
-
-            <div className="p-8 border border-white/10 bg-neutral-900/20 text-center">
-              <p className="text-white/40 text-sm mb-2">REAL-TIME IMPACT TRACKER</p>
-              <p className="text-white/50">We&apos;re just getting started. As orders come in, this dashboard will update in real time. You&apos;ll see exactly where your money goes—down to the dollar.</p>
-            </div>
-          </StaggerReveal>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* Diamond Divider */}
+      {/* Accent Divider */}
       <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/20 to-transparent" />
       </div>
 
       {/* The Commitment */}
@@ -227,30 +210,9 @@ export default function ImpactPage() {
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       </div>
 
-      {/* Partner Organizations */}
-      <section className="py-24 px-6 bg-black">
-        <div className="max-w-4xl mx-auto text-center">
-          <ScrollReveal animation="fade-up" delay={0} duration={800}>
-            <h2 className="text-3xl md:text-4xl tracking-tight mb-6 font-bebas">
-              Our Partners
-            </h2>
-            <p className="text-white/50 mb-12 max-w-2xl mx-auto">
-              We partner with verified organizations dedicated to survivor support and advocacy.
-            </p>
-            <div className="p-12 border border-white/10 border-dashed">
-              <p className="text-white/30 italic">
-                Partner organizations to be announced soon.
-              </p>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* Diamond Divider */}
+      {/* Accent Divider */}
       <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/20 to-transparent" />
       </div>
 
       {/* CTA */}
