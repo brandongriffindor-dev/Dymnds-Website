@@ -1,59 +1,107 @@
 'use client';
 
+import Image from 'next/image';
 import Link from "next/link";
+import { useState } from "react";
+import { usePathname } from 'next/navigation';
+import { getCSRFToken } from '@/lib/get-csrf-token';
+
+const SHOP_LINKS = [
+  { name: 'All Products', href: '/shop' },
+  { name: 'Men', href: '/collections/men' },
+  { name: 'Women', href: '/collections/women' },
+  { name: 'New Arrivals', href: '/collections/new-arrivals' },
+  { name: 'Best Sellers', href: '/collections/best-sellers' },
+];
+
+const COMPANY_LINKS = [
+  { name: 'About Us', href: '/about' },
+  { name: 'Our Impact', href: '/impact' },
+  { name: 'The App', href: '/app' },
+  { name: 'Careers', href: '/careers' },
+  { name: 'Contact', href: '/contact' },
+];
+
+const SUPPORT_LINKS = [
+  { name: 'FAQ', href: '/faq' },
+  { name: 'Size Guide', href: '/size-guide' },
+  { name: 'Shipping Info', href: '/shipping' },
+  { name: 'Returns & Exchanges', href: '/returns' },
+  { name: 'Email Us', href: 'mailto:info@dymnds.ca' },
+];
 
 export default function Footer() {
+  const pathname = usePathname();
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+
+  // Hide footer on admin routes
+  if (pathname?.startsWith('/admin')) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) return;
+    setStatus('submitting');
+    try {
+      const csrfToken = await getCSRFToken();
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ email, source: 'footer' }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      setStatus('success');
+      setEmail('');
+    } catch {
+      setStatus('error');
+    }
+  };
+
   return (
     <footer className="py-16 px-6 border-t border-white/10 bg-black">
       <div className="max-w-7xl mx-auto">
-        {/* Main Footer Content */}
+        {/* Main Footer Content - 4 Column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-          {/* Brand */}
+          {/* Brand Column */}
           <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-3 group mb-6">
-              <img 
-                src="/diamond-white.png" 
-                alt="DYMNDS" 
-                className="h-10 w-auto group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300" 
+            <Link
+              href="/"
+              className="flex items-center gap-3 group mb-6 w-fit hover:opacity-80 transition-opacity duration-300"
+            >
+              <Image
+                src="/diamond-white.png"
+                alt="DYMNDS"
+                width={40}
+                height={40}
+                className="h-10 w-auto group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300"
               />
-              <img 
-                src="/dymnds-only-white.png" 
-                alt="DYMNDS" 
-                className="h-5 w-auto" 
+              <Image
+                src="/dymnds-only-white.png"
+                alt="DYMNDS"
+                width={100}
+                height={20}
+                className="h-5 w-auto"
               />
             </Link>
             <p className="text-sm opacity-60 leading-relaxed mb-6">
-              Premium athletic wear for those who push limits. Pressure creates diamonds.
+              Premium athletic wear for those who push limits.
             </p>
-            <div className="flex gap-4">
-              {['Instagram', 'TikTok', 'Twitter', 'YouTube'].map((social) => (
-                <a 
-                  key={social}
-                  href="#" 
-                  className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 hover:scale-110"
-                  title={social}
-                >
-                  <span className="text-xs font-bold">{social[0]}</span>
-                </a>
-              ))}
-            </div>
+            <p className="text-xs text-white/30">
+              info@dymnds.ca
+            </p>
           </div>
 
-          {/* Shop */}
+          {/* Shop Column */}
           <div>
-            <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold">Shop</h4>
+            <h4 className="font-bebas text-sm tracking-widest uppercase mb-6 font-semibold">
+              Shop
+            </h4>
             <ul className="space-y-3">
-              {[
-                { name: 'All Products', href: '/shop' },
-                { name: 'Men', href: '/collections/men' },
-                { name: 'Women', href: '/collections/women' },
-                { name: 'New Arrivals', href: '/collections/new-arrivals' },
-                { name: 'Best Sellers', href: '/collections/best-sellers' },
-              ].map((link) => (
+              {SHOP_LINKS.map((link) => (
                 <li key={link.name}>
-                  <Link 
+                  <Link
                     href={link.href}
-                    className="text-sm opacity-60 hover:opacity-100 transition-opacity duration-300"
+                    className="link-underline text-sm opacity-60 hover:opacity-100 transition-opacity duration-300"
                   >
                     {link.name}
                   </Link>
@@ -62,21 +110,17 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Company */}
+          {/* Company Column */}
           <div>
-            <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold">Company</h4>
+            <h4 className="font-bebas text-sm tracking-widest uppercase mb-6 font-semibold">
+              Company
+            </h4>
             <ul className="space-y-3">
-              {[
-                { name: 'About Us', href: '/about' },
-                { name: 'Our Impact', href: '/impact' },
-                { name: 'The App', href: '/app' },
-                { name: 'Contact', href: '/contact' },
-                { name: 'Careers', href: '/careers' },
-              ].map((link) => (
+              {COMPANY_LINKS.map((link) => (
                 <li key={link.name}>
-                  <Link 
+                  <Link
                     href={link.href}
-                    className="text-sm opacity-60 hover:opacity-100 transition-opacity duration-300"
+                    className="link-underline text-sm opacity-60 hover:opacity-100 transition-opacity duration-300"
                   >
                     {link.name}
                   </Link>
@@ -85,21 +129,17 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
+          {/* Support Column */}
           <div>
-            <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold">Support</h4>
+            <h4 className="font-bebas text-sm tracking-widest uppercase mb-6 font-semibold">
+              Support
+            </h4>
             <ul className="space-y-3">
-              {[
-                { name: 'FAQ', href: '/faq' },
-                { name: 'Shipping Info', href: '/shipping' },
-                { name: 'Returns & Exchanges', href: '/returns' },
-                { name: 'Size Guide', href: '/size-guide' },
-                { name: 'Email Us', href: 'mailto:support@dymnds.ca' },
-              ].map((link) => (
+              {SUPPORT_LINKS.map((link) => (
                 <li key={link.name}>
-                  <Link 
+                  <Link
                     href={link.href}
-                    className="text-sm opacity-60 hover:opacity-100 transition-opacity duration-300"
+                    className="link-underline text-sm opacity-60 hover:opacity-100 transition-opacity duration-300"
                   >
                     {link.name}
                   </Link>
@@ -109,45 +149,79 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Newsletter */}
+        {/* Newsletter Section */}
         <div className="border-t border-white/10 pt-12 mb-12">
           <div className="max-w-xl mx-auto text-center">
-            <h4 className="text-xl tracking-wider mb-4" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+            <h4 className="font-bebas text-xl tracking-wider mb-4">
               Join The Movement
             </h4>
             <p className="text-sm opacity-60 mb-6">
-              Subscribe for exclusive drops, early access, and 10% off your first order.
+              Subscribe for exclusive drops and 10% off your first order.
             </p>
-            <form className="flex gap-3">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-sm focus:outline-none focus:border-white/40 transition-colors"
-              />
-              <button
-                type="submit"
-                className="px-6 py-3 bg-white text-black text-sm tracking-wider uppercase rounded-lg hover:bg-white/90 transition-all duration-300 hover:scale-105"
-              >
-                Subscribe
-              </button>
-            </form>
+            {status === 'success' ? (
+              <p className="text-white/60 text-sm py-3" aria-live="polite">
+                You&apos;re on the list. Welcome to the movement.
+              </p>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="email"
+                  id="footer-newsletter-email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  aria-label="Email for newsletter signup"
+                  className="input-premium flex-1 px-4 py-3 bg-white/5 border border-white/20 text-sm focus:outline-none focus:border-white/40 transition-colors"
+                  disabled={status === 'submitting'}
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={status === 'submitting'}
+                  className="btn-premium px-6 py-3 bg-white text-black text-sm tracking-wider uppercase font-semibold hover:bg-white/90 transition-all duration-300 disabled:opacity-50"
+                >
+                  {status === 'submitting' ? '...' : 'Subscribe'}
+                </button>
+              </form>
+            )}
+            {status === 'error' && (
+              <p className="text-red-400/60 text-xs mt-2">
+                Something went wrong. Try again.
+              </p>
+            )}
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/5">
-          <p className="text-xs opacity-40">© 2026 DYMNDS Athletic Wear. All rights reserved.</p>
-          <div className="flex gap-6">
-            {['Privacy Policy', 'Terms of Service', 'Accessibility'].map((link) => (
-              <a 
-                key={link}
-                href="#" 
-                className="text-xs opacity-40 hover:opacity-70 transition-opacity duration-300"
-              >
-                {link}
-              </a>
-            ))}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-8 border-t border-white/5">
+          <div className="flex flex-col items-center md:items-start gap-4">
+            <p className="font-bebas text-lg tracking-wider">
+              Pressure Creates Diamonds
+            </p>
+            <p className="text-xs opacity-40">
+              © 2026 DYMNDS. All rights reserved.
+            </p>
           </div>
+          <nav aria-label="Legal" className="flex flex-wrap gap-6 justify-center md:justify-end">
+            <Link
+              href="/privacy"
+              className="link-underline text-xs opacity-40 hover:opacity-70 transition-opacity duration-300"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/returns"
+              className="link-underline text-xs opacity-40 hover:opacity-70 transition-opacity duration-300"
+            >
+              Returns
+            </Link>
+            <Link
+              href="/terms"
+              className="link-underline text-xs opacity-40 hover:opacity-70 transition-opacity duration-300"
+            >
+              Terms of Service
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>

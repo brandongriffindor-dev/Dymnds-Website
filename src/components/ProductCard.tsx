@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import Image from 'next/image';
 import { useState } from "react";
 
 interface ProductCardProps {
@@ -8,23 +9,27 @@ interface ProductCardProps {
   name: string;
   price: number;
   image?: string;
+  images?: string[];
   category: string;
   isNew?: boolean;
   isBestSeller?: boolean;
   colors?: string[];
   comingSoon?: boolean;
+  stock?: Record<string, number>;
 }
 
-export default function ProductCard({ 
-  id, 
-  name, 
-  price, 
-  image, 
+export default function ProductCard({
+  id,
+  name,
+  price,
+  image,
+  images = [],
   category,
   isNew = false,
   isBestSeller = false,
   colors = ['#000', '#fff', '#333'],
-  comingSoon = true
+  comingSoon = false,
+  stock = {}
 }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
@@ -38,10 +43,13 @@ export default function ProductCard({
           onMouseLeave={() => setIsHovered(false)}
         >
           <div className="text-center relative z-10">
-            <img 
-              src="/diamond-white.png" 
-              alt="DYMNDS" 
-              className={`w-12 h-12 mx-auto mb-3 transition-all duration-500 ${
+            <Image
+              src="/diamond-white.png"
+              alt="DYMNDS"
+              width={48}
+              height={48}
+              loading="lazy"
+              className={`mx-auto mb-3 transition-all duration-500 ${
                 isHovered ? 'opacity-40 scale-110 rotate-12' : 'opacity-20'
               }`}
             />
@@ -64,30 +72,57 @@ export default function ProductCard({
   }
 
   return (
-    <Link href={`/products/${id}`} className="group block">
-      <div 
+    <Link href={`/products/${id}`} className="card-premium group block">
+      <div
         className="aspect-[3/4] bg-neutral-900 mb-4 overflow-hidden relative"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Product Image */}
-        {image ? (
-          <img 
-            src={image} 
-            alt={name}
-            className={`w-full h-full object-cover transition-transform duration-700 ${
-              isHovered ? 'scale-110' : 'scale-100'
-            }`}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <img 
-              src="/diamond-white.png" 
-              alt="DYMNDS" 
-              className="w-16 h-16 opacity-20"
+        {/* Product Images - hover swap */}
+        <div className="relative w-full h-full">
+          {/* Primary image */}
+          {image ? (
+            <Image
+              src={image}
+              alt={name}
+              fill
+              loading="lazy"
+              className={`object-cover transition-opacity duration-500 ${
+                isHovered && images.length > 0 ? 'opacity-0' : 'opacity-100'
+              }`}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
-          </div>
-        )}
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent animate-shimmer" />
+              <div className="flex flex-col items-center gap-2 relative z-10">
+                <Image
+                  src="/diamond-white.png"
+                  alt="DYMNDS"
+                  width={48}
+                  height={48}
+                  loading="lazy"
+                  className="opacity-15"
+                />
+                <p className="text-[8px] tracking-[0.2em] uppercase text-white/20">Coming Soon</p>
+              </div>
+            </div>
+          )}
+
+          {/* Secondary image (shows on hover) */}
+          {images.length > 0 && (
+            <Image
+              src={images[0]}
+              alt={`${name} alternate view`}
+              fill
+              loading="lazy"
+              className={`object-cover absolute inset-0 transition-opacity duration-500 ${
+                isHovered ? 'opacity-100' : 'opacity-0'
+              }`}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          )}
+        </div>
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -104,7 +139,7 @@ export default function ProductCard({
         </div>
 
         {/* Quick actions on hover */}
-        <div className={`absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent transition-all duration-500 ${
+        <div className={`absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent transition-[var(--ease-premium)] duration-500 ${
           isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}>
           <button className="w-full py-3 bg-white text-black text-xs tracking-widest uppercase font-semibold hover:bg-white/90 transition-colors">
@@ -113,7 +148,7 @@ export default function ProductCard({
         </div>
 
         {/* Overlay */}
-        <div className={`absolute inset-0 bg-black/0 transition-colors duration-300 ${
+        <div className={`absolute inset-0 bg-black/0 transition-[var(--ease-premium)] duration-300 ${
           isHovered ? 'bg-black/20' : ''
         }`} />
       </div>
@@ -121,9 +156,24 @@ export default function ProductCard({
       {/* Product Info */}
       <div className="space-y-2">
         <p className="text-[10px] tracking-widest uppercase text-white/50">{category}</p>
-        <h3 className="text-sm font-medium group-hover:opacity-70 transition-opacity">{name}</h3>
+        <h3 className="text-sm font-bebas font-medium group-hover:opacity-70 transition-[var(--ease-premium)]">{name}</h3>
         <p className="text-sm opacity-70">${price.toFixed(2)}</p>
-        
+
+        {/* Size availability dots */}
+        {Object.keys(stock).length > 0 && (
+          <div className="flex gap-1.5 pt-2">
+            {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => {
+              const inStock = (stock as Record<string, number>)?.[size] > 0;
+              return (
+                <div key={size} className="flex flex-col items-center gap-0.5">
+                  <div className={`w-1.5 h-1.5 rounded-full transition-colors ${inStock ? 'bg-white/40' : 'bg-white/10'}`} />
+                  <span className="text-[8px] text-white/20">{size}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Color swatches */}
         {colors.length > 0 && (
           <div className="flex gap-2 pt-1">

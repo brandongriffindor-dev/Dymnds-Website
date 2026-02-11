@@ -1,8 +1,8 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
-import { db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getCSRFToken } from '@/lib/get-csrf-token';
 
 interface AppWaitlistFormProps {
   onClose: () => void;
@@ -15,7 +15,7 @@ export default function AppWaitlistForm({ onClose }: AppWaitlistFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !email.includes('@')) {
       setStatus('error');
       setMessage('Please enter a valid email');
@@ -25,15 +25,24 @@ export default function AppWaitlistForm({ onClose }: AppWaitlistFormProps) {
     setStatus('submitting');
 
     try {
-      await setDoc(doc(db, 'app_waitlist', email), {
-        signed_up_at: serverTimestamp()
+      const csrfToken = await getCSRFToken();
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ email, type: 'app' }),
       });
-      
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Something went wrong');
+      }
+
       setStatus('success');
       setMessage('You\'re on the list! We\'ll email you when the app launches.');
     } catch (error) {
       setStatus('error');
-      setMessage('Something went wrong. Try again.');
+      setMessage(error instanceof Error ? error.message : 'Something went wrong. Try again.');
     }
   };
 
@@ -48,7 +57,7 @@ export default function AppWaitlistForm({ onClose }: AppWaitlistFormProps) {
         </button>
 
         <div className="text-center mb-8">
-          <img src="/diamond-white.png" alt="" className="h-12 w-auto mx-auto mb-4 opacity-50" />
+          <Image src="/diamond-white.png" alt="" width={48} height={48} className="h-12 w-auto mx-auto mb-4 opacity-50" />
           <h3 className="text-2xl font-bebas italic tracking-wider mb-2">Get Early Access</h3>
           <p className="text-white/50 text-sm">
             The Dymnds app is launching soon. Be the first to know.

@@ -1,5 +1,9 @@
 export { default as CursorEffect } from './CursorEffect';
-export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as Navbar } from './Navbar';
 export { default as Footer } from './Footer';
 export { default as ProductCard } from './ProductCard';
+export { default as AppWaitlistForm } from './AppWaitlistForm';
+export { default as CollectionProductCard } from './CollectionProductCard';
+export { default as ScrollReveal } from './ScrollReveal';
+export { default as StaggerReveal } from './StaggerReveal';
+export { default as AnimatedCounter } from './AnimatedCounter';

@@ -1,0 +1,199 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ───────────────────────────────────────
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuth() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isValidString(field, maxLen) {
+      return field is string && field.size() > 0 && field.size() <= maxLen;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.size() > 5 && email.size() <= 254
+        && email.matches('^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function isValidNumber(field, min, max) {
+      return field is number && field >= min && field <= max;
+    }
+
+    function hasRequiredFields(data, fields) {
+      return data.keys().hasAll(fields);
+    }
+
+    // ==========================================
+    // ADMIN RBAC COLLECTION
+    // ==========================================
+    // Document ID = Firebase Auth UID. Console-managed only.
+    // SEC-FIX-005: Each admin document should have a 'role' field:
+    //   super_admin | manager | inventory | read_only
+    // Existing admins without a role default to super_admin in code.
+
+    function isRole(role) {
+      return isAdmin()
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == role;
+    }
+
+    function isSuperAdmin() {
+      return isAdmin()
+        && (
+          !('role' in get(/databases/$(database)/documents/admins/$(request.auth.uid)).data)
+          || get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'super_admin'
+        );
+    }
+
+    match /admins/{uid} {
+      allow read: if isAdmin();
+      // Only super_admins can modify other admin documents (future use)
+      allow write: if false;
+    }
+
+    // ==========================================
+    // EXISTING APP RULES (fitness/nutrition app)
+    // SHARED FIREBASE PROJECT — LOCKED DOWN
+    // ==========================================
+
+    match /public_foods/{foodId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /flow_poses/{poseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /food_corrections/{correctionId} {
+      allow read: if true;
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuth() && request.auth.uid == userId;
+      allow write: if isAuth() && request.auth.uid == userId;
+      match /{collection}/{docId} {
+        allow read, write: if isAuth() && request.auth.uid == userId;
+      }
+    }
+
+    // ==========================================
+    // DYMNDS WEB — PUBLIC STOREFRONT
+    // ==========================================
+
+    // Products — public read, server-only writes (via Admin SDK API routes)
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Contact Messages — server-only create via Admin SDK.
+    // No public create. Admin reads/manages.
+    match /contact_messages/{messageId} {
+      allow create: if false;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Waitlist — server-only create via Admin SDK.
+    // No public create. Admin reads/manages.
+    match /waitlist/{docId} {
+      allow create: if false;
+      allow read, delete: if isAdmin();
+    }
+
+    // App Waitlist — server-only create via Admin SDK.
+    // No public create. Admin reads/manages.
+    match /app_waitlist/{docId} {
+      allow create: if false;
+      allow read, delete: if isAdmin();
+    }
+
+    // Reviews — authenticated users can create, admin manages
+    match /reviews/{reviewId} {
+      allow create: if isAuth()
+        // SEC-005: 'verified' removed — only admin can set via update rule
+        && request.resource.data.keys().hasOnly(['productId', 'productSlug', 'rating', 'title', 'body', 'authorName', 'authorEmail', 'images', 'createdAt'])
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && isValidString(request.resource.data.title, 200)
+        && isValidString(request.resource.data.body, 2000)
+        // Enforce createdAt is a valid timestamp (prevents client from faking dates)
+        && request.resource.data.createdAt is timestamp;
+      allow read: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // ==========================================
+    // DYMNDS WEB — ADMIN ONLY
+    // ==========================================
+
+    // Orders — admin read (for dashboard onSnapshot), server-only writes
+    match /orders/{orderId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /customers/{customerId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Discounts — admin read (for dashboard onSnapshot), server-only writes
+    match /discounts/{discountId} {
+      allow read: if isAdmin();
+      allow write: if false;
+
+      // Per-email usage tracking — server-only
+      match /discount_uses/{useId} {
+        allow read, write: if false;
+      }
+    }
+
+    // Expenses — admin with field validation
+    match /expenses/{expenseId} {
+      allow read: if isAdmin();
+      allow create, update: if isAdmin()
+        && hasRequiredFields(request.resource.data, ['description', 'amount', 'category'])
+        && isValidString(request.resource.data.description, 500)
+        && request.resource.data.amount is number
+        && request.resource.data.amount >= 0
+        && isValidString(request.resource.data.category, 100);
+      allow delete: if isAdmin();
+    }
+
+    match /analytics/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Inventory logs — server-only create via Admin SDK. Append-only audit trail.
+    match /inventory_logs/{logId} {
+      allow create: if false;
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /customer_notes/{email} {
+      allow read, write: if isAdmin();
+    }
+
+    // Audit log — admin read only, server-only writes (tamper-proof)
+    match /admin_audit_log/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // SEC-015: Catch-all deny — explicitly block any unmatched paths.
+    // Firestore defaults to deny, but this makes the policy auditable.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,362 +1,331 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useReducer } from 'react';
+import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Check, ShoppingBag, Diamond, Truck, Mail, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import ScrollReveal from '@/components/ScrollReveal';
+import ProductReviews from '@/components/ProductReviews';
+import ProductGallery from './ProductGallery';
+import SizeCalculator from './SizeCalculator';
+import QuestionForm from './QuestionForm';
+import { Check, ShoppingBag, Truck, Mail, ChevronDown } from 'lucide-react';
 import type { Product, ProductColor } from '@/lib/firebase';
-import { useCart } from '@/components/CartContext';
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import type { Review } from '@/lib/fetch-products';
+import { useCartStore, type CartItem } from '@/lib/stores/cart-store';
+import { useCurrency, convertPrice, formatPrice, getCadPrice } from '@/lib/stores/currency-store';
 import Link from 'next/link';
 
 interface ProductClientProps {
   product: Product;
+  initialReviews?: Review[];
+  initialMatchingProduct?: Product | null;
 }
 
-// Size Calculator Component
-function SizeCalculator({ sizeGuide, onClose }: { sizeGuide?: Product['sizeGuide']; onClose: () => void }) {
-  const [chest, setChest] = useState('');
-  const [waist, setWaist] = useState('');
-  const [recommendedSize, setRecommendedSize] = useState<string | null>(null);
-
-  const calculateSize = () => {
-    const chestNum = parseFloat(chest);
-    const waistNum = parseFloat(waist);
-
-    if (!chestNum && !waistNum) return;
-
-    let size = 'M';
-    
-    if (chestNum <= 34 || waistNum <= 28) size = 'XS';
-    else if (chestNum <= 37 || waistNum <= 31) size = 'S';
-    else if (chestNum <= 40 || waistNum <= 34) size = 'M';
-    else if (chestNum <= 43 || waistNum <= 37) size = 'L';
-    else if (chestNum <= 46 || waistNum <= 40) size = 'XL';
-    else size = 'XXL';
-
-    setRecommendedSize(size);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-neutral-900 border border-white/10 rounded-2xl p-8 w-full max-w-md">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bebas italic tracking-wider">Find Your Size</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="space-y-4 mb-6">
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Chest (inches)</label>
-            <input
-              type="number"
-              value={chest}
-              onChange={(e) => setChest(e.target.value)}
-              placeholder="e.g., 38"
-              className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 text-white focus:border-white/50 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Waist (inches)</label>
-            <input
-              type="number"
-              value={waist}
-              onChange={(e) => setWaist(e.target.value)}
-              placeholder="e.g., 32"
-              className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 text-white focus:border-white/50 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {sizeGuide && (
-          <div className="mb-6 p-4 bg-white/5 rounded-lg">
-            <p className="text-xs uppercase tracking-wider text-white/40 mb-2">Size Guide</p>
-            <div className="grid grid-cols-3 gap-2 text-xs text-white/60">
-              {Object.entries(sizeGuide.chest || {}).map(([size, measurement]) => (
-                <div key={size} className="flex justify-between">
-                  <span>{size}:</span>
-                  <span>{measurement}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <button
-          onClick={calculateSize}
-          className="w-full py-3 bg-white text-black font-bold tracking-wider uppercase rounded-lg hover:bg-white/90 transition-colors"
-        >
-          Calculate My Size
-        </button>
-
-        {recommendedSize && (
-          <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
-            <p className="text-white/60 text-sm mb-1">Your recommended size:</p>
-            <p className="text-3xl font-bebas italic text-green-400">{recommendedSize}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+// Product state and reducer for managing product page state
+interface ProductState {
+  selectedColor: ProductColor | null;
+  mainImageIndex: number;
+  imageTransition: boolean;
+  selectedSize: string | null;
+  isAdding: boolean;
+  isAdded: boolean;
+  showSizeCalculator: boolean;
+  showQuestionForm: boolean;
+  matchingProduct: Product | null;
+  deliveryOpen: boolean;
+  returnsOpen: boolean;
+  stockError: string | null;
 }
 
-// Question Form Component
-function QuestionForm({ productName, onClose }: { productName: string; onClose: () => void }) {
-  const [email, setEmail] = useState('');
-  const [question, setQuestion] = useState('');
-  const [sent, setSent] = useState(false);
+type ProductAction =
+  | { type: 'SET_COLOR'; color: ProductColor | null }
+  | { type: 'SET_IMAGE_INDEX'; index: number }
+  | { type: 'SET_IMAGE_TRANSITION'; transitioning: boolean }
+  | { type: 'SET_SIZE'; size: string | null }
+  | { type: 'SET_ADDING'; adding: boolean }
+  | { type: 'SET_ADDED'; added: boolean }
+  | { type: 'TOGGLE_SIZE_CALCULATOR' }
+  | { type: 'TOGGLE_QUESTION_FORM' }
+  | { type: 'SET_MATCHING_PRODUCT'; product: Product | null }
+  | { type: 'TOGGLE_DELIVERY' }
+  | { type: 'TOGGLE_RETURNS' }
+  | { type: 'SET_STOCK_ERROR'; error: string | null }
+  | { type: 'CLOSE_MODALS' }
+  | { type: 'CHANGE_COLOR'; color: ProductColor };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const subject = `Question about ${productName}`;
-    const body = `Product: ${productName}\n\nQuestion:\n${question}\n\nFrom: ${email}`;
-    window.location.href = `mailto:support@dymnds.ca?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setSent(true);
-    setTimeout(onClose, 2000);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-neutral-900 border border-white/10 rounded-2xl p-8 w-full max-w-md">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bebas italic tracking-wider">Ask a Question</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {sent ? (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-4">✓</div>
-            <p className="text-white/60">Opening your email client...</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Product</label>
-              <p className="text-white">{productName}</p>
-            </div>
-            <div>
-              <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Your Email *</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 text-white focus:border-white/50 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">Your Question *</label>
-              <textarea
-                required
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                rows={4}
-                className="w-full bg-black border border-white/20 rounded-lg px-4 py-3 text-white focus:border-white/50 focus:outline-none resize-none"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full py-3 bg-white text-black font-bold tracking-wider uppercase rounded-lg hover:bg-white/90 transition-colors flex items-center justify-center gap-2"
-            >
-              <Mail className="w-4 h-4" />
-              Send to support@dymnds.ca
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
-  );
+function productReducer(state: ProductState, action: ProductAction): ProductState {
+  switch (action.type) {
+    case 'SET_COLOR':
+      return { ...state, selectedColor: action.color };
+    case 'SET_IMAGE_INDEX':
+      return { ...state, mainImageIndex: action.index };
+    case 'SET_IMAGE_TRANSITION':
+      return { ...state, imageTransition: action.transitioning };
+    case 'SET_SIZE':
+      return { ...state, selectedSize: action.size, stockError: null };
+    case 'SET_ADDING':
+      return { ...state, isAdding: action.adding };
+    case 'SET_ADDED':
+      return { ...state, isAdded: action.added };
+    case 'TOGGLE_SIZE_CALCULATOR':
+      return { ...state, showSizeCalculator: !state.showSizeCalculator };
+    case 'TOGGLE_QUESTION_FORM':
+      return { ...state, showQuestionForm: !state.showQuestionForm };
+    case 'SET_MATCHING_PRODUCT':
+      return { ...state, matchingProduct: action.product };
+    case 'TOGGLE_DELIVERY':
+      return { ...state, deliveryOpen: !state.deliveryOpen };
+    case 'TOGGLE_RETURNS':
+      return { ...state, returnsOpen: !state.returnsOpen };
+    case 'SET_STOCK_ERROR':
+      return { ...state, stockError: action.error };
+    case 'CLOSE_MODALS':
+      return { ...state, showSizeCalculator: false, showQuestionForm: false };
+    case 'CHANGE_COLOR':
+      return {
+        ...state,
+        selectedColor: action.color,
+        mainImageIndex: 0,
+        imageTransition: false,
+        selectedSize: null,
+        stockError: null,
+      };
+    default:
+      return state;
+  }
 }
 
-export default function ProductClient({ product }: ProductClientProps) {
-  const { addToCart } = useCart();
-  
+
+export default function ProductClient({ product, initialReviews = [], initialMatchingProduct = null }: ProductClientProps) {
+  const addToCart = useCartStore(s => s.addToCart);
+  const cart = useCartStore(s => s.cart);
+  const openCart = useCartStore(s => s.openCart);
+  const currency = useCurrency();
+
   // Color selection state
   const hasColors = product.colors && product.colors.length > 0;
-  const [selectedColor, setSelectedColor] = useState<ProductColor | null>(
-    hasColors ? product.colors![0] : null
-  );
-  
-  // Image gallery state
-  const [mainImageIndex, setMainImageIndex] = useState(0);
-  
-  // Get current images based on color selection
-  const currentImages = selectedColor?.images || product.images || [];
-  
-  // Cart state
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isAdded, setIsAdded] = useState(false);
-  const [showSizeCalculator, setShowSizeCalculator] = useState(false);
-  const [showQuestionForm, setShowQuestionForm] = useState(false);
-  const [matchingProduct, setMatchingProduct] = useState<Product | null>(null);
 
-  // Fetch matching set product
+  // Initialize product state with useReducer — matching product now comes from server
+  const [state, dispatch] = useReducer(productReducer, {
+    selectedColor: hasColors ? product.colors![0] : null,
+    mainImageIndex: 0,
+    imageTransition: false,
+    selectedSize: null,
+    isAdding: false,
+    isAdded: false,
+    showSizeCalculator: false,
+    showQuestionForm: false,
+    matchingProduct: initialMatchingProduct,
+    deliveryOpen: true,
+    returnsOpen: false,
+    stockError: null,
+  });
+
+  // Get current images based on color selection
+  const currentImages = state.selectedColor?.images || product.images || [];
+
+  // Fix #3/#4: Matching product now fetched server-side — no client Firestore import needed
+
+  // Close modals on Escape key
   useEffect(() => {
-    const fetchMatchingSet = async () => {
-      if (product.matchingSetSlug) {
-        const q = query(collection(db, 'products'), where('slug', '==', product.matchingSetSlug), limit(1));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          setMatchingProduct({ id: snap.docs[0].id, ...snap.docs[0].data() } as Product);
-        }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        dispatch({ type: 'CLOSE_MODALS' });
       }
     };
-    fetchMatchingSet();
-  }, [product.matchingSetSlug]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-  // Image navigation
-  const nextImage = () => {
-    setMainImageIndex((prev) => (prev + 1) % currentImages.length);
-  };
-
-  const prevImage = () => {
-    setMainImageIndex((prev) => (prev - 1 + currentImages.length) % currentImages.length);
-  };
+  // Image navigation with CSS-based crossfade
+  const changeImage = useCallback((newIndex: number) => {
+    if (newIndex === state.mainImageIndex) return;
+    dispatch({ type: 'SET_IMAGE_TRANSITION', transitioning: true });
+    const timer = setTimeout(() => {
+      dispatch({ type: 'SET_IMAGE_INDEX', index: newIndex });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          dispatch({ type: 'SET_IMAGE_TRANSITION', transitioning: false });
+        });
+      });
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [state.mainImageIndex]);
 
   // Handle color change
   const handleColorChange = (color: ProductColor) => {
-    setSelectedColor(color);
-    setMainImageIndex(0);
-    setSelectedSize(null); // Reset size when color changes (different stock)
+    dispatch({ type: 'CHANGE_COLOR', color });
   };
 
-  // Handle add to cart
+  // Handle add to cart with stock validation
   const handleAddToCart = async () => {
-    if (!selectedSize) return;
-    
-    setIsAdding(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const colorName = selectedColor?.name || '';
-    const colorImage = selectedColor?.images?.[0] || product.images?.[0] || '';
-    
+    if (!state.selectedSize) return;
+    dispatch({ type: 'SET_STOCK_ERROR', error: null });
+
+    // Stock validation
+    const available = (currentStock as Record<string, number>)[state.selectedSize] ?? 0;
+    if (available <= 0) {
+      dispatch({ type: 'SET_STOCK_ERROR', error: 'This size is currently out of stock.' });
+      return;
+    }
+
+    // Check how many of this exact variant are already in cart
+    const colorName = state.selectedColor?.name || '';
+    const cartItemId = `${product.id}-${state.selectedSize}${colorName ? `-${colorName}` : ''}`;
+    const existingInCart = cart.find((item) => item.id === cartItemId);
+    const currentQty = existingInCart?.quantity ?? 0;
+
+    if (currentQty >= available) {
+      dispatch({ type: 'SET_STOCK_ERROR', error: `Only ${available} left in stock — you already have ${currentQty} in your cart.` });
+      return;
+    }
+
+    dispatch({ type: 'SET_ADDING', adding: true });
+    await new Promise(resolve => setTimeout(resolve, 400));
+
+    const colorImage = state.selectedColor?.images?.[0] || product.images?.[0] || '';
+
     addToCart({
-      id: `${product.id}-${selectedSize}${colorName ? `-${colorName}` : ''}`,
+      id: cartItemId,
       name: product.title,
       price: Number(product.price),
       quantity: 1,
-      size: selectedSize,
+      size: state.selectedSize,
       color: colorName || undefined,
       image: colorImage,
     });
-    
-    setIsAdding(false);
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 2000);
+
+    dispatch({ type: 'SET_ADDING', adding: false });
+    dispatch({ type: 'SET_ADDED', added: true });
+    openCart();
+    setTimeout(() => dispatch({ type: 'SET_ADDED', added: false }), 1500);
   };
 
   // Get current stock based on color
-  const currentStock = selectedColor?.stock || product.stock || {};
-  
+  const currentStock = state.selectedColor?.stock || product.stock || {};
+
   const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-  const impactMinutes = Math.round(Number(product.price) * 0.10 * 2);
+  const displayPrice = convertPrice(getCadPrice(product), currency);
+  const impactMinutes = Math.round(displayPrice * 0.10 * 2);
+
+  const collectionName = product.category === 'Men' ? "Men's Collection" : product.category === 'Women' ? "Women's Collection" : product.category;
+  const collectionHref = product.category === 'Men' ? '/collections/men' : product.category === 'Women' ? '/collections/women' : '/shop';
+
+  const totalStockAvailable = Object.values(currentStock as Record<string, number>).reduce((sum, qty) => sum + qty, 0);
+
+  const productSchema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.title,
+    "image": currentImages.length > 0 ? currentImages : ['https://dymnds.ca/og-product.png'],
+    "description": product.description || `${product.title} — Premium athletic wear by DYMNDS.`,
+    "sku": product.slug,
+    "brand": { "@type": "Brand", "name": "DYMNDS" },
+    "offers": {
+      "@type": "Offer",
+      "price": product.price,
+      "priceCurrency": "CAD",
+      "availability": totalStockAvailable > 0
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      "url": `https://dymnds.ca/products/${product.slug}`,
+      "priceValidUntil": new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+    },
+  };
+
+  // Add AggregateRating for rich snippet star ratings in Google SERPs
+  if (initialReviews.length > 0) {
+    const avgRating = (initialReviews.reduce((sum, r) => sum + r.rating, 0) / initialReviews.length).toFixed(1);
+    productSchema.aggregateRating = {
+      "@type": "AggregateRating",
+      "ratingValue": avgRating,
+      "reviewCount": initialReviews.length,
+    };
+  }
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://dymnds.ca" },
+      { "@type": "ListItem", "position": 2, "name": collectionName, "item": `https://dymnds.ca${collectionHref}` },
+      { "@type": "ListItem", "position": 3, "name": product.title, "item": `https://dymnds.ca/products/${product.slug}` }
+    ]
+  };
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main id="main-content" className="min-h-screen bg-black text-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema).replace(/</g, '\\u003c') }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema).replace(/</g, '\\u003c') }}
+      />
       <Navbar />
-      
-      {showSizeCalculator && (
-        <SizeCalculator sizeGuide={product.sizeGuide} onClose={() => setShowSizeCalculator(false)} />
+
+      {state.showSizeCalculator && (
+        <SizeCalculator
+          sizeGuide={product.sizeGuide}
+          onClose={() => dispatch({ type: 'TOGGLE_SIZE_CALCULATOR' })}
+        />
       )}
 
-      {showQuestionForm && (
-        <QuestionForm productName={product.title} onClose={() => setShowQuestionForm(false)} />
+      {state.showQuestionForm && (
+        <QuestionForm
+          productName={product.title}
+          onClose={() => dispatch({ type: 'TOGGLE_QUESTION_FORM' })}
+        />
       )}
-      
+
       <div className="pt-20 lg:pt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-12 lg:items-start">
-            
-            {/* LEFT SIDE - IMAGE GALLERY */}
-            <div className="mb-8 lg:mb-0">
-              {/* Main Image */}
-              <div className="relative aspect-[4/5] bg-neutral-900 rounded-lg overflow-hidden mb-4">
-                {currentImages.length > 0 ? (
-                  <img 
-                    src={currentImages[mainImageIndex]} 
-                    alt={product.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <img src="/diamond-white.png" alt="" className="w-32 h-32 opacity-20" />
-                  </div>
-                )}
-                
-                {/* Navigation Arrows */}
-                {currentImages.length > 1 && (
-                  <>
-                    <button
-                      onClick={prevImage}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors"
-                    >
-                      <ChevronLeft className="w-6 h-6" />
-                    </button>
-                    <button
-                      onClick={nextImage}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors"
-                    >
-                      <ChevronRight className="w-6 h-6" />
-                    </button>
-                  </>
-                )}
-                
-                {/* Image Counter */}
-                {currentImages.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/50 rounded-full text-sm">
-                    {mainImageIndex + 1} / {currentImages.length}
-                  </div>
-                )}
-              </div>
+          {/* Breadcrumbs */}
+          <nav className="mb-8 flex items-center gap-2 text-xs text-white/40">
+            <Link href="/" className="hover:text-white/70 transition-colors">Home</Link>
+            <span>/</span>
+            <Link href={collectionHref} className="hover:text-white/70 transition-colors">{collectionName}</Link>
+            <span>/</span>
+            <span className="text-white/60">{product.title}</span>
+          </nav>
 
-              {/* Thumbnail Strip */}
-              {currentImages.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {currentImages.map((img, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setMainImageIndex(idx)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                        mainImageIndex === idx ? 'border-white' : 'border-transparent hover:border-white/50'
-                      }`}
-                    >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+          <div className="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-start">
+
+            {/* LEFT SIDE - IMAGE GALLERY */}
+            <ProductGallery
+              images={currentImages}
+              productName={product.title}
+              selectedImageIndex={state.mainImageIndex}
+              isTransitioning={state.imageTransition}
+              onImageChange={changeImage}
+            />
 
             {/* RIGHT SIDE - PRODUCT INFO */}
             <div className="lg:sticky lg:top-32">
-              
+
               {/* Title & Price */}
-              <div className="mb-6">
+              <div className="mb-8">
                 <h1 className="text-3xl lg:text-4xl font-bebas italic tracking-wide uppercase mb-2">
                   {product.title}
                 </h1>
-                <p className="text-neutral-400 text-sm mb-3">{product.subtitle}</p>
-                <p className="text-2xl lg:text-3xl font-medium">${product.price}</p>
+                <p className="text-neutral-400 text-sm mb-4">{product.subtitle}</p>
+                <p className="text-2xl lg:text-3xl font-medium">{formatPrice(convertPrice(getCadPrice(product), currency), currency)}</p>
               </div>
 
               {/* Description */}
               {product.description && (
-                <div className="mb-6">
+                <div className="mb-8">
                   <p className="text-white/60 text-sm leading-relaxed">{product.description}</p>
                 </div>
               )}
 
               {/* Features */}
               {product.features && product.features.length > 0 && (
-                <div className="mb-6">
+                <div className="mb-8">
                   <p className="text-[10px] tracking-widest uppercase text-neutral-500 mb-3">Features</p>
-                  <ul className="space-y-1">
+                  <ul className="space-y-1.5">
                     {product.features.map((feature, idx) => (
                       <li key={idx} className="text-sm text-white/70 flex items-center gap-2">
                         <span className="w-1 h-1 bg-white/40 rounded-full" />
@@ -369,22 +338,23 @@ export default function ProductClient({ product }: ProductClientProps) {
 
               {/* Color Selection */}
               {hasColors && (
-                <div className="mb-6">
+                <div className="mb-8">
                   <p className="text-[10px] tracking-widest uppercase text-neutral-500 mb-3">
-                    Color: <span className="text-white">{selectedColor?.name}</span>
+                    Color: <span className="text-white">{state.selectedColor?.name}</span>
                   </p>
                   <div className="flex gap-3">
                     {product.colors!.map((color) => (
                       <button
                         key={color.name}
                         onClick={() => handleColorChange(color)}
-                        className={`w-10 h-10 rounded-full border-2 transition-all ${
-                          selectedColor?.name === color.name 
-                            ? 'border-white scale-110' 
-                            : 'border-transparent hover:scale-105'
+                        className={`w-10 h-10 rounded-full transition-all duration-200 ${
+                          state.selectedColor?.name === color.name
+                            ? 'ring-2 ring-white ring-offset-2 ring-offset-black scale-110'
+                            : 'hover:scale-110 ring-1 ring-white/10'
                         }`}
                         style={{ backgroundColor: color.hex }}
                         title={color.name}
+                        aria-label={`Select ${color.name} color`}
                       />
                     ))}
                   </div>
@@ -392,12 +362,12 @@ export default function ProductClient({ product }: ProductClientProps) {
               )}
 
               {/* Size Selector */}
-              <div className="mb-6">
+              <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-[10px] tracking-widest uppercase text-neutral-500">Select Size</p>
-                  <button 
-                    onClick={() => setShowSizeCalculator(true)}
-                    className="text-xs text-white/40 hover:text-white underline"
+                  <button
+                    onClick={() => dispatch({ type: 'TOGGLE_SIZE_CALCULATOR' })}
+                    className="text-xs text-white/40 hover:text-white link-underline transition-colors"
                   >
                     What&apos;s my size?
                   </button>
@@ -406,21 +376,23 @@ export default function ProductClient({ product }: ProductClientProps) {
                   {sizes.map((size) => {
                     const stock = (currentStock as Record<string, number>)?.[size] || 0;
                     const inStock = stock > 0;
-                    
+
                     return (
                       <button
                         key={size}
-                        onClick={() => inStock && setSelectedSize(size)}
+                        onClick={() => inStock && dispatch({ type: 'SET_SIZE', size })}
                         disabled={!inStock}
                         className={`
                           h-12 text-xs font-medium tracking-wider uppercase transition-all duration-200
-                          ${selectedSize === size 
-                            ? 'bg-white text-black' 
-                            : inStock 
+                          ${state.selectedSize === size
+                            ? 'bg-white text-black scale-[1.02]'
+                            : inStock
                               ? 'bg-transparent text-white border border-white/20 hover:border-white/40'
                               : 'bg-transparent text-neutral-600 border border-neutral-800 cursor-not-allowed line-through'
                           }
                         `}
+                        style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+                        aria-label={`Size ${size}${!inStock ? ', out of stock' : state.selectedSize === size ? ', selected' : ''}`}
                       >
                         {size}
                       </button>
@@ -431,95 +403,152 @@ export default function ProductClient({ product }: ProductClientProps) {
 
               {/* Model Info */}
               {(product.modelSize || product.modelHeight) && (
-                <div className="mb-6 p-3 bg-white/5 rounded-lg">
+                <div className="mb-8 p-3 bg-white/5 rounded-lg">
                   <p className="text-[10px] tracking-widest uppercase text-neutral-500 mb-1">Model Info</p>
                   <p className="text-sm text-white/60">
                     {product.modelSize && `Size: ${product.modelSize}`}
-                    {product.modelSize && product.modelHeight && ' • '}
+                    {product.modelSize && product.modelHeight && ' \u2022 '}
                     {product.modelHeight && `Height: ${product.modelHeight}`}
                   </p>
                 </div>
               )}
 
-              {/* Add to Cart */}
+              {/* Stock Error */}
+              {state.stockError && (
+                <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded">
+                  {state.stockError}
+                </div>
+              )}
+
+              {/* Add to Cart Button */}
               <button
                 onClick={handleAddToCart}
-                disabled={!selectedSize || isAdding}
+                disabled={!state.selectedSize || state.isAdding}
                 className={`
-                  w-full h-14 text-sm font-bold tracking-widest uppercase transition-all duration-300
+                  w-full h-14 text-sm font-bold tracking-widest uppercase
                   flex items-center justify-center gap-3 mb-4
-                  ${isAdded 
-                    ? 'bg-green-500 text-black' 
-                    : selectedSize 
-                      ? 'bg-white text-black hover:bg-neutral-200'
+                  transition-all duration-300
+                  ${state.isAdded
+                    ? 'bg-green-500 text-black scale-[0.98]'
+                    : state.selectedSize
+                      ? 'bg-white text-black hover:scale-[1.01] active:scale-[0.98]'
                       : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
                   }
                 `}
+                style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
               >
-                {isAdding ? (
+                {state.isAdding ? (
                   <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                ) : isAdded ? (
-                  <><Check className="w-5 h-5" /> ADDED</>
+                ) : state.isAdded ? (
+                  <><Check className="w-5 h-5" /> Added</>
                 ) : (
-                  <><ShoppingBag className="w-5 h-5" /> ADD TO CART — ${product.price}</>
+                  <><ShoppingBag className="w-5 h-5" /> Add to Cart &mdash; {formatPrice(convertPrice(getCadPrice(product), currency), currency)}</>
                 )}
               </button>
 
+              {/* Free Shipping Banner */}
+              <div className="mb-4 flex items-center gap-2 text-xs text-white/50">
+                <Truck className="w-4 h-4" />
+                <span>Free shipping on orders over $150</span>
+              </div>
+
               {/* Impact Badge */}
-              <div className="mb-6 p-4 border border-white/10 bg-white/[0.02] flex items-start gap-3">
-                <Diamond className="w-5 h-5 text-neutral-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-neutral-300">
+              <div className="mb-8 p-4 border-l-2 border-white/20 bg-white/[0.02] flex items-start gap-3">
+                <Image src="/diamond-white.png" alt="" width={20} height={20} className="w-5 h-5 opacity-40 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-neutral-300 leading-relaxed">
                   This item funds <span className="text-white font-medium">{impactMinutes} minutes</span> of survivor therapy.
                 </p>
               </div>
 
-              {/* Delivery & Returns */}
-              <div className="space-y-3 mb-6">
-                <div className="flex items-start gap-3">
-                  <Truck className="w-4 h-4 text-white/40 mt-0.5" />
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-white/40">Delivery</p>
-                    <p className="text-sm text-white/60">{product.deliveryInfo || 'Free shipping on orders over $100. Delivery in 3-5 business days.'}</p>
+              {/* Delivery Accordion */}
+              <div className="border-t border-white/10">
+                <button
+                  onClick={() => dispatch({ type: 'TOGGLE_DELIVERY' })}
+                  className="w-full flex items-center justify-between py-4 text-left"
+                  aria-expanded={state.deliveryOpen}
+                  aria-controls="delivery-content"
+                >
+                  <div className="flex items-center gap-3">
+                    <Truck className="w-4 h-4 text-white/40" />
+                    <span className="text-sm text-white/70">Delivery</span>
                   </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Mail className="w-4 h-4 text-white/40 mt-0.5" />
-                  <button 
-                    onClick={() => setShowQuestionForm(true)}
-                    className="text-sm text-white/60 hover:text-white text-left"
-                  >
-                    Ask a question about this product
-                  </button>
+                  <ChevronDown className={`w-4 h-4 text-white/40 accordion-chevron ${state.deliveryOpen ? 'open' : ''}`} />
+                </button>
+                <div id="delivery-content" role="region" aria-label="Delivery information" className={`accordion-content ${state.deliveryOpen ? 'open' : ''}`}>
+                  <div>
+                    <p className="text-sm text-white/50 pb-4 leading-relaxed">
+                      {product.deliveryInfo || 'Free shipping on orders over $150. Delivery in 3-5 business days.'}
+                    </p>
+                  </div>
                 </div>
               </div>
 
+              {/* Returns / Ask Question Accordion */}
+              <div className="border-t border-white/10">
+                <button
+                  onClick={() => dispatch({ type: 'TOGGLE_RETURNS' })}
+                  className="w-full flex items-center justify-between py-4 text-left"
+                  aria-expanded={state.returnsOpen}
+                  aria-controls="returns-content"
+                >
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-4 h-4 text-white/40" />
+                    <span className="text-sm text-white/70">Returns & Questions</span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-white/40 accordion-chevron ${state.returnsOpen ? 'open' : ''}`} />
+                </button>
+                <div id="returns-content" role="region" aria-label="Returns and questions" className={`accordion-content ${state.returnsOpen ? 'open' : ''}`}>
+                  <div>
+                    <p className="text-sm text-white/50 pb-2 leading-relaxed">
+                      {product.returnsInfo || 'Free returns within 30 days. Items must be unworn with tags attached.'}
+                    </p>
+                    <button
+                      onClick={() => dispatch({ type: 'TOGGLE_QUESTION_FORM' })}
+                      className="text-sm text-white/60 hover:text-white link-underline transition-colors pb-4"
+                    >
+                      Ask a question about this product
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-white/10" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Complete Your Look / Matching Set */}
-      {matchingProduct && (
-        <section className="py-16 px-6 bg-neutral-950 border-t border-white/10">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-2xl font-bebas italic tracking-wider mb-8">Complete Your Look</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Link href={`/products/${matchingProduct.slug}`} className="group">
-                <div className="aspect-[4/5] bg-neutral-900 mb-4 flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all">
-                  {matchingProduct.images && matchingProduct.images[0] ? (
-                    <img src={matchingProduct.images[0]} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <img src="/diamond-white.png" alt="" className="w-16 h-16 opacity-20" />
-                  )}
-                </div>
-                <p className="text-xs text-green-400 mb-1">Matching Set</p>
-                <h3 className="text-lg font-bebas italic">{matchingProduct.title}</h3>
-                <p className="text-white/40">${matchingProduct.price}</p>
-              </Link>
+      {state.matchingProduct && (
+        <ScrollReveal>
+          <section className="py-20 px-6 bg-neutral-950 border-t border-white/10 mt-16">
+            <div className="max-w-6xl mx-auto">
+              <h2 className="text-2xl font-bebas italic tracking-wider mb-10">Complete Your Look</h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <Link href={`/products/${state.matchingProduct.slug}`} className="group">
+                  <div className="relative aspect-[4/5] bg-neutral-900 mb-4 flex items-center justify-center border border-white/5 group-hover:border-white/15 transition-all duration-500 group-hover:scale-[1.02] overflow-hidden">
+                    {state.matchingProduct.images && state.matchingProduct.images[0] ? (
+                      <Image src={state.matchingProduct.images[0]} alt="" fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 100vw, 33vw" />
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 w-full h-full relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent animate-shimmer" />
+                        <Image src="/diamond-white.png" alt="" width={48} height={48} className="opacity-15 relative z-10" />
+                        <p className="text-[8px] tracking-[0.2em] uppercase text-white/20 relative z-10">Coming Soon</p>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-green-400 mb-1">Matching Set</p>
+                  <h3 className="text-lg font-bebas italic">{state.matchingProduct.title}</h3>
+                  <p className="text-white/40">{formatPrice(convertPrice(getCadPrice(state.matchingProduct), currency), currency)}</p>
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
       )}
+
+      {/* Customer Reviews — server-fetched, no client-side Firebase needed */}
+      <ProductReviews initialReviews={initialReviews} />
 
       <Footer />
     </main>

@@ -1,192 +1,204 @@
-export const metadata = {
-  title: 'FAQ | DYMNDS',
-  description: 'Frequently asked questions about DYMNDS products, shipping, and more.',
-};
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import ScrollReveal from '@/components/ScrollReveal';
+import StaggerReveal from '@/components/StaggerReveal';
+import { useState } from 'react';
 
 export default function FAQPage() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
   const faqs = [
     {
-      question: "What is DYMNDS?",
-      answer: "DYMNDS is premium athletic wear built for those who push limits. Every piece is engineered for performance, comfort, and style. Plus, 10% of every purchase supports survivors on their healing journey."
+      question: 'What is DYMNDS?',
+      answer: 'DYMNDS is premium athletic wear built for those who push limits. Every piece is engineered for performance, comfort, and style. Plus, 10% of every purchase supports survivors on their healing journey.',
     },
     {
-      question: "How does the 10% impact work?",
-      answer: "10% of every order goes directly to funding therapy, safe housing, and healing programs for survivors. When you wear DYMNDS, you help others shine."
+      question: 'How does the 10% impact work?',
+      answer: '10% of every order goes directly to funding therapy, safe housing, and healing programs for survivors. When you wear DYMNDS, you help others shine.',
     },
     {
-      question: "What sizes do you offer?",
-      answer: "We offer sizes XS through XXL. Each product page has a detailed size guide and a 'What's My Size?' calculator to help you find the perfect fit."
+      question: 'What sizes do you offer?',
+      answer: 'We offer sizes XS through XXL. Each product page has a detailed size guide and a "What&apos;s My Size?" calculator to help you find the perfect fit.',
     },
     {
-      question: "How do I care for my DYMNDS gear?",
-      answer: "Machine wash cold with like colors. Tumble dry low or hang dry. Do not bleach or iron. Our fabrics are built to last, but proper care extends their life even longer."
+      question: 'How do I care for my DYMNDS gear?',
+      answer: 'Machine wash cold with like colors. Tumble dry low or hang dry. Do not bleach or iron. Our fabrics are built to last, but proper care extends their life even longer.',
     },
     {
-      question: "Can I change or cancel my order?",
-      answer: "We process orders quickly, but if you need to make changes, contact us at support@dymnds.ca within 2 hours of placing your order and we'll do our best to help."
-    }
+      question: 'Can I change or cancel my order?',
+      answer: 'We process orders quickly, but if you need to make changes, contact us at support@dymnds.ca within 2 hours of placing your order and we&apos;ll do our best to help.',
+    },
   ];
 
+  const quickLinks = [
+    {
+      title: 'Shipping Info',
+      subtitle: 'Delivery times & tracking',
+      href: '/shipping',
+    },
+    {
+      title: 'Returns',
+      subtitle: 'Exchanges & refunds',
+      href: '/returns',
+    },
+    {
+      title: 'Contact Us',
+      subtitle: 'Get in touch directly',
+      href: '/contact',
+    },
+  ];
+
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+
   return (
-    <main className="min-h-screen bg-black text-white">
-      {/* Simple Header */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 border-b border-white/10 bg-black/95 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3">
-            <img src="/diamond-white.png" alt="" className="h-8 w-auto" />
-            <img src="/dymnds-only-white.png" alt="DYMNDS" className="h-4 w-auto" />
-          </a>
-          <a href="/" className="text-sm opacity-60 hover:opacity-100 transition-opacity">
-            ← Back Home
-          </a>
-        </div>
-      </nav>
+    <main id="main-content" className="min-h-screen bg-black text-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <Navbar />
 
       {/* Hero */}
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <img src="/diamond-white.png" alt="" className="h-8 w-auto mx-auto mb-8 opacity-30" />
-          
-          <h1 className="text-6xl md:text-8xl font-light tracking-tight mb-6" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-            Questions?
-          </h1>
-          
-          <p className="text-xl text-white/60 max-w-2xl mx-auto">
-            We&apos;ve got answers. If you don&apos;t see what you&apos;re looking for, reach out.
-          </p>
+          <ScrollReveal animation="fade-up" delay={0} duration={800}>
+            <Image src="/diamond-white.png" alt="" width={32} height={32} className="h-8 w-auto mx-auto mb-8 opacity-30" />
+          </ScrollReveal>
+
+          <ScrollReveal animation="fade-up" delay={100} duration={800}>
+            <h1 className="text-6xl md:text-8xl tracking-tight mb-6 font-bebas">
+              QUESTIONS?
+            </h1>
+          </ScrollReveal>
+
+          <ScrollReveal animation="fade-up" delay={200} duration={800}>
+            <p className="text-xl text-white/60 max-w-2xl mx-auto">
+              We&apos;ve got answers. If you don&apos;t see what you&apos;re looking for, reach out.
+            </p>
+          </ScrollReveal>
         </div>
       </section>
+
+      {/* Diamond Divider */}
+      <div className="flex justify-center items-center py-8 px-6">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      </div>
 
       {/* FAQ List */}
       <section className="py-16 px-6">
         <div className="max-w-3xl mx-auto">
-          <div className="space-y-0">
-            {faqs.map((faq, index) => (
-              <div 
-                key={index}
-                className="border-b border-white/10 py-8 first:border-t"
-              >
-                <h3 className="text-xl font-bebas italic tracking-wider mb-4">
-                  {faq.question}
-                </h3>
-                <p className="text-white/60 leading-relaxed">
-                  {faq.answer}
-                </p>
-              </div>
-            ))}
-          </div>
+          <StaggerReveal staggerDelay={50} animation="fade-up" duration={800} threshold={0.2}>
+            <div className="space-y-0">
+              {faqs.map((faq, index) => (
+                <div key={index} className="border-b border-white/8">
+                  <button
+                    onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                    className="w-full py-6 flex items-center justify-between group hover:opacity-70 transition-opacity"
+                    aria-expanded={openIndex === index}
+                    aria-controls={`faq-answer-${index}`}
+                  >
+                    <h3 id={`faq-question-${index}`} className="text-lg font-bebas tracking-wider text-left">
+                      {faq.question}
+                    </h3>
+                    <div className="accordion-chevron ml-4 flex-shrink-0 transition-transform duration-300" style={{
+                      transform: openIndex === index ? 'rotate(180deg)' : 'rotate(0deg)'
+                    }}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      </svg>
+                    </div>
+                  </button>
+                  <div
+                    id={`faq-answer-${index}`}
+                    role="region"
+                    aria-labelledby={`faq-question-${index}`}
+                    className="accordion-content overflow-hidden transition-all duration-300"
+                    style={{
+                      maxHeight: openIndex === index ? '500px' : '0px',
+                      opacity: openIndex === index ? 1 : 0,
+                    }}
+                  >
+                    <div className="pb-6 text-white/60 leading-relaxed">
+                      {faq.answer}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </StaggerReveal>
 
           {/* Ask First Question CTA */}
-          <div className="mt-16 p-8 border border-white/10 bg-neutral-950 text-center">
-            <div className="text-4xl mb-4">💬</div>
-            <h3 className="text-2xl font-bebas italic tracking-wider mb-3">
-              Ask The First Question!
-            </h3>
-            <p className="text-white/60 mb-6">
-              Have something on your mind? We&apos;re here to help. Send us your question and we&apos;ll add it to the list.
-            </p>
-            <a 
-              href="mailto:support@dymnds.ca?subject=FAQ Question"
-              className="inline-block px-8 py-4 bg-white text-black font-bold tracking-wider uppercase rounded-lg hover:bg-white/90 transition-colors"
-            >
-              Ask A Question
-            </a>
-          </div>
+          <ScrollReveal animation="scale" delay={300} duration={1000} threshold={0.3}>
+            <div className="mt-16 p-8 border border-white/10 bg-neutral-950 text-center">
+              <h3 className="text-3xl font-bebas tracking-wider mb-3">
+                Ask The First Question!
+              </h3>
+              <p className="text-white/60 mb-6">
+                Have something on your mind? We&apos;re here to help. Send us your question and we&apos;ll add it to the list.
+              </p>
+              <a
+                href="mailto:support@dymnds.ca?subject=FAQ Question"
+                className="btn-premium inline-block px-8 py-4 bg-white text-black font-bold tracking-wider uppercase hover:bg-white/90 transition-colors"
+              >
+                Ask A Question
+              </a>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
+
+      {/* Diamond Divider */}
+      <div className="flex justify-center items-center py-8 px-6">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      </div>
 
       {/* Quick Links */}
-      <section className="py-16 px-6 bg-neutral-950 border-y border-white/10">
+      <section className="py-16 px-6 bg-neutral-950 border-b border-white/10">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bebas italic tracking-wider mb-8 text-center">
-            Quick Links
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            <a href="/shipping" className="p-6 border border-white/10 hover:border-white/30 transition-colors text-center group">
-              <div className="text-2xl mb-3">🚚</div>
-              <h3 className="text-lg font-bebas italic mb-1">Shipping Info</h3>
-              <p className="text-sm text-white/50">Delivery times & tracking</p>
-            </a>
-            
-            <a href="/returns" className="p-6 border border-white/10 hover:border-white/30 transition-colors text-center group">
-              <div className="text-2xl mb-3">↩️</div>
-              <h3 className="text-lg font-bebas italic mb-1">Returns</h3>
-              <p className="text-sm text-white/50">Exchanges & refunds</p>
-            </a>
-            
-            <a href="/contact" className="p-6 border border-white/10 hover:border-white/30 transition-colors text-center group">
-              <div className="text-2xl mb-3">📧</div>
-              <h3 className="text-lg font-bebas italic mb-1">Contact Us</h3>
-              <p className="text-sm text-white/50">Get in touch directly</p>
-            </a>
-          </div>
+          <ScrollReveal animation="fade-up" delay={0} duration={800}>
+            <h2 className="text-2xl font-bebas tracking-wider mb-8 text-center">
+              Quick Links
+            </h2>
+          </ScrollReveal>
+
+          <StaggerReveal staggerDelay={100} animation="fade-up" duration={800} threshold={0.2}>
+            <div className="grid md:grid-cols-3 gap-6">
+              {quickLinks.map((link, i) => (
+                <Link
+                  key={i}
+                  href={link.href}
+                  className="card-premium p-6 border border-white/10 hover:border-white/30 transition-all duration-300 text-center group"
+                >
+                  <div className="mb-3 flex justify-center"><Image src="/diamond-white.png" alt="" width={24} height={24} className="h-6 w-auto opacity-60" /></div>
+                  <h3 className="text-lg font-bebas mb-1 group-hover:opacity-80 transition-opacity">{link.title}</h3>
+                  <p className="text-sm text-white/50">{link.subtitle}</p>
+                </Link>
+              ))}
+            </div>
+          </StaggerReveal>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-16 px-6 border-t border-white/10 bg-black">
-        <div className="max-w-7xl mx-auto">
-          {/* Main Footer Content */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            {/* Brand */}
-            <div className="md:col-span-1">
-              <a href="/" className="flex items-center gap-3 group mb-6">
-                <img src="/diamond-white.png" alt="DYMNDS" className="h-10 w-auto group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300" />
-                <img src="/dymnds-only-white.png" alt="DYMNDS" className="h-5 w-auto" />
-              </a>
-              <p className="text-sm opacity-60 leading-relaxed mb-6">
-                Premium athletic wear for those who push limits. Pressure creates diamonds.
-              </p>
-            </div>
-
-            {/* Shop */}
-            <div>
-              <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold">Shop</h4>
-              <ul className="space-y-3">
-                <li><a href="/shop" className="text-sm opacity-60 hover:opacity-100 transition-opacity">All Products</a></li>
-                <li><a href="/collections/men" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Men</a></li>
-                <li><a href="/collections/women" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Women</a></li>
-                <li><a href="/collections/all" className="text-sm opacity-60 hover:opacity-100 transition-opacity">New Arrivals</a></li>
-                <li><a href="/collections/all" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Best Sellers</a></li>
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold">Company</h4>
-              <ul className="space-y-3">
-                <li><a href="/about" className="text-sm opacity-60 hover:opacity-100 transition-opacity">About Us</a></li>
-                <li><a href="/impact" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Our Impact</a></li>
-                <li><a href="/app" className="text-sm opacity-60 hover:opacity-100 transition-opacity">The App</a></li>
-                <li><a href="/contact" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Contact</a></li>
-                <li><a href="/careers" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Careers</a></li>
-              </ul>
-            </div>
-
-            {/* Support */}
-            <div>
-              <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold">Support</h4>
-              <ul className="space-y-3">
-                <li><a href="/faq" className="text-sm opacity-60 hover:opacity-100 transition-opacity">FAQ</a></li>
-                <li><a href="/shipping" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Shipping Info</a></li>
-                <li><a href="/returns" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Returns & Exchanges</a></li>
-                <li><a href="/size-guide" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Size Guide</a></li>
-                <li><a href="mailto:support@dymnds.ca" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Email Us</a></li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/5">
-            <p className="text-xs opacity-40">© 2026 DYMNDS Athletic Wear. All rights reserved.</p>
-            <div className="flex gap-6">
-              <a href="#" className="text-xs opacity-40 hover:opacity-70 transition-opacity">Privacy Policy</a>
-              <a href="#" className="text-xs opacity-40 hover:opacity-70 transition-opacity">Terms of Service</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }

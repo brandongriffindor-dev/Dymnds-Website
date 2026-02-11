@@ -1,69 +1,94 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import type { Metadata } from 'next';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import ProductClient from './ProductClient';
-import type { Product } from '@/lib/firebase';
+import { fetchReviews } from '@/lib/fetch-products';
+import { getProductBySlug } from '@/lib/queries';
+import ProductPageWrapper from './ProductPageWrapper';
 
-export default function ProductPageWrapper() {
-  const params = useParams();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+// ISR: revalidate product pages every 60 seconds
+export const revalidate = 60;
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!params.slug) return;
-      
-      try {
-        // Query by slug field
-        const q = query(collection(db, 'products'), where('slug', '==', params.slug as string));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          setProduct({ id: doc.id, ...doc.data() } as Product);
-        } else {
-          console.error('Product not found for slug:', params.slug);
-        }
-      } catch (error: any) {
-        console.error('Error fetching product:', error.message);
-        // If index error, try fetching all and filtering client-side as fallback
-        try {
-          const allDocs = await getDocs(collection(db, 'products'));
-          const found = allDocs.docs.find(d => d.data().slug === params.slug);
-          if (found) {
-            setProduct({ id: found.id, ...found.data() } as Product);
-          }
-        } catch (e) {
-          console.error('Fallback also failed:', e);
-        }
-      }
-      setLoading(false);
-    };
+// Pre-generate all active product pages at build time for faster TTFB + crawl speed
+export async function generateStaticParams() {
+  try {
+    const productsSnap = await getDocs(collection(db, 'products'));
+    return productsSnap.docs
+      .filter((doc) => {
+        const data = doc.data();
+        return data.is_active !== false && data.is_deleted !== true;
+      })
+      .map((doc) => ({ slug: doc.data().slug as string }));
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    return [];
+  }
+}
 
-    fetchProduct();
-  }, [params.slug]);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
-      </main>
-    );
+  try {
+    const q = query(collection(db, 'products'), where('slug', '==', slug));
+    const snap = await getDocs(q);
+
+    if (!snap.empty) {
+      const product = snap.docs[0].data();
+      return {
+        title: `${product.title} | DYMNDS`,
+        description: `${product.title} — Premium athletic wear by DYMNDS. 10% of your purchase funds survivor healing.`,
+        alternates: {
+          canonical: `https://dymnds.ca/products/${slug}`,
+        },
+        openGraph: {
+          title: `${product.title} | DYMNDS`,
+          description: `${product.title} — Premium athletic wear by DYMNDS.`,
+          images: product.images?.[0] ? [{ url: product.images[0], width: 1200, height: 630, alt: product.title }] : [{ url: 'https://dymnds.ca/og-product.png', width: 1200, height: 630, alt: product.title }],
+        },
+      };
+    }
+  } catch (error) {
+    console.error('Error generating metadata:', error);
   }
 
-  if (!product) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bebas italic mb-4">PRODUCT NOT FOUND</h1>
-          <p className="text-white/40">This item doesn&apos;t exist in our collection.</p>
-        </div>
-      </main>
-    );
+  return {
+    title: 'Product | DYMNDS',
+    description: 'Premium athletic wear by DYMNDS. 10% of your purchase funds survivor healing.',
+  };
+}
+
+/**
+ * Fix #3/#4: All data now fetched server-side in parallel.
+ * Reviews + matching product no longer trigger client-side Firestore waterfalls.
+ * This eliminates ~150KB of Firebase client SDK from the product page bundle.
+ */
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+
+  // Fetch product server-side (reuses the same query from generateMetadata via Next.js dedup)
+  let initialProduct: Record<string, unknown> | null = null;
+  try {
+    const q = query(collection(db, 'products'), where('slug', '==', slug));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const doc = snap.docs[0];
+      initialProduct = { id: doc.id, ...doc.data() };
+    }
+  } catch (error) {
+    console.error('Error fetching product:', error);
   }
 
-  return <ProductClient product={product} />;
+  // Fetch reviews + matching product in parallel (server-side, no client JS needed)
+  const matchingSlug = initialProduct?.matchingSetSlug as string | undefined;
+  const [reviews, matchingProduct] = await Promise.all([
+    fetchReviews(slug),
+    matchingSlug ? getProductBySlug(matchingSlug) : Promise.resolve(null),
+  ]);
+
+  return (
+    <ProductPageWrapper
+      initialProduct={initialProduct}
+      initialReviews={reviews}
+      initialMatchingProduct={matchingProduct}
+    />
+  );
 }
