@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -73,33 +72,18 @@ export default function FAQPage() {
       />
       <Navbar />
 
-      {/* Hero */}
-      <section className="pt-32 pb-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <ScrollReveal animation="fade-up" delay={0} duration={800}>
-            <Image src="/diamond-white.png" alt="" width={32} height={32} className="h-8 w-auto mx-auto mb-8 opacity-30" />
-          </ScrollReveal>
-
-          <ScrollReveal animation="fade-up" delay={100} duration={800}>
-            <h1 className="text-6xl md:text-8xl tracking-tight mb-6 font-bebas">
-              QUESTIONS?
+      {/* Compact Header — let the content be the page */}
+      <section className="pt-36 pb-8 px-6">
+        <div className="max-w-3xl mx-auto">
+          <ScrollReveal animation="fade-up" delay={0} duration={600}>
+            <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-3">Support</p>
+            <h1 className="text-5xl md:text-7xl tracking-tight font-bebas">
+              Questions & Answers
             </h1>
-          </ScrollReveal>
-
-          <ScrollReveal animation="fade-up" delay={200} duration={800}>
-            <p className="text-xl text-white/60 max-w-2xl mx-auto">
-              We&apos;ve got answers. If you don&apos;t see what you&apos;re looking for, reach out.
-            </p>
+            <div className="w-12 h-[1px] bg-[var(--accent)]/30 mt-6" />
           </ScrollReveal>
         </div>
       </section>
-
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
 
       {/* FAQ List */}
       <section className="py-16 px-6">
@@ -164,12 +148,7 @@ export default function FAQPage() {
         </div>
       </section>
 
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+      <div className="h-px bg-gradient-to-r from-transparent via-[var(--accent)]/10 to-transparent" />
 
       {/* Quick Links */}
       <section className="py-16 px-6 bg-neutral-950 border-b border-white/10">
@@ -188,7 +167,7 @@ export default function FAQPage() {
                   href={link.href}
                   className="card-premium p-6 border border-white/10 hover:border-white/30 transition-all duration-300 text-center group"
                 >
-                  <div className="mb-3 flex justify-center"><Image src="/diamond-white.png" alt="" width={24} height={24} className="h-6 w-auto opacity-60" /></div>
+                  <div className="w-6 h-[1px] bg-[var(--accent)]/30 mx-auto mb-3" />
                   <h3 className="text-lg font-bebas mb-1 group-hover:opacity-80 transition-opacity">{link.title}</h3>
                   <p className="text-sm text-white/50">{link.subtitle}</p>
                 </Link>

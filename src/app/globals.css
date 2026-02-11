@@ -503,3 +503,49 @@ footer img[src="/diamond-white.png"]:hover {
   transform: translateY(0);
   transition: opacity 0.4s var(--ease-premium), transform 0.4s var(--ease-premium);
 }
+
+/* ===== ANIMATION CHOREOGRAPHY — Varied scroll reveal types ===== */
+
+/* Horizontal reveal from left via clip-path */
+@keyframes revealFromLeft {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* Scale reveal with blur — premium entrance for hero stats */
+@keyframes blurReveal {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+    transform: scale(1);
+  }
+}
+
+/* Slide in from right — for asymmetric reveals */
+@keyframes slideFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-reveal-left {
+  animation: revealFromLeft 0.8s var(--ease-premium) forwards;
+}
+
+.animate-blur-reveal {
+  animation: blurReveal 0.8s var(--ease-premium) forwards;
+}
+
+.animate-slide-right {
+  animation: slideFromRight 0.7s var(--ease-premium) forwards;
+}

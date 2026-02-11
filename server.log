@@ -64,3 +64,4 @@ This typically indicates that your device does not have a healthy Internet conne
  GET / 200 in 502ms (compile: 182ms, proxy.ts: 3ms, render: 317ms)
  GET / 200 in 45ms (compile: 6ms, proxy.ts: 4ms, render: 34ms)
 [2026-02-11T16:23:23.253Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x493eba02 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+✓ Compiled in 91ms

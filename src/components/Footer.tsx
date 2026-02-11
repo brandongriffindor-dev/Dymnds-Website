@@ -223,6 +223,13 @@ export default function Footer() {
             </Link>
           </nav>
         </div>
+
+        {/* Oversized ghost tagline */}
+        <div className="mt-12 pt-8 text-center overflow-hidden">
+          <p className="text-[clamp(3rem,8vw,6rem)] font-bebas text-white/[0.03] leading-none tracking-tight whitespace-nowrap">
+            PRESSURE CREATES DIAMONDS
+          </p>
+        </div>
       </div>
     </footer>
   );

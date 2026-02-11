@@ -88,12 +88,12 @@ function Parallax({
 /** Infinite horizontal marquee band */
 function Marquee() {
   return (
-    <div className="py-5 border-y border-[var(--accent)]/[0.08] overflow-hidden bg-black relative select-none">
+    <div className="py-6 border-y border-[var(--accent)]/[0.08] overflow-hidden bg-black relative select-none">
       <div className="flex animate-marquee whitespace-nowrap">
         {[...Array(6)].map((_, i) => (
           <span
             key={i}
-            className="flex items-center gap-10 mx-10 font-bebas text-[15px] tracking-[0.35em] uppercase text-[var(--accent)]/20"
+            className="flex items-center gap-10 mx-10 font-bebas text-[22px] md:text-[28px] tracking-[0.25em] uppercase text-[var(--accent)]/40"
           >
             <span>Pressure Creates Diamonds</span>
             <span className="text-[var(--accent)]/40">&#9670;</span>
@@ -238,7 +238,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             {['Pressure', 'Creates', 'Diamonds'].map((word, i) => (
               <motion.span
                 key={word}
-                className="inline-block font-bebas text-[clamp(2.5rem,8vw,6rem)] tracking-tight text-white mr-[0.15em]"
+                className="inline-block font-bebas text-[clamp(3.5rem,12vw,9rem)] tracking-tight text-white mr-[0.15em]"
                 initial={{ y: '120%', opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{
@@ -332,12 +332,16 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           <div className="bento-grid grid-cols-1 md:grid-cols-3 md:grid-rows-2">
             {/* Large feature card — spans 2 cols */}
             <motion.div
-              className="bento-card md:col-span-2 md:row-span-2 flex flex-col justify-between min-h-[300px] md:min-h-[500px]"
+              className="bento-card md:col-span-2 md:row-span-2 flex flex-col justify-between min-h-[300px] md:min-h-[500px] relative"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             >
+              {/* Decorative watermark */}
+              <span className="absolute -right-4 -bottom-6 text-[12rem] md:text-[16rem] font-bebas text-[var(--accent)]/[0.04] leading-none select-none pointer-events-none" aria-hidden="true">
+                10%
+              </span>
               <div className="relative z-10">
                 <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--accent)]/50 mb-4">Core Mission</p>
                 <h3 className="text-4xl md:text-5xl font-bebas tracking-tight mb-6">
@@ -395,26 +399,37 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </div>
       </section>
 
-      {/* ═══════ STORY — Brand Manifesto (Streamlined) ═══════ */}
+      {/* ═══════ STORY — Split-Panel Editorial Manifesto ═══════ */}
       <section className="py-32 md:py-44 px-6 bg-neutral-950 relative overflow-hidden">
         {/* Accent glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[var(--accent)]/[0.03] rounded-full blur-[120px]" />
 
-        <div className="max-w-3xl mx-auto text-center relative z-10">
-          <AnimatedHeading
-            text="Forged Under Pressure"
-            className="text-5xl md:text-7xl lg:text-8xl tracking-tight mb-16 font-bebas"
-          />
+        <div className="max-w-7xl mx-auto grid md:grid-cols-12 gap-12 md:gap-16 items-start relative z-10">
+          {/* Left — sticky oversized heading */}
+          <div className="md:col-span-5 md:sticky md:top-32">
+            <AnimatedHeading
+              text="Forged Under Pressure"
+              className="text-6xl md:text-7xl lg:text-[6.5rem] leading-[0.85] tracking-tight font-bebas"
+            />
+            <motion.div
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="w-16 h-[1px] bg-[var(--accent)]/40 mt-8 origin-left"
+            />
+          </div>
 
-          <div className="space-y-10 text-lg md:text-xl text-white/35 leading-relaxed">
+          {/* Right — body copy scrolls past */}
+          <div className="md:col-span-7 space-y-10 text-lg md:text-xl text-white/35 leading-relaxed">
             {[
               'Diamonds aren\u2019t born brilliant. They\u2019re crushed, heated, and transformed under pressure most things can\u2019t survive.',
               "Your gear should match your story. Built for the hardest sets, the longest runs, the days when quitting sounds reasonable but you don\u2019t.",
             ].map((text, i) => (
               <motion.p
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: 40 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: '-50px' }}
                 transition={{ duration: 0.8, delay: i * 0.15, ease: [0.16, 1, 0.3, 1] }}
               >
@@ -423,8 +438,8 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             ))}
 
             <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: '-50px' }}
               transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
               className="text-white/60"
@@ -582,10 +597,10 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, scale: 0.92, filter: 'blur(8px)' }}
+            whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="border-accent-glow inline-flex flex-col md:flex-row items-center gap-8 md:gap-14 px-10 md:px-20 py-14 transition-all duration-500">
               <span className="text-7xl md:text-8xl font-bebas text-accent-gradient">

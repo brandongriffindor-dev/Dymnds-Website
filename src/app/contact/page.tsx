@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -137,21 +136,16 @@ export default function ContactPage() {
       />
       <Navbar />
 
-      {/* Hero */}
-      <section className="pt-24 pb-16 px-6 bg-gradient-to-b from-neutral-950 to-black">
-        <div className="max-w-4xl mx-auto pt-16 text-center">
+      {/* Hero — Minimal */}
+      <section className="pt-36 pb-12 px-6">
+        <div className="max-w-4xl mx-auto">
           <ScrollReveal animation="fade-up" delay={0} duration={800}>
-            <Image src="/diamond-white.png" alt="DYMNDS" width={48} height={48} className="h-12 w-auto mx-auto mb-6 opacity-60" />
-          </ScrollReveal>
-
-          <ScrollReveal animation="fade-up" delay={100} duration={800}>
-            <h1 className="text-5xl md:text-7xl tracking-wider mb-6 font-bebas">
+            <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-4">Contact</p>
+            <h1 className="text-6xl md:text-8xl tracking-tight font-bebas mb-4">
               GET IN TOUCH
             </h1>
-          </ScrollReveal>
-
-          <ScrollReveal animation="fade-up" delay={200} duration={800}>
-            <p className="text-lg opacity-70 max-w-xl mx-auto leading-relaxed">
+            <div className="w-16 h-[1px] bg-[var(--accent)]/30 mb-8" />
+            <p className="text-lg text-white/50 max-w-xl leading-relaxed">
               Questions, feedback, or just want to say hi? We&apos;d love to hear from you.
             </p>
           </ScrollReveal>
@@ -282,8 +276,7 @@ export default function ContactPage() {
                 <div className="space-y-8">
                   {contactInfo.map((info, i) => (
                     <a key={i} href={info.link} className="card-premium p-6 bg-neutral-900 border border-white/5 hover:border-white/20 transition-all duration-300 group">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Image src="/diamond-white.png" alt="" width={24} height={24} className="h-6 w-auto opacity-60" />
+                      <div className="mb-2">
                         <h3 className="text-lg tracking-wider font-bebas group-hover:text-white/70 transition-colors">
                           {info.title}
                         </h3>

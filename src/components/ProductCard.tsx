@@ -138,13 +138,13 @@ export default function ProductCard({
           )}
         </div>
 
-        {/* Quick actions on hover */}
+        {/* View product on hover */}
         <div className={`absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent transition-[var(--ease-premium)] duration-500 ${
           isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}>
-          <button className="w-full py-3 bg-white text-black text-xs tracking-widest uppercase font-semibold hover:bg-white/90 transition-colors">
-            Quick Add
-          </button>
+          <span className="block w-full py-3 text-center text-[var(--accent)] text-[10px] tracking-[0.3em] uppercase font-medium">
+            View Product &rarr;
+          </span>
         </div>
 
         {/* Overlay */}

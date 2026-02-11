@@ -128,14 +128,14 @@ export default function Navbar() {
             ))}
             <Link
               href="/cart"
-              className={`relative px-6 py-2.5 bg-white text-black text-[11px] tracking-[0.2em] uppercase transition-all duration-300 hover:bg-white/90 flex items-center gap-2 ${
+              className={`relative px-6 py-2.5 bg-[var(--accent)] text-black text-[11px] tracking-[0.2em] uppercase transition-all duration-300 hover:bg-[var(--accent-light)] flex items-center gap-2 overflow-hidden group/cart ${
                 isActive('/cart') ? 'opacity-60' : ''
               }`}
             >
-              Cart
+              <span className="relative z-10">Cart</span>
               {totalItems > 0 && (
                 <span
-                  className={`bg-black text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-semibold ${
+                  className={`relative z-10 bg-black text-[var(--accent)] text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-semibold ${
                     badgePulse ? 'animate-cart-pulse' : ''
                   }`}
                   aria-live="polite"
@@ -183,10 +183,13 @@ export default function Navbar() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           >
+            {/* Accent line at top */}
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--accent)]/30 to-transparent" />
+
             {/* Close button */}
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="absolute top-6 right-6 w-11 h-11 flex items-center justify-center hover:opacity-60 transition-opacity duration-300"
+              className="absolute top-6 right-6 w-11 h-11 flex items-center justify-center hover:text-[var(--accent)] transition-colors duration-300"
               aria-label="Close menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,18 +215,9 @@ export default function Navbar() {
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`font-bebas text-5xl tracking-wider uppercase py-3 px-6 transition-all duration-300 flex items-center gap-3 ${
-                      isActive(link.href) ? 'text-white/40' : 'text-white hover:text-white/60'
+                      isActive(link.href) ? 'text-[var(--accent)]/60' : 'text-white hover:text-[var(--accent)]'
                     }`}
                   >
-                    {isActive(link.href) && (
-                      <Image
-                        src="/diamond-white.png"
-                        alt=""
-                        width={12}
-                        height={12}
-                        className="h-3 w-auto inline-block mr-1"
-                      />
-                    )}
                     {link.name}
                   </Link>
                 </motion.div>
@@ -235,27 +229,18 @@ export default function Navbar() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.5, delay: NAV_LINKS.length * 0.06 }}
-                className="mt-8 pt-8 border-t border-white/10"
+                className="mt-8 pt-8 border-t border-[var(--accent)]/10"
               >
                 <Link
                   href="/cart"
                   onClick={() => setMobileMenuOpen(false)}
                   className={`font-bebas text-5xl tracking-wider uppercase py-3 px-6 flex items-center gap-3 ${
-                    isActive('/cart') ? 'text-white/40' : 'text-white hover:text-white/60'
+                    isActive('/cart') ? 'text-[var(--accent)]/60' : 'text-white hover:text-[var(--accent)]'
                   }`}
                 >
-                  {isActive('/cart') && (
-                    <Image
-                      src="/diamond-white.png"
-                      alt=""
-                      width={12}
-                      height={12}
-                      className="h-3 w-auto inline-block mr-1"
-                    />
-                  )}
                   Cart
                   {totalItems > 0 && (
-                    <span className="bg-white text-black text-sm w-7 h-7 rounded-full flex items-center justify-center font-semibold ml-2">
+                    <span className="bg-[var(--accent)] text-black text-sm w-7 h-7 rounded-full flex items-center justify-center font-semibold ml-2">
                       {totalItems}
                     </span>
                   )}

@@ -2,28 +2,16 @@ export default function Loading() {
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center">
       <div className="text-center">
-        {/* Diamond animation — rotating diamond SVG */}
-        <div className="relative w-16 h-16 mx-auto mb-8">
-          <svg
-            viewBox="0 0 100 100"
-            className="w-full h-full animate-spin"
-            style={{ animationDuration: '3s' }}
-          >
-            <polygon
-              points="50,5 95,50 50,95 5,50"
-              fill="none"
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth="2"
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-2 h-2 bg-white/30 rounded-full animate-pulse" />
-          </div>
+        {/* Nested diamond shapes with accent gold */}
+        <div className="relative w-12 h-12 mx-auto mb-6">
+          <div className="absolute inset-0 border border-[var(--accent)]/20 rotate-45 animate-pulse" />
+          <div
+            className="absolute inset-2 border border-[var(--accent)]/40 rotate-45 animate-pulse"
+            style={{ animationDelay: '150ms' }}
+          />
+          <div className="absolute inset-4 bg-[var(--accent)]/10 rotate-45" />
         </div>
-
-        <p className="text-[10px] tracking-[0.4em] uppercase text-white/20">
-          Loading
-        </p>
+        <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-[var(--accent)]/30 to-transparent mx-auto" />
       </div>
     </main>
   );

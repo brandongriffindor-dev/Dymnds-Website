@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -65,43 +64,30 @@ export default function AboutPage() {
     <main id="main-content" className="min-h-screen bg-black text-white">
       <Navbar />
 
-      {/* Hero */}
-      <section className="pt-24 min-h-[60vh] flex items-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl" />
-        </div>
-
-        <div className="max-w-5xl mx-auto px-6 py-24 text-center relative z-10">
-          <ScrollReveal animation="fade-up" delay={0} duration={800}>
-            <Image
-              src="/diamond-white.png"
-              alt="DYMNDS"
-              width={64}
-              height={64}
-              className="h-16 w-auto mx-auto mb-8 opacity-60"
-            />
-          </ScrollReveal>
-
-          <ScrollReveal animation="fade-up" delay={100} duration={800}>
-            <h1 className="text-6xl md:text-8xl tracking-wider mb-8 font-bebas">
-              OUR STORY
-            </h1>
-          </ScrollReveal>
-
-          <ScrollReveal animation="fade-up" delay={200} duration={800}>
-            <p className="text-xl md:text-2xl opacity-70 max-w-3xl mx-auto leading-relaxed">
-              DYMNDS was born from a simple belief: pressure creates diamonds. And every struggle can become strength.
-            </p>
-          </ScrollReveal>
+      {/* Hero — Split Layout */}
+      <section className="pt-36 pb-20 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_20%_50%,rgba(200,169,126,0.04),transparent)]" />
+        <div className="max-w-7xl mx-auto grid md:grid-cols-12 gap-12 items-end relative z-10">
+          <div className="md:col-span-5">
+            <ScrollReveal animation="fade-up" delay={0} duration={800}>
+              <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-4">Our Story</p>
+              <h1 className="text-7xl md:text-8xl lg:text-9xl tracking-tight font-bebas leading-[0.85]">
+                BUILT<br />UNDER<br />PRESSURE
+              </h1>
+              <div className="w-16 h-[1px] bg-[var(--accent)]/40 mt-8" />
+            </ScrollReveal>
+          </div>
+          <div className="md:col-span-7">
+            <ScrollReveal animation="fade-up" delay={200} duration={800}>
+              <p className="text-xl md:text-2xl text-white/50 leading-relaxed">
+                DYMNDS was born from a simple belief: pressure creates diamonds. And every struggle can become strength.
+              </p>
+            </ScrollReveal>
+          </div>
         </div>
       </section>
 
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+      <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
       {/* The Origin - Founder's Story */}
       <section className="py-28 px-6 bg-neutral-950">
@@ -157,12 +143,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+      <div className="h-20" />
 
       {/* Core Commitments */}
       <section className="py-28 px-6 bg-black">
@@ -192,12 +173,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+      <div className="h-px bg-gradient-to-r from-transparent via-[var(--accent)]/10 to-transparent" />
 
       {/* Values */}
       <section className="py-28 px-6 bg-black">
@@ -215,7 +191,7 @@ export default function AboutPage() {
             <div className="grid md:grid-cols-3 gap-8">
               {values.map((value, i) => (
                 <div key={i} className="card-premium p-8 bg-neutral-900 border border-white/5 hover:border-white/20 transition-all duration-500">
-                  <Image src="/diamond-white.png" alt="" width={24} height={24} className="h-6 w-auto opacity-60 mb-4 block" />
+                  <div className="w-8 h-[1px] bg-[var(--accent)]/30 mb-4" />
                   <h3 className="text-xl tracking-wider mb-3 font-bebas">
                     {value.title}
                   </h3>
@@ -227,12 +203,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+      <div className="h-20" />
 
       {/* The Vision */}
       <section className="py-28 px-6 bg-neutral-950">
@@ -270,25 +241,10 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+      <div className="h-px bg-gradient-to-r from-transparent via-[var(--accent)]/10 to-transparent" />
 
       {/* Join Us CTA */}
       <section className="py-32 px-6 bg-black relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5">
-          <Image
-            src="/diamond-white.png"
-            alt=""
-            width={384}
-            height={384}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-auto"
-          />
-        </div>
-
         <div className="max-w-3xl mx-auto text-center relative z-10">
           <ScrollReveal animation="fade-up" delay={0} duration={800}>
             <h2 className="text-4xl md:text-6xl tracking-wider mb-6 font-bebas">
@@ -303,7 +259,7 @@ export default function AboutPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/collections/all"
-                className="btn-premium inline-block px-10 py-4 bg-white text-black text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300 hover:scale-105"
+                className="btn-premium inline-block px-10 py-4 bg-[var(--accent)] text-black text-sm tracking-widest uppercase hover:bg-[var(--accent-light)] transition-all duration-300 hover:scale-105"
               >
                 Shop Now
               </Link>

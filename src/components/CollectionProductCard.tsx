@@ -100,8 +100,8 @@ export default function CollectionProductCard({
         </p>
 
         {/* Impact Badge */}
-        <div className="flex items-center gap-2 mb-4 text-emerald-400 text-xs">
-          <div className="w-2 h-2 rounded-full bg-emerald-400" />
+        <div className="flex items-center gap-2 mb-4 text-[var(--accent)]/70 text-xs">
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]/60" />
           <span className="tracking-wide">${donation} supports survivors</span>
         </div>
 

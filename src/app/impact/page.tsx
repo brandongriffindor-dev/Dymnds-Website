@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -35,11 +34,15 @@ export default function ImpactPage() {
     <main id="main-content" className="min-h-screen bg-black text-white">
       <Navbar />
 
-      {/* Hero */}
-      <section className="pt-32 pb-24 px-6">
-        <div className="max-w-4xl mx-auto text-center">
+      {/* Hero — Oversized Stat as Visual Anchor */}
+      <section className="pt-32 pb-16 px-6 relative overflow-hidden">
+        {/* Giant decorative 10% — partially clipped for drama */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none" aria-hidden="true">
+          <span className="text-[20rem] md:text-[28rem] font-bebas text-[var(--accent)]/[0.04] leading-none block">10%</span>
+        </div>
+        <div className="max-w-4xl mx-auto text-center relative z-10">
           <ScrollReveal animation="fade-up" delay={0} duration={800}>
-            <Image src="/diamond-white.png" alt="" width={40} height={40} className="h-10 w-auto mx-auto mb-8 opacity-30" />
+            <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/50 mb-4">Our Impact</p>
           </ScrollReveal>
 
           <ScrollReveal animation="fade-up" delay={100} duration={800}>
@@ -56,12 +59,10 @@ export default function ImpactPage() {
         </div>
       </section>
 
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+      {/* Divider */}
+      <div className="h-px bg-gradient-to-r from-transparent via-[var(--accent)]/10 to-transparent" />
+
+      <div className="h-20" />
 
       {/* The 10% Promise */}
       <section className="py-24 px-6 bg-neutral-950">
@@ -82,7 +83,7 @@ export default function ImpactPage() {
             <div className="grid md:grid-cols-3 gap-8 text-center">
               {impactAreas.map((area, i) => (
                 <div key={i} className="card-premium p-8 border border-white/10 bg-neutral-900/50">
-                  <Image src="/diamond-white.png" alt="" width={24} height={24} className="h-6 w-auto opacity-60 mx-auto mb-4" />
+                  <div className="w-8 h-[1px] bg-[var(--accent)]/30 mx-auto mb-4" />
                   <p className="text-2xl font-bebas mb-3">{area.title}</p>
                   <p className="text-white/50">{area.desc}</p>
                 </div>
@@ -92,12 +93,8 @@ export default function ImpactPage() {
         </div>
       </section>
 
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+      {/* Divider */}
+      <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
       {/* The Story */}
       <section className="py-24 px-6 bg-black border-y border-white/5">
@@ -130,12 +127,8 @@ export default function ImpactPage() {
         </div>
       </section>
 
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+      {/* Divider */}
+      <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
       {/* The Pledge */}
       <section className="py-24 px-6 bg-neutral-950">
@@ -158,11 +151,6 @@ export default function ImpactPage() {
           </ScrollReveal>
         </div>
       </section>
-
-      {/* Accent Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/20 to-transparent" />
-      </div>
 
       {/* The Commitment */}
       <section className="py-24 px-6 bg-neutral-950">
@@ -203,23 +191,13 @@ export default function ImpactPage() {
         </div>
       </section>
 
-      {/* Diamond Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <Image src="/diamond-white.png" alt="" width={16} height={16} className="h-4 w-auto mx-4 opacity-30" />
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
-
-      {/* Accent Divider */}
-      <div className="flex justify-center items-center py-8 px-6">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/20 to-transparent" />
-      </div>
+      {/* Divider */}
+      <div className="h-20" />
 
       {/* CTA */}
       <section className="py-32 px-6 bg-neutral-950">
         <div className="max-w-2xl mx-auto text-center">
           <ScrollReveal animation="fade-up" delay={0} duration={800}>
-            <Image src="/diamond-white.png" alt="" width={32} height={32} className="h-8 w-auto mx-auto mb-8 opacity-30" />
             <h2 className="text-4xl md:text-5xl tracking-tight mb-4 font-bebas">
               Join The Movement
             </h2>
@@ -231,7 +209,7 @@ export default function ImpactPage() {
           <ScrollReveal animation="fade-up" delay={200} duration={800}>
             <Link
               href="/shop"
-              className="btn-premium inline-block px-12 py-5 bg-white text-black text-xs tracking-[0.2em] uppercase hover:bg-white/90 transition-all"
+              className="btn-premium inline-block px-12 py-5 bg-[var(--accent)] text-black text-xs tracking-[0.2em] uppercase hover:bg-[var(--accent-light)] transition-all"
             >
               Shop Now
             </Link>
