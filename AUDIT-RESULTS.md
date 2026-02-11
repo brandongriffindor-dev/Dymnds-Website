@@ -304,4 +304,129 @@ Ranked by points-gained-per-hour-invested:
 
 ---
 
-**Which of these three should we implement first? Say the word and I start coding.**
+## PART 5: PHOTOGRAPHY & VIDEO INTEGRATION ROADMAP
+
+When assets arrive, this is the priority order for maximum curation score lift. Each placement is mapped to specific files, exact implementation, and which scorecard dimensions it moves.
+
+---
+
+### Asset Priority 1: Hero Video / Hero Image (Homepage)
+
+**Where:** `HomeClient.tsx` — hero section (lines 199-308)
+**Current state:** Ambient glow radial gradient. Pure typography. No visual hook.
+**Scorecard impact:** 0.3-Second Test jumps from 5 to 8. Screenshot Test jumps from 5 to 7. Total: +5 points.
+
+**Implementation strategy:**
+The hero needs a full-bleed background video (or static image as fallback). This is the single highest-value asset placement on the entire site. One cinematic loop — dark gym, athlete silhouette, slow motion, 3-5 seconds — behind the oversized type.
+
+Key technical details:
+- Use Next.js `<video>` with `autoPlay muted loop playsInline` — no controls, no audio
+- Poster image as fallback for slow connections and mobile (where autoplay may be blocked)
+- Overlay: `bg-black/60` or `bg-gradient-to-t from-black via-black/50 to-black/30` so type remains legible
+- Video should be compressed to under 3MB for the hero loop (use WebM with H.265 fallback)
+- On mobile (below md breakpoint), serve the poster image only — no video download. Use a `<picture>` or conditional render
+- The parallax effect on heroOpacity/heroScale/heroY already exists and will work perfectly over a video background
+- The typography from Change 1 (16rem asymmetric) layered over a dark cinematic video is the exact combination that gets featured
+
+**What to shoot:** Dark environment. Single light source (rim light or overhead spot). Athlete in motion — pulling a rope, mid-sprint, heavy bag work. Desaturated, high contrast. The video should feel like the brand sounds. No bright colors, no smiling-at-camera lifestyle. This is Fear of God meets Nike Training Club.
+
+**File changes:**
+- `HomeClient.tsx`: Replace `hero-ambient` div with `<video>` element + overlay div
+- `globals.css`: Remove `.hero-ambient` styles (no longer needed)
+- Add video to `/public/` — hero-video.webm + hero-video.mp4 + hero-poster.jpg
+
+---
+
+### Asset Priority 2: Product Photography (Collection & Homepage Cards)
+
+**Where:** `EditorialProductCard` in `HomeClient.tsx`, `CollectionProductCard.tsx`, `ProductCard.tsx`, PDP gallery
+**Current state:** Shimmer placeholder with DYMNDS watermark when no image exists. Product images when available.
+**Scorecard impact:** Screenshot Test +2, Conversion UX +2, 0.3-Second Test +1 (from product sections). Total: +5 points.
+
+**Implementation strategy:**
+Product photography is already wired — the `<Image>` components, sizes attributes, lazy loading, hover swap are all built. The code is ready. The question is art direction.
+
+**What to shoot for maximum curation value:**
+- Primary image: Product on model, dark background, single directional light. Not flat-lay. Not white background. The background should be near-black (#0a0a0a to #141414) so the cards feel seamless with the site.
+- Secondary image (hover swap): Different angle OR detail shot (fabric texture, seam closeup, logo emboss). This is already wired in `CollectionProductCard.tsx` line 45-53 and `ProductCard.tsx` line 113-124. Upload a second image and the hover swap activates automatically.
+- PDP gallery: 4-6 images minimum. Full body front, full body back, detail shot, lifestyle/motion shot, flat lay. The `ProductGallery` component already handles multi-image display.
+
+**Art direction that gets featured:** Look at Represent Clo's product pages. Dark backgrounds. Dramatic lighting. Model is partially in shadow. The product glows. This is the opposite of ASOS or Zara — it is editorial, not catalog. Shoot for mood, not information.
+
+**No code changes needed.** The infrastructure is built. Upload images to Firebase Storage, reference in Firestore product documents. The components handle everything.
+
+---
+
+### Asset Priority 3: About Page — Founder Portrait or Brand Film
+
+**Where:** `src/app/about/page.tsx` — founder story section (lines 92-144)
+**Current state:** Pure text. No visual anchor for the founder story.
+**Scorecard impact:** Page Identity +2, Screenshot Test +1. Total: +3 points.
+
+**Implementation strategy:**
+The About page currently has a text-heavy founder story with no visual break. A single portrait or brand film would transform this page from "blog post" to "editorial feature."
+
+**Option A — Static portrait:**
+Add a full-bleed or asymmetric image between the hero and the founder story. Use Next.js `<Image>` with priority loading. Position it as a 12-col full-bleed moment that breaks the max-w-4xl container. Dark, moody, shot from slightly below. Desaturated.
+
+**Option B — Brand film (higher impact):**
+A 15-30 second brand film embedded as a `<video>` loop in a full-bleed section. No audio needed. Montage of: gym moments, hands gripping a barbell, the diamond logo on fabric, community. This becomes the page's visual signature and solves the Page Identity problem (score dimension 11).
+
+**File changes when ready:**
+- `about/page.tsx`: Add an image/video section between the hero (line 88) and the founder story (line 92)
+- Use the same overlay + type pattern as the homepage hero
+
+---
+
+### Asset Priority 4: Impact Page — Survivor Stories or Partner Imagery
+
+**Where:** `src/app/impact/page.tsx` — "Why This Matters" section (lines 99-128) and below
+**Current state:** Text-only. Stats and descriptions. No emotional visual anchor.
+**Scorecard impact:** Page Identity +1, Screenshot Test +1. Total: +2 points.
+
+**Implementation strategy:**
+This page handles sensitive content (survivor healing), so imagery must be handled with extreme care. No faces of survivors. No trauma imagery.
+
+**What works:** Abstract or symbolic imagery. Hands holding hands. Sunlight through a window. A door opening. These are visual metaphors for healing that respect the subject matter while adding emotional weight.
+
+Alternatively, partner organization logos/badges in a clean grid — this adds credibility without requiring sensitive imagery.
+
+**File changes when ready:**
+- `impact/page.tsx`: Add an image section in the "Why This Matters" area
+- Consider a single full-bleed image with the scroll-reactive 10% (from Change 9) overlaid
+
+---
+
+### Asset Priority 5: Collection Page Hero Banners
+
+**Where:** Collection layout pages in `src/app/collections/`
+**Current state:** Text headers with no visual differentiation between collections.
+**Scorecard impact:** Page Identity +1 per collection page. Total: +2-3 points.
+
+**Implementation strategy:**
+Each collection (Men, Women, New Arrivals, Best Sellers) should have a distinct hero banner — a cinematic product shot or lifestyle image that immediately tells you which collection you are in without reading text.
+
+**What to shoot:** One hero shot per collection. Men's: dark, powerful, compression gear on athlete mid-movement. Women's: same energy but different composition. New Arrivals: close-up detail of newest fabric/product. Best Sellers: the most recognizable product shot.
+
+**File changes when ready:**
+- Add hero image sections to each collection page layout
+- Use Next.js `<Image>` with priority, full-bleed, overlay for text legibility
+
+---
+
+### Revised Score Projection With Assets
+
+| Scenario | Score | Gap to 120 |
+|----------|-------|------------|
+| Current (no changes) | 85 | -35 |
+| After code-only changes (top 5) | 105-110 | -10 to -15 |
+| After code changes + hero video + product photography | 120-125 | At or above bar |
+| After all code changes + all 5 asset priorities | 130-135 | Comfortably featured |
+
+The hero video alone is worth +5 points. Product photography is another +5. Together with the code changes, you cross 120 — the feature bar. The remaining assets (about portrait, impact imagery, collection banners) push you into comfortable territory where you are not borderline but clearly belong.
+
+**The sequence matters.** Do the code changes first (they are free and immediate). Then the hero video (single highest-value asset). Then product photography (unlocks the commerce experience). Then secondary page assets (polish).
+
+---
+
+**Which of the top 3 code changes should we implement first? Say the word and I start coding.**

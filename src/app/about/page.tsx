@@ -71,7 +71,7 @@ export default function AboutPage() {
           <div className="md:col-span-5">
             <ScrollReveal animation="fade-up" delay={0} duration={800}>
               <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-4">Our Story</p>
-              <h1 className="text-7xl md:text-8xl lg:text-9xl tracking-tight font-bebas leading-[0.85]">
+              <h1 className="tracking-tight font-bebas leading-[0.82]" style={{ fontSize: 'clamp(5rem, 16vw, 13rem)' }}>
                 BUILT<br />UNDER<br />PRESSURE
               </h1>
               <div className="w-16 h-[1px] bg-[var(--accent)]/40 mt-8" />

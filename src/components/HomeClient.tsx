@@ -196,98 +196,86 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       />
       <Navbar />
 
-      {/* ═══════ HERO — Full Viewport Immersive with Ambient Glow ═══════ */}
+      {/* ═══════ HERO — Nuclear Typography + Asymmetric Layout ═══════ */}
       <section
         ref={heroRef}
-        className="hero-height w-full flex flex-col items-center justify-center px-6 relative overflow-hidden"
+        className="hero-height w-full flex items-end px-6 md:px-12 lg:px-20 pb-20 md:pb-28 relative overflow-hidden"
       >
-        {/* Ambient glow background — replaces empty black void */}
+        {/* Ambient glow background */}
         <div className="hero-ambient" aria-hidden="true" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(200,169,126,0.06),transparent)]" />
 
         <motion.div
           style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
-          className="text-center max-w-4xl relative z-10"
+          className="w-full relative z-10"
         >
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <Image
-              src="/dymnds-logo-white.png"
-              alt="DYMNDS"
-              width={720}
-              height={120}
-              priority
-              className="w-[80vw] max-w-[680px] mx-auto mb-16"
-            />
-          </motion.div>
+          <div className="flex flex-col md:grid md:grid-cols-12 gap-8 md:gap-6 items-end">
+            {/* Left — Nuclear headline, each word on its own line */}
+            <div className="md:col-span-8 lg:col-span-9">
+              {['Pressure', 'Creates', 'Diamonds'].map((word, i) => (
+                <div key={word} className="overflow-hidden">
+                  <motion.div
+                    className="font-bebas tracking-[-0.03em] leading-[0.85] text-white"
+                    style={{ fontSize: 'clamp(4.5rem, 18vw, 16rem)' }}
+                    initial={{ y: '120%' }}
+                    animate={{ y: 0 }}
+                    transition={{
+                      duration: 0.9,
+                      delay: 0.3 + i * 0.12,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                  >
+                    {word}
+                  </motion.div>
+                </div>
+              ))}
+            </div>
 
-          {/* Accent line */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="w-16 h-[1px] bg-[var(--accent)] mx-auto mb-14 origin-center"
-          />
+            {/* Right — Sub-content + CTAs, asymmetric balance */}
+            <div className="md:col-span-4 lg:col-span-3 flex flex-col items-start md:items-end gap-8 pb-2">
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 1, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="w-16 h-[1px] bg-[var(--accent)] origin-right hidden md:block"
+              />
 
-          {/* Headline — word-by-word reveal */}
-          <div className="overflow-hidden mb-6">
-            {['Pressure', 'Creates', 'Diamonds'].map((word, i) => (
-              <motion.span
-                key={word}
-                className="inline-block font-bebas text-[clamp(3.5rem,12vw,9rem)] tracking-tight text-white mr-[0.15em]"
-                initial={{ y: '120%', opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{
-                  duration: 0.9,
-                  delay: 0.6 + i * 0.12,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1.0, ease: [0.16, 1, 0.3, 1] }}
+                className="text-[11px] md:text-[13px] text-white/35 tracking-[0.3em] max-w-[280px] uppercase text-left md:text-right leading-relaxed"
               >
-                {word}
-              </motion.span>
-            ))}
+                Forged in struggle &middot; Built for comebacks &middot; <span className="text-[var(--accent)]/60">10% heals</span>
+              </motion.p>
+
+              <motion.div
+                className="flex flex-col gap-4 w-full md:w-auto"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1.2, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <Link
+                  href="/collections/men"
+                  className="group relative px-10 py-4 border border-[var(--accent)]/25 text-white text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500 hover:border-[var(--accent)] text-center"
+                >
+                  <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
+                    Shop Men
+                  </span>
+                  <span className="absolute inset-0 bg-[var(--accent)] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+                </Link>
+                <Link
+                  href="/collections/women"
+                  className="group relative px-10 py-4 bg-[var(--accent)] text-black text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500 text-center"
+                >
+                  <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
+                    Shop Women
+                  </span>
+                  <span className="absolute inset-0 bg-[var(--accent-light)] transform translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+                </Link>
+              </motion.div>
+            </div>
           </div>
-
-          {/* Sub-tagline */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.1, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[11px] md:text-[13px] text-white/35 mb-16 tracking-[0.3em] max-w-md mx-auto uppercase"
-          >
-            Forged in struggle &middot; Built for comebacks &middot; <span className="text-[var(--accent)]/60">10% heals</span>
-          </motion.p>
-
-          {/* CTA Buttons — accent color integration */}
-          <motion.div
-            className="flex flex-col sm:flex-row gap-5 justify-center"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.3, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <Link
-              href="/collections/men"
-              className="group relative px-12 py-5 border border-[var(--accent)]/25 text-white text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500 hover:border-[var(--accent)]"
-            >
-              <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
-                Shop Men
-              </span>
-              <span className="absolute inset-0 bg-[var(--accent)] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
-            </Link>
-            <Link
-              href="/collections/women"
-              className="group relative px-12 py-5 bg-[var(--accent)] text-black text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500"
-            >
-              <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
-                Shop Women
-              </span>
-              <span className="absolute inset-0 bg-[var(--accent-light)] transform translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" />
-            </Link>
-          </motion.div>
         </motion.div>
 
         {/* Scroll indicator */}
@@ -310,6 +298,43 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       {/* ═══════ MARQUEE ═══════ */}
       <Marquee />
 
+      {/* ═══════ THE VOID — Full-Viewport Statement ═══════ */}
+      <section className="min-h-[80vh] flex items-center justify-center px-6 bg-black relative overflow-hidden">
+        {/* Subtle radial glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--accent)]/[0.02] rounded-full blur-[150px]" />
+
+        <div className="text-center relative z-10 max-w-5xl mx-auto">
+          <motion.p
+            className="text-[10px] tracking-[0.5em] uppercase text-[var(--accent)]/30 mb-8"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            Our Promise
+          </motion.p>
+
+          <motion.h2
+            className="font-bebas leading-[0.85] tracking-tight text-white"
+            style={{ fontSize: 'clamp(3rem, 10vw, 10rem)' }}
+            initial={{ opacity: 0, filter: 'blur(12px)' }}
+            whileInView={{ opacity: 1, filter: 'blur(0px)' }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          >
+            Your Gear Should<br />Mean Something
+          </motion.h2>
+
+          <motion.div
+            className="w-12 h-[1px] bg-[var(--accent)]/20 mx-auto mt-10"
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          />
+        </div>
+      </section>
+
       {/* ═══════ BENTO GRID — Frost-Inspired Brand Pillars ═══════ */}
       <section className="py-0 bg-black">
         <div className="max-w-7xl mx-auto px-6 py-28 md:py-40">
@@ -330,13 +355,13 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
 
           {/* Bento Grid — asymmetric card layout */}
           <div className="bento-grid grid-cols-1 md:grid-cols-3 md:grid-rows-2">
-            {/* Large feature card — spans 2 cols */}
+            {/* Large feature card — spans 2 cols, scale entrance */}
             <motion.div
               className="bento-card md:col-span-2 md:row-span-2 flex flex-col justify-between min-h-[300px] md:min-h-[500px] relative"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.92 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             >
               {/* Decorative watermark */}
               <span className="absolute -right-4 -bottom-6 text-[12rem] md:text-[16rem] font-bebas text-[var(--accent)]/[0.04] leading-none select-none pointer-events-none" aria-hidden="true">
@@ -362,13 +387,13 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               </Link>
             </motion.div>
 
-            {/* Top-right card */}
+            {/* Top-right card — slide from right */}
             <motion.div
               className="bento-card flex flex-col justify-between min-h-[200px]"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: 60 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="relative z-10">
                 <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--accent)]/50 mb-3">Materials</p>
@@ -379,13 +404,13 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               </div>
             </motion.div>
 
-            {/* Bottom-right card */}
+            {/* Bottom-right card — scale + blur entrance */}
             <motion.div
               className="bento-card flex flex-col justify-between min-h-[200px]"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.9, filter: 'blur(8px)' }}
+              whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
               viewport={{ once: true }}
-              transition={{ duration: 0.9, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.9, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="relative z-10">
                 <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--accent)]/50 mb-3">Community</p>
@@ -486,31 +511,31 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
 
                 {/* Editorial: 1 hero (7 cols) + 2 supporting (5 cols) */}
                 <div className="grid md:grid-cols-12 gap-6 md:gap-8">
-                  {/* Hero product */}
+                  {/* Hero product — scale entrance */}
                   {menFeatured.slice(0, 1).map((product) => (
                     <motion.div
                       key={product.id}
                       className="md:col-span-7"
-                      initial={{ opacity: 0, y: 50 }}
-                      whileInView={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, scale: 0.92, y: 80 }}
+                      whileInView={{ opacity: 1, scale: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                      transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
                     >
                       <EditorialProductCard product={product} currency={currency} large />
                     </motion.div>
                   ))}
 
-                  {/* Supporting products */}
+                  {/* Supporting products — slide from right with stagger */}
                   <div className="md:col-span-5 grid gap-6 md:gap-8">
                     {menFeatured.slice(1, 3).map((product, i) => (
                       <motion.div
                         key={product.id}
-                        initial={{ opacity: 0, y: 50 }}
-                        whileInView={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0, x: 50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{
                           duration: 0.9,
-                          delay: 0.15 * (i + 1),
+                          delay: 0.3 + i * 0.15,
                           ease: [0.16, 1, 0.3, 1],
                         }}
                       >
@@ -557,12 +582,12 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                     {womenFeatured.slice(1, 3).map((product, i) => (
                       <motion.div
                         key={product.id}
-                        initial={{ opacity: 0, y: 50 }}
-                        whileInView={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0, x: -50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{
                           duration: 0.9,
-                          delay: 0.15 * i,
+                          delay: 0.3 + i * 0.15,
                           ease: [0.16, 1, 0.3, 1],
                         }}
                       >
@@ -575,10 +600,10 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                     <motion.div
                       key={product.id}
                       className="md:col-span-7 order-1 md:order-2"
-                      initial={{ opacity: 0, y: 50 }}
-                      whileInView={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, scale: 0.92, y: 80 }}
+                      whileInView={{ opacity: 1, scale: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.9, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                      transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
                     >
                       <EditorialProductCard product={product} currency={currency} large />
                     </motion.div>
@@ -670,6 +695,34 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                 &rarr;
               </span>
             </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════ HORIZONTAL SCROLL — Brand Values ═══════ */}
+      <section className="py-4 bg-black overflow-hidden relative">
+        <div className="flex whitespace-nowrap">
+          <motion.div
+            className="flex items-center gap-0"
+            initial={{ x: 0 }}
+            whileInView={{ x: '-50%' }}
+            viewport={{ once: false }}
+            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+          >
+            {[...Array(2)].map((_, setIdx) => (
+              <div key={setIdx} className="flex items-center gap-0">
+                {['No Shortcuts', 'Real Impact', 'Zero Pretension', 'Built to Last', 'Pressure Creates Diamonds'].map((value, i) => (
+                  <span
+                    key={`${setIdx}-${i}`}
+                    className="font-bebas text-white/[0.04] tracking-tight leading-none px-6 md:px-10 flex-shrink-0"
+                    style={{ fontSize: 'clamp(4rem, 12vw, 10rem)' }}
+                  >
+                    {value}
+                    <span className="text-[var(--accent)]/[0.08] mx-4 md:mx-8">&#9670;</span>
+                  </span>
+                ))}
+              </div>
+            ))}
           </motion.div>
         </div>
       </section>

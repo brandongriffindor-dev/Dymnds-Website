@@ -141,8 +141,8 @@ export default function ContactPage() {
         <div className="max-w-4xl mx-auto">
           <ScrollReveal animation="fade-up" delay={0} duration={800}>
             <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-4">Contact</p>
-            <h1 className="text-6xl md:text-8xl tracking-tight font-bebas mb-4">
-              GET IN TOUCH
+            <h1 className="tracking-tight font-bebas mb-4 leading-[0.85]" style={{ fontSize: 'clamp(4.5rem, 14vw, 11rem)' }}>
+              GET IN<br />TOUCH
             </h1>
             <div className="w-16 h-[1px] bg-[var(--accent)]/30 mb-8" />
             <p className="text-lg text-white/50 max-w-xl leading-relaxed">

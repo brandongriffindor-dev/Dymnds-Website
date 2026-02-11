@@ -46,8 +46,8 @@ export default function ImpactPage() {
           </ScrollReveal>
 
           <ScrollReveal animation="fade-up" delay={100} duration={800}>
-            <h1 className="text-6xl md:text-8xl tracking-tight mb-6 font-bebas">
-              Your Purchase Has Power
+            <h1 className="tracking-tight mb-6 font-bebas leading-[0.85]" style={{ fontSize: 'clamp(4rem, 12vw, 10rem)' }}>
+              Your Purchase<br />Has Power
             </h1>
           </ScrollReveal>
 

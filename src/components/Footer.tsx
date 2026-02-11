@@ -163,7 +163,7 @@ export default function Footer() {
                 You&apos;re on the list. Welcome to the movement.
               </p>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+              <form onSubmit={handleSubmit} className="flex max-w-md mx-auto">
                 <input
                   type="email"
                   id="footer-newsletter-email"
@@ -171,14 +171,14 @@ export default function Footer() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   aria-label="Email for newsletter signup"
-                  className="input-premium flex-1 px-4 py-3 bg-white/5 border border-white/20 text-sm focus:outline-none focus:border-white/40 transition-colors"
+                  className="input-premium flex-1 px-4 py-3 bg-white/5 border border-white/20 border-r-0 text-sm focus:outline-none focus:border-white/40 transition-colors"
                   disabled={status === 'submitting'}
                   required
                 />
                 <button
                   type="submit"
                   disabled={status === 'submitting'}
-                  className="btn-accent px-6 py-3 text-sm tracking-wider uppercase font-semibold disabled:opacity-50"
+                  className="px-6 py-3 bg-[var(--accent)] text-black text-sm tracking-wider uppercase font-semibold disabled:opacity-50 transition-colors hover:bg-[var(--accent-light)] whitespace-nowrap"
                 >
                   {status === 'submitting' ? '...' : 'Subscribe'}
                 </button>
@@ -224,10 +224,10 @@ export default function Footer() {
           </nav>
         </div>
 
-        {/* Oversized ghost tagline */}
+        {/* Oversized ghost DYMNDS watermark */}
         <div className="mt-12 pt-8 text-center overflow-hidden">
-          <p className="text-[clamp(3rem,8vw,6rem)] font-bebas text-white/[0.03] leading-none tracking-tight whitespace-nowrap">
-            PRESSURE CREATES DIAMONDS
+          <p className="font-bebas text-white/[0.04] leading-none tracking-tight whitespace-nowrap" style={{ fontSize: 'clamp(5rem, 15vw, 14rem)' }}>
+            DYMNDS
           </p>
         </div>
       </div>

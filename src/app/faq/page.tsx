@@ -77,8 +77,8 @@ export default function FAQPage() {
         <div className="max-w-3xl mx-auto">
           <ScrollReveal animation="fade-up" delay={0} duration={600}>
             <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-3">Support</p>
-            <h1 className="text-5xl md:text-7xl tracking-tight font-bebas">
-              Questions & Answers
+            <h1 className="tracking-tight font-bebas leading-[0.88]" style={{ fontSize: 'clamp(4rem, 12vw, 9rem)' }}>
+              Questions &<br />Answers
             </h1>
             <div className="w-12 h-[1px] bg-[var(--accent)]/30 mt-6" />
           </ScrollReveal>
