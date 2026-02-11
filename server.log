@@ -33,3 +33,23 @@ Persisting failed: Unable to write SST file 00000028.sst
 
 Caused by:
     No such file or directory (os error 2)
+[2026-02-11T09:14:09.701Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x3324cc94 error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
+⨯ Error: ENOENT: no such file or directory, open '/Users/clawdminimac/Desktop/Dymnds-Claude/.next/dev/server/app/page/build-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/clawdminimac/Desktop/Dymnds-Claude/.next/dev/server/app/page/build-manifest.json'
+}
+
+thread 'tokio-runtime-worker' (3480604) panicked at /Users/geist/dev/actions-runner/_work/next.js/next.js/turbopack/crates/turbo-tasks-backend/src/backend/operation/mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for ResolvedMap::lookup (TaskId 222896))
+
+Caused by:
+    0: Looking up data for TaskId 222896 from database failed
+    1: Unable to open static sorted file referenced from 00000025.meta
+    2: Unable to open static sorted file 00000012.sst
+    3: No such file or directory (os error 2)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+○ Compiling /_error ...
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
