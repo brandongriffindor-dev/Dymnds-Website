@@ -9,7 +9,7 @@
 
 ✓ Starting...
 ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
-✓ Ready in 397ms
+✓ Ready in 405ms
 [DYMNDS] Missing env vars (non-fatal in dev):
   - NEXT_PUBLIC_FIREBASE_API_KEY
   - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
@@ -22,41 +22,15 @@
 [DYMNDS] STRIPE_WEBHOOK_SECRET not set (non-fatal in dev). Webhook processing will fail until configured.
 [DYMNDS] NEXT_PUBLIC_APP_URL not set (non-fatal in dev). Stripe checkout redirects will use undefined URLs.
 [DYMNDS] EXCHANGE_RATE_API_KEY not set. Currency conversion will use fallback rates that may drift from real values.
-[2026-02-11T07:13:18.405Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x3324cc91 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
-[2026-02-11T07:13:18.408Z]  @firebase/firestore: Firestore (12.8.0): Could not reach Cloud Firestore backend. Connection failed 1 times. Most recent error: FirebaseError: [code=invalid-argument]: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+[2026-02-11T10:18:45.092Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x38d93c38 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+[2026-02-11T10:18:45.094Z]  @firebase/firestore: Firestore (12.8.0): Could not reach Cloud Firestore backend. Connection failed 1 times. Most recent error: FirebaseError: [code=invalid-argument]: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
 This typically indicates that your device does not have a healthy Internet connection at the moment. The client will operate in offline mode until it is able to successfully connect to the backend.
- GET / 200 in 2.5s (compile: 2.0s, proxy.ts: 45ms, render: 408ms)
-[2026-02-11T08:13:18.562Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x3324cc92 error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
- GET / 200 in 38ms (compile: 4ms, proxy.ts: 5ms, render: 29ms)
-[2026-02-11T08:14:07.534Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x3324cc93 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
-Persisting failed: Unable to write SST file 00000028.sst
-
-Caused by:
-    No such file or directory (os error 2)
-[2026-02-11T09:14:09.701Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x3324cc94 error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
-⨯ Error: ENOENT: no such file or directory, open '/Users/clawdminimac/Desktop/Dymnds-Claude/.next/dev/server/app/page/build-manifest.json'
-    at ignore-listed frames {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/Users/clawdminimac/Desktop/Dymnds-Claude/.next/dev/server/app/page/build-manifest.json'
-}
-
-thread 'tokio-runtime-worker' (3480604) panicked at /Users/geist/dev/actions-runner/_work/next.js/next.js/turbopack/crates/turbo-tasks-backend/src/backend/operation/mod.rs:156:17:
-Failed to restore task data (corrupted database or bug): Data for ResolvedMap::lookup (TaskId 222896))
-
-Caused by:
-    0: Looking up data for TaskId 222896 from database failed
-    1: Unable to open static sorted file referenced from 00000025.meta
-    2: Unable to open static sorted file 00000012.sst
-    3: No such file or directory (os error 2)
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-○ Compiling /_error ...
-Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
-⨯ Error: ENOENT: no such file or directory, open '/Users/clawdminimac/Desktop/Dymnds-Claude/.next/dev/server/app/page/build-manifest.json'
-    at ignore-listed frames {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/Users/clawdminimac/Desktop/Dymnds-Claude/.next/dev/server/app/page/build-manifest.json'
-}
+ GET / 200 in 2.4s (compile: 1982ms, proxy.ts: 43ms, render: 367ms)
+ GET / 200 in 46ms (compile: 5ms, proxy.ts: 5ms, render: 35ms)
+[2026-02-11T10:18:52.985Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x38d93c39 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+[2026-02-11T11:18:53.092Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x38d93c3a error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
+[2026-02-11T11:19:10.203Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x38d93c3b error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+ GET / 200 in 174ms (compile: 4ms, proxy.ts: 5ms, render: 165ms)
+[2026-02-11T12:19:11.918Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x38d93c3c error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
+[2026-02-11T12:20:04.326Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x38d93c3d error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+ GET / 200 in 126ms (compile: 3ms, proxy.ts: 3ms, render: 120ms)
