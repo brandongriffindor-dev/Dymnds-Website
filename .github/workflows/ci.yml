@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - - name: Lint
+      - name: Lint
         run: npx eslint src/
         
       - name: Run tests
