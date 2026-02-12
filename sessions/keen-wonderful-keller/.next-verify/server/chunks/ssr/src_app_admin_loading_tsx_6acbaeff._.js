@@ -1,3 +1,0 @@
-module.exports=[19225,a=>{"use strict";var b=a.i(7997);function c(){return(0,b.jsx)("div",{className:"flex items-center justify-center py-32",children:(0,b.jsxs)("div",{className:"text-center",children:[(0,b.jsx)("div",{className:"w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"}),(0,b.jsx)("p",{className:"text-white/30 text-sm tracking-wider uppercase",children:"Loading..."})]})})}a.s(["default",()=>c])}];
-
-//# sourceMappingURL=src_app_admin_loading_tsx_6acbaeff._.js.map
