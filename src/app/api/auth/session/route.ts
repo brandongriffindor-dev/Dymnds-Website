@@ -88,7 +88,10 @@ export async function POST(request: Request) {
       path: '/',
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(
+      { success: true },
+      { headers: { 'Cache-Control': 'private, no-store' } }
+    );
   } catch (error) {
     const requestId = generateRequestId();
     logger.error('Session API error', { route: '/api/auth/session', requestId }, error);

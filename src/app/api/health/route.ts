@@ -1,11 +1,23 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getAdminDb } from '@/lib/firebase-admin';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
+const HEALTH_RATE_LIMIT = { limit: 10, windowSeconds: 60 };
+
+export async function GET(request: Request) {
+  // Rate limit: 10 requests per minute per IP to prevent abuse
+  const ip = getClientIP(request);
+  const rl = await rateLimit(`health:${ip}`, HEALTH_RATE_LIMIT);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+    );
+  }
   const checks: Record<string, boolean> = {};
   let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 

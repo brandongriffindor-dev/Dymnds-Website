@@ -110,8 +110,9 @@ export async function POST(request: Request) {
       const productSnap = await db.collection('products').doc(item.productId).get();
 
       if (!productSnap.exists) {
+        logger.warn('Product not found during order creation', { productId: item.productId, ip });
         return NextResponse.json(
-          { error: `Product ${item.productId} not found` },
+          { error: 'One or more items in your cart are no longer available. Please refresh and try again.', code: 'PRODUCT_NOT_FOUND' },
           { status: 400 }
         );
       }
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
       // Reject deleted or inactive products
       if (productData.is_deleted === true || productData.is_active === false) {
         return NextResponse.json(
-          { error: 'One or more products are no longer available. Please refresh your cart.' },
+          { error: 'One or more products are no longer available. Please refresh your cart.', code: 'PRODUCT_UNAVAILABLE' },
           { status: 409 }
         );
       }
@@ -138,7 +139,7 @@ export async function POST(request: Request) {
           ip,
         });
         return NextResponse.json(
-          { error: 'Price has changed. Please refresh and try again.' },
+          { error: 'Price has changed. Please refresh and try again.', code: 'PRICE_MISMATCH' },
           { status: 409 }
         );
       }
@@ -411,7 +412,7 @@ export async function POST(request: Request) {
       const errorMessage = transactionError instanceof Error ? transactionError.message : 'Stock unavailable';
       logger.error('Order creation transaction failed', { error: errorMessage, ip }, transactionError);
       return NextResponse.json(
-        { error: errorMessage || 'Stock unavailable' },
+        { error: 'One or more items are unavailable or out of stock. Please refresh your cart and try again.', code: 'STOCK_INSUFFICIENT' },
         { status: 409 }
       );
     }

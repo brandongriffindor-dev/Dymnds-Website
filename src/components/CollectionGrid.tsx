@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import StaggerReveal from '@/components/StaggerReveal';
 import CollectionProductCard from '@/components/CollectionProductCard';
 import type { Product } from '@/lib/firebase';
@@ -24,9 +25,17 @@ export default function CollectionGrid({
 }: CollectionGridProps) {
   if (products.length === 0) {
     return (
-      <div className="text-center py-20">
-        <p className="text-white/40 text-xl mb-4">{emptyMessage}</p>
-        <p className="text-white/30">{emptySubtext}</p>
+      <div className="text-center py-32">
+        <Image
+          src="/diamond-white.png"
+          alt=""
+          width={40}
+          height={40}
+          className="opacity-10 mx-auto mb-6"
+        />
+        <div className="section-divider max-w-xs mx-auto mb-8" />
+        <p className="font-bebas tracking-wider text-white/40 text-2xl mb-3">{emptyMessage}</p>
+        <p className="text-white/30 text-sm">{emptySubtext}</p>
       </div>
     );
   }

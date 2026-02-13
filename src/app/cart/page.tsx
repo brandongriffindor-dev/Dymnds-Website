@@ -235,7 +235,7 @@ export default function CartPage() {
                           {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
                         </span>
                       </div>
-                      <div className="flex justify-between text-emerald-400 text-sm font-medium">
+                      <div className="flex justify-between text-[var(--accent)] text-sm font-medium">
                         <span>Your Impact (10%)</span>
                         <span>${donation.toFixed(2)}</span>
                       </div>
@@ -252,8 +252,8 @@ export default function CartPage() {
                     </div>
 
                     {/* Impact Note */}
-                    <div className="bg-emerald-500/8 border border-emerald-500/15 rounded-lg p-4 mb-8">
-                      <p className="text-xs text-emerald-400 text-center leading-relaxed">
+                    <div className="bg-[var(--accent)]/[0.08] border border-[var(--accent)]/15 rounded-lg p-4 mb-8">
+                      <p className="text-xs text-[var(--accent)] text-center leading-relaxed">
                         Your purchase contributes <span className="font-semibold">${donation.toFixed(2)}</span> to support survivors
                       </p>
                     </div>
@@ -285,7 +285,7 @@ export default function CartPage() {
                         </p>
                       </div>
                     ) : (
-                      <p className="text-center text-xs text-emerald-400 uppercase tracking-wider">
+                      <p className="text-center text-xs text-[var(--accent)] uppercase tracking-wider">
                         You qualify for free shipping
                       </p>
                     )}

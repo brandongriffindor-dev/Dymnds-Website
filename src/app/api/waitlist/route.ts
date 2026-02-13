@@ -6,6 +6,31 @@ import { validateCSRF } from '@/lib/csrf';
 import { logger } from '@/lib/logger';
 import { getAdminDb, FieldValue } from '@/lib/firebase-admin';
 
+// In-memory recent email cache to avoid redundant Firestore reads on rapid resubmits
+const recentEmails = new Map<string, number>();
+const RECENT_EMAIL_TTL = 5 * 60 * 1000; // 5 minutes
+
+function isRecentlySubmitted(email: string): boolean {
+  const submittedAt = recentEmails.get(email);
+  if (!submittedAt) return false;
+  if (Date.now() - submittedAt > RECENT_EMAIL_TTL) {
+    recentEmails.delete(email);
+    return false;
+  }
+  return true;
+}
+
+function markAsSubmitted(email: string): void {
+  recentEmails.set(email, Date.now());
+  // Cleanup old entries periodically (every 100 writes)
+  if (recentEmails.size > 100) {
+    const now = Date.now();
+    for (const [key, ts] of recentEmails) {
+      if (now - ts > RECENT_EMAIL_TTL) recentEmails.delete(key);
+    }
+  }
+}
+
 export async function POST(request: Request) {
   try {
     // ── CSRF Validation ─────────────────────────────────────
@@ -49,10 +74,19 @@ export async function POST(request: Request) {
 
       const email = sanitizeEmail(parsed.data.email);
 
+      // Fast in-memory duplicate check (avoids Firestore read on rapid resubmits)
+      if (isRecentlySubmitted(`app:${email}`)) {
+        return NextResponse.json(
+          { success: true, message: "You're already on the list!" },
+          { status: 200 }
+        );
+      }
+
       // Deduplicate: check if email already signed up
       const existingApp = await db.collection('app_waitlist')
         .where('email', '==', email).limit(1).get();
       if (!existingApp.empty) {
+        markAsSubmitted(`app:${email}`);
         return NextResponse.json(
           { success: true, message: "You're already on the list!" },
           { status: 200 }
@@ -63,6 +97,7 @@ export async function POST(request: Request) {
         email,
         createdAt: FieldValue.serverTimestamp(),
       });
+      markAsSubmitted(`app:${email}`);
 
       return NextResponse.json(
         { success: true, message: "You're on the list!" },
@@ -80,10 +115,19 @@ export async function POST(request: Request) {
 
       const email = sanitizeEmail(parsed.data.email);
 
+      // Fast in-memory duplicate check (avoids Firestore read on rapid resubmits)
+      if (isRecentlySubmitted(`newsletter:${email}`)) {
+        return NextResponse.json(
+          { success: true, message: 'Welcome to the movement.' },
+          { status: 200 }
+        );
+      }
+
       // Deduplicate: check if email already signed up
       const existingWaitlist = await db.collection('waitlist')
         .where('email', '==', email).limit(1).get();
       if (!existingWaitlist.empty) {
+        markAsSubmitted(`newsletter:${email}`);
         return NextResponse.json(
           { success: true, message: 'Welcome to the movement.' },
           { status: 200 }
@@ -95,6 +139,7 @@ export async function POST(request: Request) {
         createdAt: FieldValue.serverTimestamp(),
         source: parsed.data.source,
       });
+      markAsSubmitted(`newsletter:${email}`);
 
       return NextResponse.json(
         { success: true, message: 'Welcome to the movement.' },

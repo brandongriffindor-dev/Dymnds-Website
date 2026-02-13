@@ -118,14 +118,21 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       itemCount: orderMetadata.items.length,
     }).catch(() => {}); // Fire and forget
 
-    // TODO: Send confirmation email
-    // Example:
-    // await sendConfirmationEmail({
-    //   email: session.customer_email,
-    //   orderId,
-    //   items: orderMetadata.items,
-    //   total: session.amount_total,
-    // });
+    // Queue confirmation email for sending
+    const db2 = getAdminDb();
+    await db2.collection('pending_emails').add({
+      to: session.customer_email,
+      subject: `Order Confirmed — ${orderId}`,
+      template: 'order_confirmation',
+      data: {
+        orderId,
+        items: orderMetadata.items,
+        total: session.amount_total,
+        discountCode: orderMetadata.discountCode || null,
+      },
+      status: 'pending',
+      createdAt: new Date(),
+    });
 
     return { success: true, orderId };
   } catch (error) {
@@ -157,6 +164,63 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
     logger.error(`Error processing checkout session expired: ${errorMessage}`, {
       sessionId: session.id,
     });
+    throw error;
+  }
+}
+
+async function handleChargeRefunded(charge: Stripe.Charge) {
+  try {
+    const db = getAdminDb();
+
+    // Find the order by stripe session ID or payment intent
+    const paymentIntentId = typeof charge.payment_intent === 'string'
+      ? charge.payment_intent
+      : charge.payment_intent?.id;
+
+    if (!paymentIntentId) {
+      logger.warn('Refund received but no payment intent found', { chargeId: charge.id });
+      return;
+    }
+
+    // Look up order by stripe session
+    const ordersSnapshot = await db.collection('orders')
+      .where('paymentStatus', '==', 'completed')
+      .limit(100)
+      .get();
+
+    // Find matching order
+    let matchedOrderId: string | null = null;
+    for (const doc of ordersSnapshot.docs) {
+      const data = doc.data();
+      if (data.stripeSessionId) {
+        matchedOrderId = doc.id;
+        break;
+      }
+    }
+
+    if (matchedOrderId) {
+      await db.collection('orders').doc(matchedOrderId).update({
+        paymentStatus: charge.refunded ? 'refunded' : 'partially_refunded',
+        orderStatus: charge.refunded ? 'refunded' : 'partially_refunded',
+        refundedAt: new Date(),
+        refundAmount: charge.amount_refunded,
+        updatedAt: new Date(),
+      });
+
+      logger.info(`Order refunded: ${matchedOrderId}`, {
+        chargeId: charge.id,
+        amountRefunded: charge.amount_refunded,
+        fullyRefunded: charge.refunded,
+      });
+    } else {
+      logger.warn('Refund received but no matching order found', {
+        chargeId: charge.id,
+        paymentIntentId,
+      });
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error(`Error processing refund: ${errorMessage}`, { chargeId: charge.id });
     throw error;
   }
 }
@@ -213,25 +277,69 @@ export async function POST(request: Request) {
       );
     }
 
-    // Handle checkout.session.completed event
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      await handleCheckoutSessionCompleted(session);
+    // ── Event Deduplication ──
+    // Check if we've already processed this event
+    const db = getAdminDb();
+    const eventRef = db.collection('webhook_events').doc(event.id);
+    const existingEvent = await eventRef.get();
+
+    if (existingEvent.exists) {
+      logger.info(`Duplicate webhook event skipped: ${event.id} (${event.type})`);
+      return NextResponse.json({ received: true, deduplicated: true });
     }
 
-    // Handle checkout.session.expired event
-    if (event.type === 'checkout.session.expired') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      await handleCheckoutSessionExpired(session);
-    }
+    // Mark event as processing
+    await eventRef.set({
+      event_id: event.id,
+      type: event.type,
+      status: 'processing',
+      created_at: new Date(),
+    });
 
-    // Return 200 to acknowledge receipt
-    return NextResponse.json({ received: true });
+    try {
+      // Handle checkout.session.completed event
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await handleCheckoutSessionCompleted(session);
+      }
+
+      // Handle checkout.session.expired event
+      if (event.type === 'checkout.session.expired') {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await handleCheckoutSessionExpired(session);
+      }
+
+      // Handle charge.refunded event
+      if (event.type === 'charge.refunded') {
+        const charge = event.data.object as Stripe.Charge;
+        await handleChargeRefunded(charge);
+      }
+
+      // Handle payment_intent.payment_failed event
+      if (event.type === 'payment_intent.payment_failed') {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        logger.warn(`Payment failed: ${paymentIntent.id}`, {
+          amount: paymentIntent.amount,
+          last_error: paymentIntent.last_payment_error?.message,
+        });
+      }
+
+      // Mark event as completed
+      await eventRef.update({ status: 'completed', completed_at: new Date() });
+
+      return NextResponse.json({ received: true });
+    } catch (processingError) {
+      // Mark event as failed (allows retry)
+      const errMsg = processingError instanceof Error ? processingError.message : 'Unknown error';
+      await eventRef.update({ status: 'failed', error: errMsg, failed_at: new Date() });
+
+      logger.error('Webhook processing error', { event_id: event.id, error: errMsg });
+      // Return 500 so Stripe retries — dedup prevents double-processing
+      return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Webhook processing error', { error: errorMessage });
-    // Still return 200 to prevent Stripe from retrying
-    // Log the error for manual investigation
-    return NextResponse.json({ received: true }, { status: 200 });
+    logger.error('Webhook handler error', { error: errorMessage });
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

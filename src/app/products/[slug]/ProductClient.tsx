@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useReducer } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -102,6 +102,20 @@ export default function ProductClient({ product, initialReviews = [], initialMat
   const cart = useCartStore(s => s.cart);
   const openCart = useCartStore(s => s.openCart);
   const currency = useCurrency();
+
+  // Sticky mobile CTA
+  const addToCartRef = useRef<HTMLButtonElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  useEffect(() => {
+    if (!addToCartRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(addToCartRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Color selection state
   const hasColors = product.colors && product.colors.length > 0;
@@ -422,6 +436,7 @@ export default function ProductClient({ product, initialReviews = [], initialMat
 
               {/* Add to Cart Button */}
               <button
+                ref={addToCartRef}
                 onClick={handleAddToCart}
                 disabled={!state.selectedSize || state.isAdding}
                 className={`
@@ -551,6 +566,42 @@ export default function ProductClient({ product, initialReviews = [], initialMat
       <ProductReviews initialReviews={initialReviews} />
 
       <Footer />
+
+      {/* Sticky mobile add-to-cart bar */}
+      {showStickyBar && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-black/95 backdrop-blur-xl border-t border-white/10 safe-area-padding animate-slide-up">
+          <div className="flex items-center justify-between gap-4 px-4 py-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{product.title}</p>
+              <p className="text-xs text-[var(--accent)]">{formatPrice(convertPrice(getCadPrice(product), currency), currency)}</p>
+            </div>
+            <button
+              onClick={state.selectedSize ? handleAddToCart : () => {
+                // Scroll to size selector
+                document.querySelector('[aria-label="Select Size"]')?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+              }}
+              disabled={state.isAdding}
+              className={`flex-shrink-0 px-6 py-3 text-xs font-bold tracking-widest uppercase transition-all duration-300 ${
+                state.isAdded
+                  ? 'bg-green-500 text-black'
+                  : state.selectedSize
+                    ? 'bg-white text-black'
+                    : 'bg-[var(--accent)] text-black'
+              }`}
+            >
+              {state.isAdding ? (
+                <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+              ) : state.isAdded ? (
+                'Added'
+              ) : state.selectedSize ? (
+                'Add to Cart'
+              ) : (
+                'Select Size'
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

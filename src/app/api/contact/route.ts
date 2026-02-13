@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { success: true },
-      { status: 201 }
+      { status: 201, headers: { 'Cache-Control': 'private, no-store' } }
     );
   } catch (error) {
     logger.error('Contact API error', { route: '/api/contact' }, error);

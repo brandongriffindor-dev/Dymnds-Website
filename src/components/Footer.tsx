@@ -59,7 +59,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="py-16 px-6 border-t border-white/10 bg-black">
+    <footer className="py-20 md:py-24 px-6 border-t border-white/10 bg-black">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Content - 4 Column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
@@ -151,9 +151,10 @@ export default function Footer() {
         </div>
 
         {/* Newsletter Section */}
-        <div className="border-t border-white/10 pt-12 mb-12">
+        <div className="pt-12 mb-12">
+          <div className="section-divider mb-12" />
           <div className="max-w-xl mx-auto text-center">
-            <h4 className="font-bebas text-xl tracking-wider mb-4">
+            <h4 className="font-bebas text-2xl md:text-3xl tracking-wider mb-4">
               Join The Movement
             </h4>
             <p className="text-sm opacity-60 mb-6">

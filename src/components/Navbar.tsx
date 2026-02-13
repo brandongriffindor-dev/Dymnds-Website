@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from 'next/navigation';
 import { useTotalItems } from '@/lib/stores/cart-store';
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
@@ -25,6 +25,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const { scrollY } = useScroll();
   const lastScrollY = useRef(0);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // Hide navbar on scroll down, show on scroll up
   useMotionValueEvent(scrollY, 'change', (latest) => {
@@ -67,6 +68,40 @@ export default function Navbar() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileMenuOpen]);
 
+  // Focus trap for mobile menu
+  const handleFocusTrap = useCallback((e: KeyboardEvent) => {
+    if (e.key !== 'Tab' || !mobileMenuRef.current) return;
+    const focusable = mobileMenuRef.current.querySelectorAll<HTMLElement>(
+      'a[href], button, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    // Focus first focusable element
+    const timer = setTimeout(() => {
+      const firstFocusable = mobileMenuRef.current?.querySelector<HTMLElement>(
+        'a[href], button, [tabindex]:not([tabindex="-1"])'
+      );
+      firstFocusable?.focus();
+    }, 100);
+    window.addEventListener('keydown', handleFocusTrap);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleFocusTrap);
+    };
+  }, [mobileMenuOpen, handleFocusTrap]);
+
   // Check if link is active
   const isActive = (href: string) => {
     if (href === '/shop') return pathname === '/shop';
@@ -85,7 +120,9 @@ export default function Navbar() {
         animate={{ y: hidden && !mobileMenuOpen ? '-100%' : '0%' }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       >
-        <nav className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+        <nav className={`max-w-7xl mx-auto px-6 flex items-center justify-between transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          scrolled ? 'py-3' : 'py-5'
+        }`}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             <Image
@@ -94,7 +131,9 @@ export default function Navbar() {
               width={24}
               height={24}
               priority
-              className="h-6 w-auto transition-transform duration-300 group-hover:rotate-12"
+              className={`w-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:rotate-12 ${
+                scrolled ? 'h-5' : 'h-6'
+              }`}
             />
             <Image
               src="/dymnds-only-white.png"
@@ -102,7 +141,9 @@ export default function Navbar() {
               width={100}
               height={20}
               priority
-              className="h-4 w-auto"
+              className={`w-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                scrolled ? 'h-3' : 'h-4'
+              }`}
             />
           </Link>
 
@@ -113,13 +154,13 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={`relative py-1 transition-all duration-300 ${
-                  isActive(link.href) ? 'text-white/50' : 'text-white/70 hover:text-white'
+                  isActive(link.href) ? 'text-[var(--accent)]' : 'text-white/70 hover:text-white'
                 }`}
               >
                 {link.name}
                 {isActive(link.href) && (
                   <motion.div
-                    className="absolute -bottom-1 left-0 right-0 h-px bg-white/30"
+                    className="absolute -bottom-1 left-0 right-0 h-px bg-[var(--accent)]"
                     layoutId="nav-underline"
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   />
@@ -177,6 +218,11 @@ export default function Navbar() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
+            ref={mobileMenuRef}
+            data-mobile-menu
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
             className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center safe-area-padding"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
