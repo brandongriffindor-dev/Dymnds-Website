@@ -45,3 +45,6 @@ next-env.d.ts
 sessions/
 .next-verify/
 .next-verify2/
+
+# claude IDE
+.claude/
