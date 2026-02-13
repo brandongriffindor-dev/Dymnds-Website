@@ -32,6 +32,8 @@ export default function ProductsPage() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [toastError, setToastError] = useState<string | null>(null);
+  const [toastSuccess, setToastSuccess] = useState<string | null>(null);
   const displayOrderTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
   // Stock change modal
@@ -134,7 +136,7 @@ export default function ProductsPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || 'Failed to update stock');
+        setToastError(data.error || 'Failed to update stock');
         return;
       }
 
@@ -142,7 +144,7 @@ export default function ProductsPage() {
       await fetchData();
     } catch (error: unknown) {
       console.error('Error updating stock:', error);
-      alert('Failed to update stock: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      setToastError('Failed to update stock: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -164,7 +166,7 @@ export default function ProductsPage() {
       logAdminAction('product_deleted', { productId, soft: true }, getAdminEmail());
     } catch (error) {
       console.error('Error archiving product:', error);
-      alert('Failed to archive product');
+      setToastError('Failed to archive product');
     }
   };
 
@@ -304,10 +306,10 @@ export default function ProductsPage() {
 
       setProducts(prev => prev.map(p => p.id === product.id ? { ...p, ...updateData } : p));
       setEditingProduct(null);
-      alert('Product updated successfully');
+      setToastSuccess('Product updated successfully');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Failed to update product');
+      setToastError('Failed to update product');
     }
   };
 
@@ -536,6 +538,20 @@ export default function ProductsPage() {
 
   return (
     <div>
+      {/* Toast Notifications */}
+      {toastError && (
+        <div className="fixed top-4 right-4 z-[80] bg-red-500/15 border border-red-500/30 backdrop-blur-xl px-5 py-3 rounded-xl flex items-center gap-3 animate-scale-in">
+          <p className="text-sm text-red-300">{toastError}</p>
+          <button onClick={() => setToastError(null)} className="text-red-300/60 hover:text-red-300 text-xs">✕</button>
+        </div>
+      )}
+      {toastSuccess && (
+        <div className="fixed top-4 right-4 z-[80] bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-xl px-5 py-3 rounded-xl flex items-center gap-3 animate-scale-in">
+          <p className="text-sm text-emerald-300">{toastSuccess}</p>
+          <button onClick={() => setToastSuccess(null)} className="text-emerald-300/60 hover:text-emerald-300 text-xs">✕</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>

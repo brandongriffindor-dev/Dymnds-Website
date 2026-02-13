@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function CursorEffect() {
-  const [hasPointer, setHasPointer] = useState(false);
+  const [hasPointer, setHasPointer] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  });
   const ringRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
@@ -13,41 +16,9 @@ export default function CursorEffect() {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasPointer(mediaQuery.matches);
-
     const handleChange = (e: MediaQueryListEvent) => setHasPointer(e.matches);
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  const updateCursor = useCallback(() => {
-    const { x, y } = posRef.current;
-    const ring = ringRef.current;
-    const dot = dotRef.current;
-
-    // Smooth trailing for outer ring (lerp)
-    ringPosRef.current.x += (x - ringPosRef.current.x) * 0.15;
-    ringPosRef.current.y += (y - ringPosRef.current.y) * 0.15;
-
-    const isHovering = hoveringRef.current;
-    const ringSize = isHovering ? 56 : 36;
-    const ringOffset = ringSize / 2;
-
-    if (ring) {
-      ring.style.transform = `translate3d(${ringPosRef.current.x - ringOffset}px, ${ringPosRef.current.y - ringOffset}px, 0)`;
-      ring.style.width = `${ringSize}px`;
-      ring.style.height = `${ringSize}px`;
-      ring.style.borderColor = isHovering
-        ? 'rgba(200, 169, 126, 0.6)'
-        : 'rgba(255, 255, 255, 0.35)';
-    }
-    if (dot) {
-      dot.style.transform = `translate3d(${x - 3}px, ${y - 3}px, 0)`;
-      dot.style.opacity = isHovering ? '0' : '1';
-    }
-
-    rafRef.current = requestAnimationFrame(updateCursor);
   }, []);
 
   useEffect(() => {
@@ -71,6 +42,36 @@ export default function CursorEffect() {
       }
     };
 
+    // Animation loop using plain function (no useCallback needed — refs handle everything)
+    function updateCursor() {
+      const { x, y } = posRef.current;
+      const ring = ringRef.current;
+      const dot = dotRef.current;
+
+      // Smooth trailing for outer ring (lerp)
+      ringPosRef.current.x += (x - ringPosRef.current.x) * 0.15;
+      ringPosRef.current.y += (y - ringPosRef.current.y) * 0.15;
+
+      const isHovering = hoveringRef.current;
+      const ringSize = isHovering ? 56 : 36;
+      const ringOffset = ringSize / 2;
+
+      if (ring) {
+        ring.style.transform = `translate3d(${ringPosRef.current.x - ringOffset}px, ${ringPosRef.current.y - ringOffset}px, 0)`;
+        ring.style.width = `${ringSize}px`;
+        ring.style.height = `${ringSize}px`;
+        ring.style.borderColor = isHovering
+          ? 'rgba(200, 169, 126, 0.6)'
+          : 'rgba(255, 255, 255, 0.35)';
+      }
+      if (dot) {
+        dot.style.transform = `translate3d(${x - 3}px, ${y - 3}px, 0)`;
+        dot.style.opacity = isHovering ? '0' : '1';
+      }
+
+      rafRef.current = requestAnimationFrame(updateCursor);
+    }
+
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mouseover', handleMouseOver, { passive: true });
     document.addEventListener('mouseout', handleMouseOut, { passive: true });
@@ -84,7 +85,7 @@ export default function CursorEffect() {
       document.removeEventListener('mouseout', handleMouseOut);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [hasPointer, updateCursor]);
+  }, [hasPointer]);
 
   if (!hasPointer) return null;
 

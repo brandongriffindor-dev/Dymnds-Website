@@ -29,6 +29,7 @@ export default function OrdersPage() {
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [toastError, setToastError] = useState<string | null>(null);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
@@ -93,7 +94,7 @@ export default function OrdersPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || 'Failed to update status');
+        setToastError(data.error || 'Failed to update status');
         setUpdating(false);
         return;
       }
@@ -102,7 +103,7 @@ export default function OrdersPage() {
       setUpdating(false);
     } catch (error) {
       console.error('Error updating order:', error);
-      alert('Failed to update order status');
+      setToastError('Failed to update order status');
       setUpdating(false);
     }
   };
@@ -124,7 +125,7 @@ export default function OrdersPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || 'Failed to archive orders');
+        setToastError(data.error || 'Failed to archive orders');
         setUpdating(false);
         return;
       }
@@ -134,7 +135,7 @@ export default function OrdersPage() {
       setUpdating(false);
     } catch (error) {
       console.error('Error archiving orders:', error);
-      alert('Failed to archive orders');
+      setToastError('Failed to archive orders');
       setUpdating(false);
     }
   };
@@ -221,6 +222,14 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Toast Error */}
+      {toastError && (
+        <div className="fixed top-4 right-4 z-[80] bg-red-500/15 border border-red-500/30 backdrop-blur-xl px-5 py-3 rounded-xl flex items-center gap-3 animate-scale-in">
+          <p className="text-sm text-red-300">{toastError}</p>
+          <button onClick={() => setToastError(null)} className="text-red-300/60 hover:text-red-300 text-xs">✕</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="border-b border-white/[0.08] px-6 py-8">
         <h1 className="font-bebas text-4xl tracking-wider">Orders</h1>
@@ -361,7 +370,7 @@ export default function OrdersPage() {
               <div className="text-white/60 text-sm">
                 Showing {filteredOrders.length} of {orders.length} orders
               </div>
-              {hasMore && !statusFilter && !searchTerm && (
+              {hasMore && (statusFilter === 'all') && !searchTerm && (
                 <button
                   onClick={loadMoreOrders}
                   disabled={loadingMore}
@@ -378,7 +387,7 @@ export default function OrdersPage() {
       {/* Order Detail Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="modal-panel max-w-2xl w-full max-h-96 overflow-y-auto">
+          <div className="modal-panel max-w-2xl w-full max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <h2 className="font-bebas text-2xl">Order Details</h2>
               <button

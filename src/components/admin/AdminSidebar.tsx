@@ -50,7 +50,7 @@ export default function AdminSidebar({
   };
 
   return (
-    <aside className={`fixed left-0 top-0 h-full w-64 bg-neutral-950 border-r border-white/[0.06] z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <aside className={`fixed left-0 top-0 h-full w-64 bg-[var(--surface-0)] border-r border-white/[0.06] z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       {/* Logo */}
       <div className="p-6 border-b border-white/[0.06]">
         <div className="flex items-center gap-3">

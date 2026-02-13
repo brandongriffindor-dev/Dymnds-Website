@@ -4,22 +4,6 @@ import { create } from 'zustand';
 
 export type Currency = 'CAD' | 'USD';
 
-// Helper function to fetch exchange rate
-async function fetchExchangeRate() {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    const response = await fetch('/api/exchange-rate', { signal: controller.signal });
-    clearTimeout(timeoutId);
-    const data = await response.json();
-    const rate = data.rate ?? 1.35;
-    useCurrencyStore.setState({ rate });
-  } catch (error) {
-    console.error('Failed to fetch exchange rate:', error);
-    // Keep default rate (1.35)
-  }
-}
-
 interface CurrencyState {
   currency: Currency;
   rate: number; // CAD_TO_USD exchange rate
@@ -41,13 +25,27 @@ export const useCurrencyStore = create<CurrencyState & CurrencyActions>((set, ge
     if (get()._initialized) return;
     set({ _initialized: true });
 
+    // Helper: fetch exchange rate from API
+    const loadExchangeRate = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const response = await fetch('/api/exchange-rate', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        const data = await response.json();
+        const rate = data.rate ?? 1.35;
+        set({ rate });
+      } catch {
+        // Keep default rate (1.35)
+      }
+    };
+
     // Check localStorage first
     try {
       const stored = localStorage.getItem('dymnds-currency') as Currency | null;
       if (stored) {
         set({ currency: stored, isLoading: false });
-        // Fetch exchange rate
-        fetchExchangeRate();
+        loadExchangeRate();
         return;
       }
     } catch {
@@ -79,7 +77,7 @@ export const useCurrencyStore = create<CurrencyState & CurrencyActions>((set, ge
     }
 
     // Fetch exchange rate after currency is set
-    fetchExchangeRate();
+    loadExchangeRate();
   },
 }));
 
@@ -97,7 +95,7 @@ export function convertPrice(cadPrice: number, currency: Currency, rate: number 
 
 export function formatPrice(price: number, currency: Currency): string {
   const symbol = currency === 'CAD' ? 'CAD $' : 'USD $';
-  return `${symbol}${price}`;
+  return `${symbol}${price.toFixed(2)}`;
 }
 
 // Hook for convenience

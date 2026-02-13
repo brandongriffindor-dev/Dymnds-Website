@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, startTransition } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import TwoFactorSetup from '@/components/admin/TwoFactorSetup';
 import TwoFactorVerify from '@/components/admin/TwoFactorVerify';
@@ -32,8 +32,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
 
   // Close mobile menu on route change
+  const prevPathname = useRef(pathname);
   useEffect(() => {
-    setMobileMenuOpen(false);
+    if (prevPathname.current !== pathname) {
+      prevPathname.current = pathname;
+      startTransition(() => setMobileMenuOpen(false));
+    }
   }, [pathname]);
 
   // Keyboard shortcuts for global search
@@ -139,7 +143,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-neutral-950/95 backdrop-blur-xl border-b border-white/[0.06] z-50 flex items-center justify-between px-4">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[var(--surface-0)]/95 backdrop-blur-xl border-b border-white/[0.06] z-50 flex items-center justify-between px-4">
         <h1 className="text-xl font-bebas tracking-wider">DYMNDS OS</h1>
         <div className="flex items-center gap-3">
           <button

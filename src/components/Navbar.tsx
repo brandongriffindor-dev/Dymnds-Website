@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from "next/link";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, startTransition } from "react";
 import { usePathname } from 'next/navigation';
 import { useTotalItems } from '@/lib/stores/cart-store';
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
@@ -30,22 +30,23 @@ export default function Navbar() {
   // Hide navbar on scroll down, show on scroll up
   useMotionValueEvent(scrollY, 'change', (latest) => {
     const direction = latest > lastScrollY.current ? 'down' : 'up';
-    if (direction === 'down' && latest > 150) {
-      setHidden(true);
-    } else {
-      setHidden(false);
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setScrolled(latest > 50);
+    const shouldHide = direction === 'down' && latest > 150;
+    const shouldBeScrolled = latest > 50;
+
+    // Batch state updates to avoid React Compiler warnings
+    startTransition(() => {
+      setHidden(shouldHide);
+      setScrolled(shouldBeScrolled);
+    });
     lastScrollY.current = latest;
   });
 
   // Pulse the cart badge when items increase
   useEffect(() => {
     if (totalItems > prevItemsRef.current) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setBadgePulse(true);
-      const timer = setTimeout(() => setBadgePulse(false), 300);
+      startTransition(() => setBadgePulse(true));
+      const timer = setTimeout(() => startTransition(() => setBadgePulse(false)), 300);
+      prevItemsRef.current = totalItems;
       return () => clearTimeout(timer);
     }
     prevItemsRef.current = totalItems;

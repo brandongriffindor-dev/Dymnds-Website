@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { getAdminDb } from '@/lib/firebase-admin';
+import { getAdminDb, FieldValue } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { logAdminActionServer } from '@/lib/audit-log-server';
+import { SIZES } from '@/lib/constants';
+import type { StockRecord } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
@@ -38,196 +40,265 @@ interface OrderMetadata {
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  try {
-    if (!session.metadata?.orderData) {
-      throw new Error('Missing order data in session metadata');
+  if (!session.metadata?.orderData) {
+    throw new Error('Missing order data in session metadata');
+  }
+
+  const orderMetadata: OrderMetadata = JSON.parse(session.metadata.orderData);
+  const db = getAdminDb();
+  const now = new Date().toISOString();
+
+  // Stripe amounts are in cents — convert back to dollars for storage
+  const totalDollars = (session.amount_total || 0) / 100;
+  const subtotalDollars = orderMetadata.subtotal;
+  const discountDollars = orderMetadata.discountAmount || 0;
+
+  // FIX WEBHOOK-002 + DUAL-PATH: Use SAME field names as /api/orders/create route
+  // This ensures the admin panel can display orders from both paths consistently.
+  let createdOrderId = '';
+
+  await db.runTransaction(async (transaction) => {
+    // Phase 1: Read all products and validate stock
+    const productReads: {
+      item: OrderItem;
+      data: FirebaseFirestore.DocumentData;
+      ref: FirebaseFirestore.DocumentReference;
+    }[] = [];
+
+    for (const item of orderMetadata.items) {
+      const ref = db.collection('products').doc(item.productId);
+      const snap = await transaction.get(ref);
+
+      if (!snap.exists) {
+        throw new Error(`Product ${item.productId} not found`);
+      }
+
+      const data = snap.data()!;
+      productReads.push({ item, data, ref });
     }
 
-    const orderMetadata: OrderMetadata = JSON.parse(session.metadata.orderData);
-    const db = getAdminDb();
+    // Phase 2: Validate stock and decrement
+    for (const { item, data, ref } of productReads) {
+      // FIX WEBHOOK-001: Use correct field name 'stock' (not 'inventory')
+      // Support both color-variant and plain stock structures
+      if (item.color && data.colors && Array.isArray(data.colors)) {
+        const colors = [...(data.colors as { name: string; stock: Record<string, number> }[])];
+        const colorIdx = colors.findIndex((c) => c.name === item.color);
 
-    // Create order in Firestore
-    const orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        if (colorIdx !== -1) {
+          const available = colors[colorIdx].stock[item.size] ?? 0;
+          if (available < item.quantity) {
+            throw new Error(
+              `Insufficient stock for product ${item.productId} size ${item.size} color ${item.color}`
+            );
+          }
 
-    const orderData = {
-      orderId,
-      customerId: session.customer_email || 'guest',
-      customerEmail: session.customer_email,
-      items: orderMetadata.items,
-      subtotal: orderMetadata.subtotal,
-      discountCode: orderMetadata.discountCode || null,
-      discountAmount: orderMetadata.discountAmount || 0,
-      discountType: orderMetadata.discountType || null,
-      total: session.amount_total || 0,
-      stripeSessionId: session.id,
-      paymentStatus: 'completed',
-      orderStatus: 'pending', // Will be updated to 'confirmed' after notification
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    // Use a transaction to atomically create order and decrement stock
-    await db.runTransaction(async (transaction: any) => {
-      // Create order document
-      const orderRef = db.collection('orders').doc(orderId);
-      transaction.set(orderRef, orderData);
-
-      // Decrement stock for each item
-      for (const item of orderMetadata.items) {
-        const productRef = db.collection('products').doc(item.productId);
-        const productDoc = await transaction.get(productRef);
-
-        if (productDoc.exists) {
-          const inventory = productDoc.data().inventory || {};
-          const currentStock = inventory[item.size] || 0;
-          const newStock = Math.max(0, currentStock - item.quantity);
-
-          transaction.update(productRef, {
-            [`inventory.${item.size}`]: newStock,
-          });
+          colors[colorIdx] = {
+            ...colors[colorIdx],
+            stock: {
+              ...colors[colorIdx].stock,
+              [item.size]: available - item.quantity,
+            },
+          };
         }
+
+        // Recalculate total stock across all colors
+        const totalStock: StockRecord = { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+        for (const color of colors) {
+          for (const size of SIZES) {
+            totalStock[size] += color.stock[size] ?? 0;
+          }
+        }
+
+        transaction.update(ref, {
+          colors,
+          stock: totalStock,
+          updated_at: now,
+        });
+      } else {
+        // Non-color product
+        const currentStock = (data.stock as Record<string, number>) || {};
+        const available = currentStock[item.size] ?? 0;
+
+        if (available < item.quantity) {
+          throw new Error(
+            `Insufficient stock for product ${item.productId} size ${item.size}`
+          );
+        }
+
+        transaction.update(ref, {
+          stock: {
+            ...currentStock,
+            [item.size]: available - item.quantity,
+          },
+          updated_at: now,
+        });
       }
 
-      // Increment discount usage if applicable
-      if (orderMetadata.discountCode) {
-        const discountRef = db.collection('discounts').doc(orderMetadata.discountCode);
-        const discountDoc = await transaction.get(discountRef);
+      // Write inventory log inside transaction
+      const logRef = db.collection('inventory_logs').doc();
+      transaction.set(logRef, {
+        product_id: item.productId,
+        size: item.size,
+        color: item.color || null,
+        change: -item.quantity,
+        reason: `Stripe checkout ${session.id}`,
+        user_email: 'system',
+        created_at: now,
+        timestamp: FieldValue.serverTimestamp(),
+      });
+    }
 
-        if (discountDoc.exists) {
-          const timesUsed = discountDoc.data().timesUsed || 0;
+    // Increment discount usage if applicable
+    if (orderMetadata.discountCode) {
+      const discountsQuery = await db
+        .collection('discounts')
+        .where('code', '==', orderMetadata.discountCode.toUpperCase())
+        .limit(1)
+        .get();
+
+      if (!discountsQuery.empty) {
+        const discountRef = discountsQuery.docs[0].ref;
+        const freshSnap = await transaction.get(discountRef);
+        if (freshSnap.exists) {
           transaction.update(discountRef, {
-            timesUsed: timesUsed + 1,
+            currentUses: FieldValue.increment(1),
           });
         }
       }
-    });
+    }
 
-    logger.info(`Order created from Stripe payment: ${orderId}`, {
-      sessionId: session.id,
-      email: session.customer_email,
-      total: session.amount_total,
-      itemCount: orderMetadata.items.length,
-    });
+    // Phase 3: Create order document — SAME schema as /api/orders/create
+    const orderRef = db.collection('orders').doc();
+    createdOrderId = orderRef.id;
 
-    // Log the order creation
-    logAdminActionServer('order_created_server', {
-      orderId,
-      sessionId: session.id,
-      customerEmail: session.customer_email,
-      total: session.amount_total,
-      itemCount: orderMetadata.items.length,
-    }).catch(() => {}); // Fire and forget
-
-    // Queue confirmation email for sending
-    const db2 = getAdminDb();
-    await db2.collection('pending_emails').add({
-      to: session.customer_email,
-      subject: `Order Confirmed — ${orderId}`,
-      template: 'order_confirmation',
-      data: {
-        orderId,
-        items: orderMetadata.items,
-        total: session.amount_total,
-        discountCode: orderMetadata.discountCode || null,
-      },
+    transaction.set(orderRef, {
+      items: orderMetadata.items.map((item) => ({
+        productId: item.productId,
+        size: item.size,
+        color: item.color || null,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      customer_email: session.customer_email || '',
+      customer_name: session.customer_details?.name || '',
+      shipping_address: session.collected_information?.shipping_details?.address
+        ? {
+            name: session.collected_information.shipping_details.name || session.customer_details?.name || '',
+            line1: session.collected_information.shipping_details.address.line1 || '',
+            line2: session.collected_information.shipping_details.address.line2 || undefined,
+            city: session.collected_information.shipping_details.address.city || '',
+            state: session.collected_information.shipping_details.address.state || '',
+            postalCode: session.collected_information.shipping_details.address.postal_code || '',
+            country: session.collected_information.shipping_details.address.country || '',
+          }
+        : {},
+      subtotal: subtotalDollars,
+      discount: discountDollars,
+      total: totalDollars,
+      donation: totalDollars * 0.10,
       status: 'pending',
-      createdAt: new Date(),
+      payment_status: 'paid',
+      stripe_session_id: session.id,
+      stripe_payment_intent: typeof session.payment_intent === 'string'
+        ? session.payment_intent
+        : session.payment_intent?.id || null,
+      created_at: now,
+      updated_at: now,
     });
+  });
 
-    return { success: true, orderId };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(`Error processing checkout session completed: ${errorMessage}`, {
-      sessionId: session.id,
-    });
-    throw error;
-  }
+  logger.info('Order created from Stripe payment', {
+    orderId: createdOrderId,
+    sessionId: session.id,
+    email: session.customer_email,
+    total: totalDollars,
+    itemCount: orderMetadata.items.length,
+  });
+
+  logAdminActionServer('order_created_server', {
+    orderId: createdOrderId,
+    sessionId: session.id,
+    customerEmail: session.customer_email,
+    total: totalDollars,
+    itemCount: orderMetadata.items.length,
+    source: 'stripe_webhook',
+  }).catch(() => {});
+
+  // Queue confirmation email
+  await db.collection('pending_emails').add({
+    to: session.customer_email,
+    subject: `Order Confirmed — ${createdOrderId}`,
+    template: 'order_confirmation',
+    data: {
+      orderId: createdOrderId,
+      items: orderMetadata.items,
+      total: totalDollars,
+      discountCode: orderMetadata.discountCode || null,
+    },
+    status: 'pending',
+    created_at: now,
+  });
+
+  return { success: true, orderId: createdOrderId };
 }
 
 async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
-  try {
-    logger.info(`Checkout session expired: ${session.id}`, {
-      email: session.customer_email,
-    });
-
-    // TODO: Clean up any temporary holds or reserved inventory
-    // If you implement inventory holds during checkout, release them here
-    // Example:
-    // const orderMetadata: OrderMetadata = JSON.parse(session.metadata?.orderData || '{}');
-    // for (const item of orderMetadata.items) {
-    //   await releaseInventoryHold(item.productId, item.size, item.quantity);
-    // }
-
-    return { success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(`Error processing checkout session expired: ${errorMessage}`, {
-      sessionId: session.id,
-    });
-    throw error;
-  }
+  logger.info('Checkout session expired', {
+    sessionId: session.id,
+    email: session.customer_email,
+  });
+  return { success: true };
 }
 
 async function handleChargeRefunded(charge: Stripe.Charge) {
-  try {
-    const db = getAdminDb();
+  const db = getAdminDb();
 
-    // Find the order by stripe session ID or payment intent
-    const paymentIntentId = typeof charge.payment_intent === 'string'
-      ? charge.payment_intent
-      : charge.payment_intent?.id;
+  // FIX WEBHOOK-003: Match order by stripe_payment_intent field
+  const paymentIntentId = typeof charge.payment_intent === 'string'
+    ? charge.payment_intent
+    : charge.payment_intent?.id;
 
-    if (!paymentIntentId) {
-      logger.warn('Refund received but no payment intent found', { chargeId: charge.id });
-      return;
-    }
-
-    // Look up order by stripe session
-    const ordersSnapshot = await db.collection('orders')
-      .where('paymentStatus', '==', 'completed')
-      .limit(100)
-      .get();
-
-    // Find matching order
-    let matchedOrderId: string | null = null;
-    for (const doc of ordersSnapshot.docs) {
-      const data = doc.data();
-      if (data.stripeSessionId) {
-        matchedOrderId = doc.id;
-        break;
-      }
-    }
-
-    if (matchedOrderId) {
-      await db.collection('orders').doc(matchedOrderId).update({
-        paymentStatus: charge.refunded ? 'refunded' : 'partially_refunded',
-        orderStatus: charge.refunded ? 'refunded' : 'partially_refunded',
-        refundedAt: new Date(),
-        refundAmount: charge.amount_refunded,
-        updatedAt: new Date(),
-      });
-
-      logger.info(`Order refunded: ${matchedOrderId}`, {
-        chargeId: charge.id,
-        amountRefunded: charge.amount_refunded,
-        fullyRefunded: charge.refunded,
-      });
-    } else {
-      logger.warn('Refund received but no matching order found', {
-        chargeId: charge.id,
-        paymentIntentId,
-      });
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(`Error processing refund: ${errorMessage}`, { chargeId: charge.id });
-    throw error;
+  if (!paymentIntentId) {
+    logger.warn('Refund received but no payment intent found', { chargeId: charge.id });
+    return;
   }
+
+  // Query by the correct field name (stripe_payment_intent)
+  const ordersSnapshot = await db.collection('orders')
+    .where('stripe_payment_intent', '==', paymentIntentId)
+    .limit(1)
+    .get();
+
+  if (ordersSnapshot.empty) {
+    logger.warn('Refund received but no matching order found', {
+      chargeId: charge.id,
+      paymentIntentId,
+    });
+    return;
+  }
+
+  const orderDoc = ordersSnapshot.docs[0];
+  const now = new Date().toISOString();
+
+  await orderDoc.ref.update({
+    payment_status: charge.refunded ? 'refunded' : 'paid',
+    status: charge.refunded ? 'cancelled' : orderDoc.data().status,
+    refunded_at: now,
+    refund_amount: charge.amount_refunded / 100,
+    updated_at: now,
+  });
+
+  logger.info('Order refunded', {
+    orderId: orderDoc.id,
+    chargeId: charge.id,
+    amountRefunded: charge.amount_refunded / 100,
+    fullyRefunded: charge.refunded,
+  });
 }
 
 export async function POST(request: Request) {
   try {
-    // Initialize Stripe with runtime guard
     let stripe: Stripe;
     try {
       stripe = getStripe();
@@ -240,7 +311,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Read raw body for webhook signature verification
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
 
@@ -260,7 +330,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify webhook signature
     let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(
@@ -270,71 +339,71 @@ export async function POST(request: Request) {
       );
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Webhook signature verification failed: ${errorMessage}`);
+      logger.error('Webhook signature verification failed', { error: errorMessage });
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 400 }
       );
     }
 
-    // ── Event Deduplication ──
-    // Check if we've already processed this event
+    // Event deduplication — use transaction to prevent race condition
     const db = getAdminDb();
     const eventRef = db.collection('webhook_events').doc(event.id);
-    const existingEvent = await eventRef.get();
 
-    if (existingEvent.exists) {
-      logger.info(`Duplicate webhook event skipped: ${event.id} (${event.type})`);
+    // FIX WEBHOOK-004: Use transaction for dedup check to prevent race condition
+    const isDuplicate = await db.runTransaction(async (transaction) => {
+      const existingEvent = await transaction.get(eventRef);
+      if (existingEvent.exists) {
+        return true;
+      }
+      transaction.set(eventRef, {
+        event_id: event.id,
+        type: event.type,
+        status: 'processing',
+        created_at: new Date().toISOString(),
+      });
+      return false;
+    });
+
+    if (isDuplicate) {
+      logger.info('Duplicate webhook event skipped', { eventId: event.id, type: event.type });
       return NextResponse.json({ received: true, deduplicated: true });
     }
 
-    // Mark event as processing
-    await eventRef.set({
-      event_id: event.id,
-      type: event.type,
-      status: 'processing',
-      created_at: new Date(),
-    });
-
     try {
-      // Handle checkout.session.completed event
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
         await handleCheckoutSessionCompleted(session);
-      }
-
-      // Handle checkout.session.expired event
-      if (event.type === 'checkout.session.expired') {
+      } else if (event.type === 'checkout.session.expired') {
         const session = event.data.object as Stripe.Checkout.Session;
         await handleCheckoutSessionExpired(session);
-      }
-
-      // Handle charge.refunded event
-      if (event.type === 'charge.refunded') {
+      } else if (event.type === 'charge.refunded') {
         const charge = event.data.object as Stripe.Charge;
         await handleChargeRefunded(charge);
-      }
-
-      // Handle payment_intent.payment_failed event
-      if (event.type === 'payment_intent.payment_failed') {
+      } else if (event.type === 'payment_intent.payment_failed') {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        logger.warn(`Payment failed: ${paymentIntent.id}`, {
+        logger.warn('Payment failed', {
+          paymentIntentId: paymentIntent.id,
           amount: paymentIntent.amount,
-          last_error: paymentIntent.last_payment_error?.message,
+          lastError: paymentIntent.last_payment_error?.message,
         });
       }
 
-      // Mark event as completed
-      await eventRef.update({ status: 'completed', completed_at: new Date() });
+      await eventRef.update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      });
 
       return NextResponse.json({ received: true });
     } catch (processingError) {
-      // Mark event as failed (allows retry)
       const errMsg = processingError instanceof Error ? processingError.message : 'Unknown error';
-      await eventRef.update({ status: 'failed', error: errMsg, failed_at: new Date() });
+      await eventRef.update({
+        status: 'failed',
+        error: errMsg,
+        failed_at: new Date().toISOString(),
+      });
 
       logger.error('Webhook processing error', { event_id: event.id, error: errMsg });
-      // Return 500 so Stripe retries — dedup prevents double-processing
       return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
     }
   } catch (error) {

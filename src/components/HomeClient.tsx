@@ -88,21 +88,21 @@ function Parallax({
 /** Infinite horizontal marquee band */
 function Marquee() {
   return (
-    <div className="py-6 border-y border-[var(--accent)]/[0.08] overflow-hidden bg-black relative select-none">
+    <div className="py-8 border-y border-[var(--accent)]/[0.06] overflow-hidden bg-black relative select-none">
       <div className="flex animate-marquee whitespace-nowrap">
         {[...Array(6)].map((_, i) => (
           <span
             key={i}
-            className="flex items-center gap-10 mx-10 font-bebas text-[22px] md:text-[28px] tracking-[0.25em] uppercase text-[var(--accent)]/40"
+            className="flex items-center gap-10 mx-10 font-bebas text-[22px] md:text-[28px] tracking-[0.25em] uppercase text-[var(--accent)]/30"
           >
             <span>Pressure Creates Diamonds</span>
-            <span className="text-[var(--accent)]/40">&#9670;</span>
+            <span className="text-[var(--accent)]/20">&#9670;</span>
             <span>Wear The Change</span>
-            <span className="text-[var(--accent)]/40">&#9670;</span>
+            <span className="text-[var(--accent)]/20">&#9670;</span>
             <span>Premium Activewear</span>
-            <span className="text-[var(--accent)]/40">&#9670;</span>
+            <span className="text-[var(--accent)]/20">&#9670;</span>
             <span>10% Funds Healing</span>
-            <span className="text-[var(--accent)]/40">&#9670;</span>
+            <span className="text-[var(--accent)]/20">&#9670;</span>
           </span>
         ))}
       </div>
@@ -142,6 +142,12 @@ function EditorialProductCard({
         )}
         {/* Hover gradient with accent tint */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        {/* Quick-view hint on hover */}
+        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
+          <span className="text-[10px] tracking-[0.3em] uppercase text-white/80 bg-black/60 backdrop-blur-md px-5 py-2.5 border border-white/10">
+            View Product
+          </span>
+        </div>
         {/* Accent line on hover */}
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--accent)] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-left" />
       </div>
@@ -168,7 +174,6 @@ function HomepageNewsletter() {
     setStatus('loading');
 
     try {
-      // Get CSRF token
       const csrfRes = await fetch('/api/csrf');
       const { token } = await csrfRes.json();
 
@@ -194,8 +199,8 @@ function HomepageNewsletter() {
   };
 
   return (
-    <section className="py-24 md:py-32 px-6 bg-black relative">
-      <div className="section-divider mb-20" />
+    <section className="py-28 md:py-36 px-6 bg-black relative">
+      <div className="section-divider-glow mb-20" />
       <div className="max-w-xl mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -203,20 +208,27 @@ function HomepageNewsletter() {
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/50 mb-4">
+          <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-4">
             Stay Connected
           </p>
           <h2 className="text-4xl md:text-5xl font-bebas tracking-tight mb-4">
             Join The Movement
           </h2>
-          <p className="text-white/40 text-sm mb-10">
+          <p className="text-white/35 text-sm mb-10 leading-relaxed">
             First access to drops, behind-the-scenes content, and impact updates.
           </p>
 
           {status === 'success' ? (
-            <p className="text-[var(--accent)] text-sm" aria-live="polite">
-              {message}
-            </p>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center justify-center gap-3"
+            >
+              <div className="glow-dot" />
+              <p className="text-[var(--accent)] text-sm" aria-live="polite">
+                {message}
+              </p>
+            </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <input
@@ -225,13 +237,13 @@ function HomepageNewsletter() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
-                className="flex-1 px-5 py-3.5 bg-white/[0.04] border border-white/[0.08] text-white text-sm placeholder:text-white/25 input-premium focus:outline-none"
+                className="flex-1 px-5 py-3.5 bg-white/[0.04] border border-white/[0.08] text-white text-sm placeholder:text-white/20 input-premium focus:outline-none transition-all duration-300 focus:bg-white/[0.06]"
                 aria-label="Email address"
               />
               <button
                 type="submit"
                 disabled={status === 'loading'}
-                className="px-8 py-3.5 bg-[var(--accent)] text-black text-[11px] tracking-[0.2em] uppercase font-semibold hover:bg-[var(--accent-light)] transition-colors duration-300 disabled:opacity-50"
+                className="px-8 py-3.5 bg-[var(--accent)] text-black text-[11px] tracking-[0.2em] uppercase font-semibold hover:bg-[var(--accent-light)] transition-all duration-300 disabled:opacity-50 hover:shadow-[0_0_24px_-4px_rgba(200,169,126,0.3)]"
               >
                 {status === 'loading' ? 'Joining...' : 'Join'}
               </button>
@@ -254,7 +266,6 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
   const currency = useCurrency();
   const heroRef = useRef(null);
 
-  // Parallax the entire hero section as user scrolls down
   const { scrollYProgress: heroScrollProgress } = useScroll({
     target: heroRef,
     offset: ['start start', 'end start'],
@@ -279,7 +290,6 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       id="main-content"
       className="min-h-screen bg-black text-white overflow-x-hidden selection:bg-[var(--accent)]/15 selection:text-white"
     >
-      {/* Grain texture overlay */}
       <div className="grain-overlay" aria-hidden="true" />
 
       <script
@@ -288,12 +298,11 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       />
       <Navbar />
 
-      {/* ═══════ HERO — Nuclear Typography + Asymmetric Layout ═══════ */}
+      {/* ═══════ HERO ═══════ */}
       <section
         ref={heroRef}
         className="hero-height w-full flex items-end px-6 md:px-12 lg:px-20 pb-20 md:pb-28 relative overflow-hidden"
       >
-        {/* Ambient glow background */}
         <div className="hero-ambient" aria-hidden="true" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(200,169,126,0.06),transparent)]" />
 
@@ -302,12 +311,13 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           className="w-full relative z-10"
         >
           <div className="flex flex-col md:grid md:grid-cols-12 gap-8 md:gap-6 items-end">
-            {/* Left — Nuclear headline, each word on its own line */}
             <div className="md:col-span-8 lg:col-span-9">
               {['Pressure', 'Creates', 'Diamonds'].map((word, i) => (
                 <div key={word} className="overflow-hidden">
                   <motion.div
-                    className="font-bebas tracking-[-0.03em] leading-[0.85] text-white"
+                    className={`font-bebas tracking-[-0.03em] leading-[0.85] ${
+                      word === 'Diamonds' ? 'text-accent-gradient' : 'text-white'
+                    }`}
                     style={{ fontSize: 'clamp(4.5rem, 18vw, 16rem)' }}
                     initial={{ y: '120%' }}
                     animate={{ y: 0 }}
@@ -323,20 +333,19 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               ))}
             </div>
 
-            {/* Right — Sub-content + CTAs, asymmetric balance */}
             <div className="md:col-span-4 lg:col-span-3 flex flex-col items-start md:items-end gap-8 pb-2">
               <motion.div
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
                 transition={{ duration: 1, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="w-16 h-[1px] bg-[var(--accent)] origin-right hidden md:block"
+                className="w-16 h-[1px] bg-[var(--accent)]/50 origin-right hidden md:block"
               />
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 1.0, ease: [0.16, 1, 0.3, 1] }}
-                className="text-[11px] md:text-[13px] text-white/45 tracking-[0.3em] max-w-[280px] uppercase text-left md:text-right leading-relaxed"
+                className="text-[11px] md:text-[13px] text-white/40 tracking-[0.3em] max-w-[280px] uppercase text-left md:text-right leading-relaxed"
               >
                 Forged in struggle &middot; Built for comebacks &middot; <span className="text-[var(--accent)]/60">10% heals</span>
               </motion.p>
@@ -358,7 +367,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                 </Link>
                 <Link
                   href="/collections/women"
-                  className="group relative px-10 py-4 bg-[var(--accent)] text-black text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500 text-center"
+                  className="group relative px-10 py-4 bg-[var(--accent)] text-black text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500 text-center hover:shadow-[0_0_32px_-4px_rgba(200,169,126,0.25)]"
                 >
                   <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
                     Shop Women
@@ -370,7 +379,6 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           </div>
         </motion.div>
 
-        {/* Scroll indicator */}
         <motion.div
           className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
           initial={{ opacity: 0 }}
@@ -387,12 +395,10 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </motion.div>
       </section>
 
-      {/* ═══════ MARQUEE ═══════ */}
       <Marquee />
 
       {/* ═══════ THE VOID — Full-Viewport Statement ═══════ */}
       <section className="min-h-[80vh] flex items-center justify-center px-6 bg-black relative overflow-hidden">
-        {/* Subtle radial glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--accent)]/[0.02] rounded-full blur-[150px]" />
 
         <div className="text-center relative z-10 max-w-5xl mx-auto">
@@ -427,17 +433,17 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </div>
       </section>
 
-      {/* ═══════ BENTO GRID — Frost-Inspired Brand Pillars ═══════ */}
+      {/* ═══════ BENTO GRID ═══════ */}
       <section className="py-0 bg-black">
         <div className="max-w-7xl mx-auto px-6 py-28 md:py-40">
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-20"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/50 mb-3">
+            <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-4">
               The DYMNDS Standard
             </p>
             <h2 className="text-5xl md:text-7xl tracking-tight font-bebas">
@@ -445,9 +451,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             </h2>
           </motion.div>
 
-          {/* Bento Grid — asymmetric card layout */}
           <div className="bento-grid grid-cols-1 md:grid-cols-3 md:grid-rows-2">
-            {/* Large feature card — spans 2 cols, scale entrance */}
             <motion.div
               className="bento-card md:col-span-2 md:row-span-2 flex flex-col justify-between min-h-[300px] md:min-h-[500px] relative"
               initial={{ opacity: 0, scale: 0.92 }}
@@ -455,7 +459,6 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               viewport={{ once: true }}
               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              {/* Decorative watermark */}
               <span className="absolute -right-4 -bottom-6 text-[12rem] md:text-[16rem] font-bebas text-[var(--accent)]/[0.04] leading-none select-none pointer-events-none" aria-hidden="true">
                 10%
               </span>
@@ -479,7 +482,6 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               </Link>
             </motion.div>
 
-            {/* Top-right card — slide from right */}
             <motion.div
               className="bento-card flex flex-col justify-between min-h-[200px]"
               initial={{ opacity: 0, x: 60 }}
@@ -496,7 +498,6 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               </div>
             </motion.div>
 
-            {/* Bottom-right card — scale + blur entrance */}
             <motion.div
               className="bento-card flex flex-col justify-between min-h-[200px]"
               initial={{ opacity: 0, scale: 0.9, filter: 'blur(8px)' }}
@@ -516,13 +517,11 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </div>
       </section>
 
-      {/* ═══════ STORY — Split-Panel Editorial Manifesto ═══════ */}
-      <section className="py-40 md:py-56 px-6 bg-neutral-950 relative overflow-hidden">
-        {/* Accent glow */}
+      {/* ═══════ STORY ═══════ */}
+      <section className="py-40 md:py-56 px-6 bg-[var(--surface-1)] relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[var(--accent)]/[0.03] rounded-full blur-[120px]" />
 
         <div className="max-w-7xl mx-auto grid md:grid-cols-12 gap-12 md:gap-16 items-start relative z-10">
-          {/* Left — sticky oversized heading */}
           <div className="md:col-span-5 md:sticky md:top-32">
             <AnimatedHeading
               text="Forged Under Pressure"
@@ -537,8 +536,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             />
           </div>
 
-          {/* Right — body copy scrolls past */}
-          <div className="md:col-span-7 space-y-10 text-lg md:text-xl text-white/45 leading-relaxed">
+          <div className="md:col-span-7 space-y-10 text-lg md:text-xl text-white/40 leading-relaxed">
             {[
               'Diamonds aren\u2019t born brilliant. They\u2019re crushed, heated, and transformed under pressure most things can\u2019t survive.',
               "Your gear should match your story. Built for the hardest sets, the longest runs, the days when quitting sounds reasonable but you don\u2019t.",
@@ -559,7 +557,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: '-50px' }}
               transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="text-white/60"
+              className="text-white/55"
             >
               And because we believe in lifting others as we lift ourselves,{' '}
               <span className="text-[var(--accent)] font-semibold">10% of every purchase</span>{' '}
@@ -569,14 +567,12 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </div>
       </section>
 
-      {/* ═══════ COLLECTIONS — Editorial Grid Layout ═══════ */}
+      {/* ═══════ COLLECTIONS ═══════ */}
       {hasProducts && (
         <>
-          {/* Men's Collection */}
           {menFeatured.length > 0 && (
-            <section id="men" className="py-24 md:py-36 px-6 bg-black">
+            <section id="men" className="py-28 md:py-40 px-6 bg-black">
               <div className="max-w-7xl mx-auto">
-                {/* Section header */}
                 <motion.div
                   className="flex items-end justify-between mb-16"
                   initial={{ opacity: 0, y: 30 }}
@@ -595,15 +591,11 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                     className="group flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/50 hover:text-[var(--accent)] transition-colors duration-500 pb-1"
                   >
                     View All
-                    <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                      &rarr;
-                    </span>
+                    <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
                   </Link>
                 </motion.div>
 
-                {/* Editorial: 1 hero (7 cols) + 2 supporting (5 cols) */}
                 <div className="grid md:grid-cols-12 gap-6 md:gap-8">
-                  {/* Hero product — scale entrance */}
                   {menFeatured.slice(0, 1).map((product) => (
                     <motion.div
                       key={product.id}
@@ -617,7 +609,6 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                     </motion.div>
                   ))}
 
-                  {/* Supporting products — slide from right with stagger */}
                   <div className="md:col-span-5 grid gap-6 md:gap-8">
                     {menFeatured.slice(1, 3).map((product, i) => (
                       <motion.div
@@ -640,9 +631,8 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             </section>
           )}
 
-          {/* Women's Collection — mirrored layout */}
           {womenFeatured.length > 0 && (
-            <section id="women" className="py-32 md:py-48 px-6 bg-neutral-950">
+            <section id="women" className="py-32 md:py-48 px-6 bg-[var(--surface-1)]">
               <div className="max-w-7xl mx-auto">
                 <motion.div
                   className="flex items-end justify-between mb-16"
@@ -662,13 +652,10 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                     className="group flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/50 hover:text-[var(--accent)] transition-colors duration-500 pb-1"
                   >
                     View All
-                    <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                      &rarr;
-                    </span>
+                    <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
                   </Link>
                 </motion.div>
 
-                {/* Mirrored editorial: 2 supporting (5 cols) + 1 hero (7 cols) */}
                 <div className="grid md:grid-cols-12 gap-6 md:gap-8">
                   <div className="md:col-span-5 grid gap-6 md:gap-8 order-2 md:order-1">
                     {womenFeatured.slice(1, 3).map((product, i) => (
@@ -707,9 +694,8 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </>
       )}
 
-      {/* ═══════ IMPACT — Gold Accent Section (Contrast Reversal) ═══════ */}
+      {/* ═══════ IMPACT ═══════ */}
       <section className="py-36 md:py-52 px-6 bg-[var(--accent)] relative overflow-hidden">
-        {/* Subtle dark vignette for depth */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_30%,rgba(0,0,0,0.08)_100%)]" />
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
@@ -738,21 +724,11 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             </div>
           </motion.div>
 
-          {/* Impact cards — dark cards on gold */}
           <div className="mt-24 grid md:grid-cols-3 gap-[1px] bg-black/[0.1] max-w-3xl mx-auto">
             {[
-              {
-                title: 'Therapy',
-                desc: 'One-on-one counseling for survivors on their healing journey.',
-              },
-              {
-                title: 'Safe Housing',
-                desc: 'Emergency shelter for those escaping abuse.',
-              },
-              {
-                title: 'Support Groups',
-                desc: 'Community healing through peer support.',
-              },
+              { title: 'Therapy', desc: 'One-on-one counseling for survivors on their healing journey.' },
+              { title: 'Safe Housing', desc: 'Emergency shelter for those escaping abuse.' },
+              { title: 'Support Groups', desc: 'Community healing through peer support.' },
             ].map((card, i) => (
               <motion.div
                 key={card.title}
@@ -760,11 +736,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{
-                  duration: 0.7,
-                  delay: i * 0.1,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
+                transition={{ duration: 0.7, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
               >
                 <p className="text-3xl mb-3 font-bebas text-[var(--accent)]">{card.title}</p>
                 <p className="text-white/40 text-sm leading-relaxed">{card.desc}</p>
@@ -783,15 +755,13 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               className="group inline-flex items-center gap-2 mt-16 text-[11px] tracking-[0.2em] uppercase text-black/50 hover:text-black transition-colors duration-500 border-b border-black/20 pb-1"
             >
               Learn More
-              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                &rarr;
-              </span>
+              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
             </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* ═══════ HORIZONTAL SCROLL — Brand Values ═══════ */}
+      {/* ═══════ HORIZONTAL SCROLL ═══════ */}
       <section className="py-8 bg-black overflow-hidden relative">
         <div className="flex whitespace-nowrap">
           <motion.div
@@ -819,9 +789,8 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </div>
       </section>
 
-      {/* ═══════ FOUNDER'S QUOTE — Parallax ═══════ */}
-      <section className="py-28 md:py-40 px-6 bg-neutral-950 relative overflow-hidden">
-        {/* Giant decorative quotation mark with accent */}
+      {/* ═══════ FOUNDER'S QUOTE ═══════ */}
+      <section className="py-28 md:py-40 px-6 bg-[var(--surface-1)] relative overflow-hidden">
         <span
           className="absolute -top-10 left-1/2 -translate-x-1/2 text-[14rem] md:text-[20rem] font-serif text-[var(--accent)]/[0.03] leading-none select-none pointer-events-none"
           aria-hidden="true"
@@ -836,10 +805,9 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             viewport={{ once: true }}
             transition={{ duration: 1.2 }}
           >
-            {/* Accent line instead of diamond icon */}
             <div className="w-12 h-[1px] bg-[var(--accent)]/30 mx-auto mb-14" />
 
-            <blockquote className="text-2xl md:text-3xl lg:text-4xl font-light italic leading-relaxed mb-12 text-white/70">
+            <blockquote className="text-2xl md:text-3xl lg:text-4xl font-light italic leading-relaxed mb-12 text-white/60">
               &ldquo;We started Dymnds because we were tired of fitness brands that were all
               surface and no substance. We wanted to build something where every purchase actually
               meant something &mdash; where pressure truly creates diamonds.&rdquo;
@@ -851,7 +819,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </Parallax>
       </section>
 
-      {/* ═══════ APP TEASER — With accent border ═══════ */}
+      {/* ═══════ APP TEASER ═══════ */}
       <motion.section
         className="py-16 md:py-20 px-6 bg-black border-y border-[var(--accent)]/[0.06]"
         initial={{ opacity: 0, y: 20 }}
@@ -880,16 +848,13 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </div>
       </motion.section>
 
-      {/* ═══════ NEWSLETTER ═══════ */}
       <HomepageNewsletter />
 
       {/* ═══════ FINAL CTA ═══════ */}
       <section className="py-40 md:py-56 px-6 bg-black relative">
-        {/* Accent gradient line */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/15 to-transparent" />
 
         <div className="max-w-2xl mx-auto text-center">
-          {/* Accent line instead of diamond */}
           <motion.div
             initial={{ opacity: 0, scaleX: 0 }}
             whileInView={{ opacity: 1, scaleX: 1 }}
@@ -908,7 +873,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-white/40 mb-14 text-lg"
+            className="text-white/35 mb-14 text-lg leading-relaxed"
           >
             Premium quality. Real impact. Every purchase heals.
           </motion.p>
@@ -931,7 +896,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             </Link>
             <Link
               href="/collections/women"
-              className="group relative px-12 py-5 bg-[var(--accent)] text-black text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500"
+              className="group relative px-12 py-5 bg-[var(--accent)] text-black text-[11px] tracking-[0.25em] uppercase overflow-hidden transition-all duration-500 hover:shadow-[0_0_32px_-4px_rgba(200,169,126,0.25)]"
             >
               <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
                 Shop Women

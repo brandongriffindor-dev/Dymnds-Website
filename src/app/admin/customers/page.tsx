@@ -351,7 +351,7 @@ export default function CustomersPage() {
       {/* Customer 360° Modal */}
       {selectedCustomer && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="modal-panel max-w-3xl w-full max-h-96 overflow-y-auto">
+          <div className="modal-panel max-w-3xl w-full max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="font-bebas text-2xl">Customer 360°</h2>

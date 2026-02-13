@@ -89,3 +89,5 @@ This typically indicates that your device does not have a healthy Internet conne
 [2026-02-13T07:02:56.049Z]  @firebase/firestore: Firestore (12.8.0): Could not reach Cloud Firestore backend. Connection failed 1 times. Most recent error: FirebaseError: [code=invalid-argument]: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
 This typically indicates that your device does not have a healthy Internet connection at the moment. The client will operate in offline mode until it is able to successfully connect to the backend.
  GET / 200 in 613ms (compile: 226ms, proxy.ts: 62ms, render: 324ms)
+{"level":"warn","message":"Upstash Redis not configured, falling back to in-memory rate limiting","timestamp":"2026-02-13T07:06:47.799Z"}
+ GET /api/health 200 in 254ms (compile: 243ms, proxy.ts: 5ms, render: 7ms)

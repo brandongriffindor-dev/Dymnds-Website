@@ -15,6 +15,7 @@ import { logger } from '@/lib/logger';
 export type ServerAuditAction =
   | 'order_created_server'
   | 'order_status_updated_server'
+  | 'checkout_session_created'
   | 'critical_admin_action'
   | 'discount_created'
   | 'discount_updated'

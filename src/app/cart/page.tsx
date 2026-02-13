@@ -6,12 +6,16 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollReveal from '@/components/ScrollReveal';
 import { useCartItems, useSubtotal, useDonation, useCartStore } from '@/lib/stores/cart-store';
+import { useCurrency, convertPrice, formatPrice } from '@/lib/stores/currency-store';
+import { getCSRFToken } from '@/lib/get-csrf-token';
 import { useState } from 'react';
+import { Minus, Plus, Trash2, ShoppingBag, Truck } from 'lucide-react';
 
 export default function CartPage() {
   const cart = useCartItems();
   const subtotal = useSubtotal();
   const donation = useDonation();
+  const currency = useCurrency();
   const removeFromCart = useCartStore(s => s.removeFromCart);
   const updateQuantity = useCartStore(s => s.updateQuantity);
   const clearCart = useCartStore(s => s.clearCart);
@@ -22,14 +26,20 @@ export default function CartPage() {
   const total = subtotal + shipping;
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  const fmt = (cad: number) => formatPrice(convertPrice(cad, currency), currency);
+
   const handleCheckout = async () => {
     setCheckoutLoading(true);
     setCheckoutError(null);
 
     try {
+      const csrfToken = await getCSRFToken();
       const res = await fetch('/api/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
         body: JSON.stringify({
           items: cart.map(item => ({
             productId: item.id,
@@ -83,27 +93,22 @@ export default function CartPage() {
             <ScrollReveal animation="fade-up" delay={100} duration={600}>
               <div className="flex flex-col items-center justify-center py-24 text-center">
                 {/* Diamond Icon */}
-                <div className="mb-8 opacity-20">
-                  <Image
-                    src="/diamond-white.png"
-                    alt=""
-                    width={48}
-                    height={48}
-                  />
+                <div className="w-20 h-20 rounded-full bg-white/[0.03] flex items-center justify-center mb-8">
+                  <ShoppingBag className="w-8 h-8 text-white/15" />
                 </div>
 
                 {/* Empty State Text */}
-                <h2 className="text-3xl md:text-4xl font-bebas uppercase mb-6 tracking-tight">
+                <h2 className="text-3xl md:text-4xl font-bebas uppercase mb-4 tracking-tight">
                   YOUR CART IS EMPTY
                 </h2>
-                <p className="text-white/50 max-w-md mb-12 text-base leading-relaxed">
+                <p className="text-white/40 max-w-md mb-12 text-sm leading-relaxed">
                   Every purchase helps survivors heal. 10% of your order goes directly to recovery programs.
                 </p>
 
                 {/* Shop Now Button */}
                 <Link
                   href="/shop"
-                  className="btn-premium bg-white text-black font-bebas uppercase tracking-widest py-4 px-12 inline-flex items-center justify-center transition-all hover:scale-105 duration-300"
+                  className="px-12 py-4 bg-[var(--accent)] text-black font-bebas text-sm tracking-[0.2em] uppercase transition-all duration-400 hover:bg-[var(--accent-light)] hover:shadow-[0_0_32px_-4px_rgba(200,169,126,0.25)]"
                 >
                   SHOP NOW
                 </Link>
@@ -114,18 +119,18 @@ export default function CartPage() {
             <div className="grid lg:grid-cols-3 gap-12">
               {/* Left Column: Cart Items */}
               <div className="lg:col-span-2">
-                <div className="space-y-6 mb-8">
+                <div className="space-y-4 mb-8">
                   {cart.map((item, index) => (
                     <ScrollReveal
                       key={item.id}
                       animation="fade-up"
                       delay={index * 50}
                       duration={600}
-                      className="card-premium bg-white/[0.03] border border-white/8 p-6 rounded-2xl"
+                      className="bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] p-5 md:p-6 transition-all duration-300"
                     >
-                      <div className="flex gap-6">
+                      <div className="flex gap-5 md:gap-6">
                         {/* Product Image */}
-                        <div className="relative w-28 h-28 flex-shrink-0 rounded-lg bg-neutral-900 overflow-hidden flex items-center justify-center">
+                        <div className="relative w-24 h-28 md:w-28 md:h-32 flex-shrink-0 bg-neutral-900 overflow-hidden flex items-center justify-center">
                           {item.image ? (
                             <Image
                               src={item.image}
@@ -138,47 +143,47 @@ export default function CartPage() {
                             <Image
                               src="/diamond-white.png"
                               alt=""
-                              width={40}
-                              height={40}
-                              className="opacity-20"
+                              width={32}
+                              height={32}
+                              className="opacity-15"
                             />
                           )}
                         </div>
 
                         {/* Product Info */}
-                        <div className="flex-1 flex flex-col justify-between">
+                        <div className="flex-1 flex flex-col justify-between min-w-0">
                           <div>
-                            <h3 className="font-bebas text-lg uppercase tracking-wide mb-2">
+                            <h3 className="font-bebas text-lg uppercase tracking-wide mb-1.5 truncate">
                               {item.name}
                             </h3>
-                            <div className="flex gap-4 text-xs text-white/40 uppercase tracking-wider mb-2">
+                            <div className="flex gap-3 text-[10px] text-white/35 uppercase tracking-[0.2em] mb-2">
                               {item.size && <span>Size: {item.size}</span>}
                               {item.color && <span>Color: {item.color}</span>}
                             </div>
-                            <p className="text-white/80 font-medium">
-                              ${item.price.toFixed(2)}
+                            <p className="text-sm text-[var(--accent)]">
+                              {fmt(item.price)}
                             </p>
                           </div>
 
                           {/* Quantity Controls */}
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5 mt-3">
                             <button
                               onClick={() => updateQuantity(item.id, item.size, Math.max(1, item.quantity - 1), item.color)}
-                              className="btn-premium w-11 h-11 flex items-center justify-center bg-white text-black rounded-lg hover:scale-105 transition-all duration-200 font-bebas text-lg"
+                              className="w-8 h-8 flex items-center justify-center border border-white/[0.08] hover:border-white/20 transition-colors duration-300"
                               aria-label="Decrease quantity"
                             >
-                              −
+                              <Minus className="w-3 h-3" />
                             </button>
-                            <span className="w-8 text-center font-bebas text-lg">
+                            <span className="w-8 text-center text-sm font-medium">
                               {item.quantity}
                             </span>
                             <button
                               onClick={() => updateQuantity(item.id, item.size, item.quantity + 1, item.color)}
                               disabled={item.quantity >= 10}
-                              className="btn-premium w-11 h-11 flex items-center justify-center bg-white text-black rounded-lg hover:scale-105 transition-all duration-200 font-bebas text-lg disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
+                              className="w-8 h-8 flex items-center justify-center border border-white/[0.08] hover:border-white/20 transition-colors duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
                               aria-label="Increase quantity"
                             >
-                              +
+                              <Plus className="w-3 h-3" />
                             </button>
                           </div>
                         </div>
@@ -186,14 +191,14 @@ export default function CartPage() {
                         {/* Item Total & Remove */}
                         <div className="flex flex-col items-end justify-between">
                           <p className="font-bebas text-lg">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            {fmt(item.price * item.quantity)}
                           </p>
                           <button
                             onClick={() => removeFromCart(item.id, item.size, item.color)}
-                            className="text-xs uppercase tracking-wider text-white/40 hover:text-red-400 transition-colors duration-200"
+                            className="text-white/20 hover:text-red-400 transition-colors duration-300"
                             aria-label="Remove item"
                           >
-                            Remove
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
@@ -204,7 +209,7 @@ export default function CartPage() {
                 {/* Clear Cart Button */}
                 <button
                   onClick={clearCart}
-                  className="text-xs uppercase tracking-widest text-white/30 hover:text-white transition-colors duration-200"
+                  className="text-[10px] uppercase tracking-[0.25em] text-white/25 hover:text-white/60 transition-colors duration-300"
                 >
                   CLEAR CART
                 </button>
@@ -218,50 +223,53 @@ export default function CartPage() {
                   duration={600}
                   className="sticky top-32"
                 >
-                  <div className="card-premium bg-white/[0.03] border border-white/8 rounded-2xl p-8">
-                    <h2 className="font-bebas text-xl uppercase tracking-widest mb-8">
+                  <div className="bg-white/[0.02] border border-white/[0.06] p-7 md:p-8">
+                    <h2 className="font-bebas text-xl uppercase tracking-wider mb-8">
                       ORDER SUMMARY
                     </h2>
 
                     {/* Summary Lines */}
                     <div className="space-y-4 mb-8">
-                      <div className="flex justify-between text-white/60 text-sm">
+                      <div className="flex justify-between text-white/50 text-sm">
                         <span>Subtotal</span>
-                        <span>${subtotal.toFixed(2)}</span>
+                        <span>{fmt(subtotal)}</span>
                       </div>
-                      <div className="flex justify-between text-white/60 text-sm">
+                      <div className="flex justify-between text-white/50 text-sm">
                         <span>Shipping</span>
                         <span className="font-medium">
-                          {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
+                          {shipping === 0 ? 'FREE' : fmt(shipping)}
                         </span>
                       </div>
-                      <div className="flex justify-between text-[var(--accent)] text-sm font-medium">
+                      <div className="flex justify-between text-[var(--accent)]/70 text-sm">
                         <span>Your Impact (10%)</span>
-                        <span>${donation.toFixed(2)}</span>
+                        <span>{fmt(donation)}</span>
                       </div>
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-white/8 py-6 mb-6">
+                    <div className="border-t border-white/[0.06] py-6 mb-6">
                       <div className="flex justify-between items-center">
-                        <span className="font-bebas uppercase tracking-widest">Total</span>
+                        <span className="font-bebas uppercase tracking-wider text-white/80">Total</span>
                         <span className="font-bebas text-2xl">
-                          ${total.toFixed(2)}
+                          {fmt(total)}
                         </span>
                       </div>
                     </div>
 
                     {/* Impact Note */}
-                    <div className="bg-[var(--accent)]/[0.08] border border-[var(--accent)]/15 rounded-lg p-4 mb-8">
-                      <p className="text-xs text-[var(--accent)] text-center leading-relaxed">
-                        Your purchase contributes <span className="font-semibold">${donation.toFixed(2)}</span> to support survivors
-                      </p>
+                    <div className="glass-panel-accent p-4 mb-8">
+                      <div className="flex items-center justify-center gap-2.5">
+                        <div className="glow-dot" style={{ width: '5px', height: '5px' }} />
+                        <p className="text-xs text-[var(--accent)]/60 text-center leading-relaxed">
+                          Your purchase contributes <span className="font-semibold text-[var(--accent)]">{fmt(donation)}</span> to support survivors
+                        </p>
+                      </div>
                     </div>
 
                     {/* Checkout Error */}
                     {checkoutError && (
-                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-                        <p className="text-xs text-red-400 text-center">{checkoutError}</p>
+                      <div className="bg-red-500/[0.06] border border-red-500/15 p-3 mb-4">
+                        <p className="text-xs text-red-400/80 text-center">{checkoutError}</p>
                       </div>
                     )}
 
@@ -269,7 +277,7 @@ export default function CartPage() {
                     <button
                       onClick={handleCheckout}
                       disabled={checkoutLoading}
-                      className="btn-premium bg-white text-black font-bebas uppercase tracking-widest w-full py-4 rounded-lg hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+                      className="w-full py-4 bg-[var(--accent)] text-black font-bebas text-sm tracking-[0.2em] uppercase transition-all duration-400 hover:bg-[var(--accent-light)] hover:shadow-[0_0_24px_-4px_rgba(200,169,126,0.25)] disabled:opacity-50 disabled:cursor-not-allowed mb-5"
                     >
                       {checkoutLoading ? 'PROCESSING...' : 'PROCEED TO CHECKOUT'}
                     </button>
@@ -277,17 +285,26 @@ export default function CartPage() {
                     {/* Shipping Progress */}
                     {subtotal < 150 ? (
                       <div className="text-center">
-                        <div className="w-full bg-white/10 rounded-full h-1.5 mb-2">
-                          <div className="bg-white h-1.5 rounded-full transition-all duration-500" style={{ width: `${Math.min((subtotal / 150) * 100, 100)}%` }} />
+                        <div className="w-full bg-white/[0.06] h-1 mb-3">
+                          <div
+                            className="bg-[var(--accent)] h-1 transition-all duration-500"
+                            style={{ width: `${Math.min((subtotal / 150) * 100, 100)}%` }}
+                          />
                         </div>
-                        <p className="text-xs text-white/40 uppercase tracking-wider">
-                          ${(150 - subtotal).toFixed(0)} away from free shipping
-                        </p>
+                        <div className="flex items-center justify-center gap-2 text-xs text-white/35">
+                          <Truck className="w-3.5 h-3.5" />
+                          <span className="uppercase tracking-wider">
+                            {fmt(150 - subtotal)} away from free shipping
+                          </span>
+                        </div>
                       </div>
                     ) : (
-                      <p className="text-center text-xs text-[var(--accent)] uppercase tracking-wider">
-                        You qualify for free shipping
-                      </p>
+                      <div className="flex items-center justify-center gap-2 text-xs text-[var(--accent)]/70">
+                        <Truck className="w-3.5 h-3.5" />
+                        <span className="uppercase tracking-wider">
+                          You qualify for free shipping
+                        </span>
+                      </div>
                     )}
                   </div>
                 </ScrollReveal>

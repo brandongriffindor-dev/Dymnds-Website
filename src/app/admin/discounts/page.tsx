@@ -31,6 +31,7 @@ export default function DiscountsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [toastError, setToastError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     code: '',
     type: 'percentage' as 'percentage' | 'fixed',
@@ -99,7 +100,7 @@ export default function DiscountsPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || 'Failed to create discount');
+        setToastError(data.error || 'Failed to create discount');
         setUpdating(false);
         return;
       }
@@ -110,7 +111,7 @@ export default function DiscountsPage() {
       setUpdating(false);
     } catch (error) {
       console.error('Error creating discount:', error);
-      alert('Failed to create discount');
+      setToastError('Failed to create discount');
       setUpdating(false);
     }
   };
@@ -126,7 +127,7 @@ export default function DiscountsPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || 'Failed to update discount');
+        setToastError(data.error || 'Failed to update discount');
       }
       setUpdating(false);
     } catch (error) {
@@ -146,7 +147,7 @@ export default function DiscountsPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || 'Failed to delete discount');
+        setToastError(data.error || 'Failed to delete discount');
       }
       setDeleting(false);
     } catch (error) {
@@ -176,6 +177,14 @@ export default function DiscountsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Toast Error */}
+      {toastError && (
+        <div className="fixed top-4 right-4 z-[80] bg-red-500/15 border border-red-500/30 backdrop-blur-xl px-5 py-3 rounded-xl flex items-center gap-3 animate-scale-in">
+          <p className="text-sm text-red-300">{toastError}</p>
+          <button onClick={() => setToastError(null)} className="text-red-300/60 hover:text-red-300 text-xs">✕</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="border-b border-white/[0.08] px-6 py-8">
         <h1 className="font-bebas text-4xl tracking-wider">Discount Codes</h1>

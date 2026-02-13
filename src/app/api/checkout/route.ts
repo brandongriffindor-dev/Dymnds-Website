@@ -4,6 +4,9 @@ import Stripe from 'stripe';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { logAdminActionServer } from '@/lib/audit-log-server';
+import { validateCSRF } from '@/lib/csrf';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
+import { sanitizeEmail } from '@/lib/sanitize';
 
 // Lazy-initialized Stripe client — avoids crash at module load if key is missing
 let _stripe: Stripe | null = null;
@@ -24,27 +27,25 @@ function getStripe(): Stripe {
 const CartItemSchema = z.object({
   productId: z.string().min(1),
   size: z.string().min(1),
-  quantity: z.number().int().positive(),
+  quantity: z.number().int().positive().max(10),
   color: z.string().optional(),
   declaredPrice: z.number().positive(),
 });
 
 const CheckoutRequestSchema = z.object({
-  items: z.array(CartItemSchema).min(1),
-  customerEmail: z.string().email().optional(),
-  discountCode: z.string().optional(),
+  items: z.array(CartItemSchema).min(1).max(50),
+  customerEmail: z.string().email().max(254).optional(),
+  discountCode: z.string().max(50).optional(),
 });
-
-type CheckoutRequest = z.infer<typeof CheckoutRequestSchema>;
 
 interface ValidatedItem {
   productId: string;
   size: string;
   quantity: number;
   color?: string;
-  declaredPrice: number;
+  serverPrice: number;
   productName: string;
-  stripePrice: number;
+  stripePriceCents: number;
   image: string;
 }
 
@@ -52,11 +53,11 @@ interface DiscountInfo {
   code: string;
   type: 'percentage' | 'fixed';
   value: number;
-  appliedAmount: number;
+  appliedAmountCents: number;
 }
 
 async function validateAndFetchProduct(
-  db: any,
+  db: FirebaseFirestore.Firestore,
   productId: string,
   size: string,
   quantity: number,
@@ -70,24 +71,38 @@ async function validateAndFetchProduct(
     throw new Error(`Product ${productId} not found`);
   }
 
-  const productData = productDoc.data();
+  const productData = productDoc.data()!;
 
-  // Verify price hasn't changed significantly (allow small variance)
+  // Reject deleted or inactive products
+  if (productData.is_deleted === true || productData.is_active === false) {
+    throw new Error(`Product ${productId} is no longer available`);
+  }
+
+  // FIX CHECKOUT-001: Use correct field name 'price' (CAD)
   const actualPrice = productData.price || 0;
-  const priceDifference = Math.abs(actualPrice - declaredPrice);
-  const percentageDiff = (priceDifference / actualPrice) * 100;
 
-  if (percentageDiff > 5) {
+  // Verify price matches (allow small floating point differences)
+  if (Math.abs(actualPrice - declaredPrice) > 0.01) {
     throw new Error(
       `Price mismatch for product ${productId}. Expected ${actualPrice}, got ${declaredPrice}`
     );
   }
 
-  // Check stock availability
-  const sizeInventory = productData.inventory?.[size];
-  if (!sizeInventory || sizeInventory < quantity) {
+  // FIX CHECKOUT-001: Use correct field name 'stock' (not 'inventory')
+  // Support both color-variant and plain stock structures
+  let available = 0;
+  if (color && productData.colors && Array.isArray(productData.colors)) {
+    const colorVariant = (productData.colors as { name: string; stock: Record<string, number> }[]).find(
+      (c) => c.name === color
+    );
+    available = colorVariant?.stock?.[size] ?? 0;
+  } else if (productData.stock && typeof productData.stock === 'object') {
+    available = (productData.stock as Record<string, number>)[size] ?? 0;
+  }
+
+  if (available < quantity) {
     throw new Error(
-      `Insufficient stock for ${productData.name} in size ${size}. Available: ${sizeInventory || 0}, Requested: ${quantity}`
+      `Insufficient stock for ${productData.title || productId} in size ${size}. Available: ${available}, Requested: ${quantity}`
     );
   }
 
@@ -96,66 +111,96 @@ async function validateAndFetchProduct(
     size,
     quantity,
     color,
-    declaredPrice: actualPrice,
-    productName: productData.name,
-    stripePrice: Math.round(actualPrice * 100), // Convert to cents
-    image: productData.image || '',
+    serverPrice: actualPrice,
+    // FIX CHECKOUT-001: Use correct field name 'title' (not 'name')
+    productName: productData.title || 'Product',
+    stripePriceCents: Math.round(actualPrice * 100),
+    // FIX CHECKOUT-001: Use correct field name 'images' array (not 'image')
+    image: Array.isArray(productData.images) && productData.images.length > 0
+      ? productData.images[0]
+      : '',
   };
 }
 
 async function validateDiscount(
-  db: any,
+  db: FirebaseFirestore.Firestore,
   discountCode: string,
-  subtotal: number
+  subtotalCents: number
 ): Promise<DiscountInfo> {
-  const discountRef = db.collection('discounts').doc(discountCode);
-  const discountDoc = await discountRef.get();
+  // FIX CHECKOUT-005: Look up by 'code' field query, not doc ID
+  const discountsQuery = await db
+    .collection('discounts')
+    .where('code', '==', discountCode.toUpperCase())
+    .where('is_deleted', '!=', true)
+    .limit(1)
+    .get();
 
-  if (!discountDoc.exists) {
-    throw new Error(`Discount code ${discountCode} not found`);
+  if (discountsQuery.empty) {
+    throw new Error('Invalid discount code');
   }
 
+  const discountDoc = discountsQuery.docs[0];
   const discountData = discountDoc.data();
 
   // Check if discount is active
-  if (!discountData.active) {
-    throw new Error(`Discount code ${discountCode} is not active`);
+  if (discountData.active === false) {
+    throw new Error('This discount code is no longer active');
   }
 
   // Check expiration date
-  if (discountData.expiryDate) {
-    const expiryDate = discountData.expiryDate.toDate?.() || new Date(discountData.expiryDate);
+  if (discountData.expiresAt) {
+    const expiryDate = new Date(discountData.expiresAt);
     if (expiryDate < new Date()) {
-      throw new Error(`Discount code ${discountCode} has expired`);
+      throw new Error('This discount code has expired');
     }
   }
 
   // Check usage limits
-  if (discountData.maxUses && discountData.timesUsed >= discountData.maxUses) {
-    throw new Error(`Discount code ${discountCode} has reached maximum usage`);
+  if (discountData.maxUses > 0 && (discountData.currentUses || 0) >= discountData.maxUses) {
+    throw new Error('This discount code has reached its usage limit');
   }
 
-  // Calculate discount amount
-  let appliedAmount = 0;
+  // Check minimum order (convert subtotal from cents to dollars for comparison)
+  const subtotalDollars = subtotalCents / 100;
+  if (discountData.minOrder && subtotalDollars < discountData.minOrder) {
+    throw new Error(`Minimum order of $${discountData.minOrder} required for this code`);
+  }
+
+  // Calculate discount amount in cents
+  let appliedAmountCents = 0;
   if (discountData.type === 'percentage') {
-    appliedAmount = Math.round((subtotal * discountData.value) / 100);
+    const cappedPercent = Math.min(discountData.value, 100);
+    appliedAmountCents = Math.round(subtotalCents * (cappedPercent / 100));
   } else if (discountData.type === 'fixed') {
-    appliedAmount = Math.round(discountData.value * 100); // Convert to cents
+    appliedAmountCents = Math.round(discountData.value * 100);
   }
 
   // Ensure discount doesn't exceed subtotal
-  appliedAmount = Math.min(appliedAmount, subtotal);
+  appliedAmountCents = Math.min(appliedAmountCents, subtotalCents);
 
   return {
-    code: discountCode,
+    code: discountCode.toUpperCase(),
     type: discountData.type,
     value: discountData.value,
-    appliedAmount,
+    appliedAmountCents,
   };
 }
 
 export async function POST(request: Request) {
   try {
+    // FIX CHECKOUT-002: Add CSRF validation
+    const csrf = await validateCSRF(request);
+    if (!csrf.valid) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 403 });
+    }
+
+    // FIX CHECKOUT-002: Add rate limiting (10 checkout attempts per minute per IP)
+    const ip = getClientIP(request);
+    const rl = await rateLimit(`checkout:${ip}`, { limit: 10, windowSeconds: 60 });
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     // Fail fast if critical env vars are missing
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) {
@@ -179,33 +224,40 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const validatedBody = CheckoutRequestSchema.parse(body);
+    const parsed = CheckoutRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request payload', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
 
+    const validatedBody = parsed.data;
     const db = getAdminDb();
     let validatedItems: ValidatedItem[];
-    let subtotal = 0;
+    let subtotalCents = 0;
 
-    // Validate all items in parallel for faster checkout
+    // Validate all items sequentially (reads from same collection)
     try {
-      validatedItems = await Promise.all(
-        validatedBody.items.map((item) =>
-          validateAndFetchProduct(
-            db,
-            item.productId,
-            item.size,
-            item.quantity,
-            item.declaredPrice,
-            item.color
-          )
-        )
-      );
-      subtotal = validatedItems.reduce(
-        (sum, item) => sum + item.stripePrice * item.quantity,
+      validatedItems = [];
+      for (const item of validatedBody.items) {
+        const validated = await validateAndFetchProduct(
+          db,
+          item.productId,
+          item.size,
+          item.quantity,
+          item.declaredPrice,
+          item.color
+        );
+        validatedItems.push(validated);
+      }
+      subtotalCents = validatedItems.reduce(
+        (sum, item) => sum + item.stripePriceCents * item.quantity,
         0
       );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error('Product validation error during checkout', { error: errorMessage });
+      logger.warn('Product validation error during checkout', { error: errorMessage, ip });
       return NextResponse.json(
         { error: 'One or more items in your cart are unavailable. Please refresh and try again.' },
         { status: 400 }
@@ -216,93 +268,108 @@ export async function POST(request: Request) {
     let discountInfo: DiscountInfo | null = null;
     if (validatedBody.discountCode) {
       try {
-        discountInfo = await validateDiscount(db, validatedBody.discountCode, subtotal);
+        discountInfo = await validateDiscount(db, validatedBody.discountCode, subtotalCents);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        logger.error('Discount validation error', { error: errorMessage });
+        logger.warn('Discount validation error', { error: errorMessage, ip });
         return NextResponse.json(
-          { error: 'Invalid or expired discount code. Please try again.' },
+          { error: errorMessage || 'Invalid or expired discount code. Please try again.' },
           { status: 400 }
         );
       }
     }
 
     // Prepare line items for Stripe
-    const lineItems = validatedItems.map((item) => ({
+    // FIX CHECKOUT-003: Use 'cad' currency (products are priced in CAD)
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = validatedItems.map((item) => ({
       price_data: {
-        currency: 'usd',
+        currency: 'cad',
         product_data: {
           name: item.productName,
-          image: item.image ? [item.image] : undefined,
+          ...(item.image ? { images: [item.image] } : {}),
           metadata: {
             productId: item.productId,
             size: item.size,
             color: item.color || '',
           },
         },
-        unit_amount: item.stripePrice,
+        unit_amount: item.stripePriceCents,
       },
       quantity: item.quantity,
     }));
 
-    // Prepare metadata for webhook
+    // FIX CHECKOUT-004: If there's a discount, apply it as a negative line item
+    // instead of using Stripe coupons (which require pre-created coupon objects).
+    // This approach is Stripe-approved for custom discount logic.
+    if (discountInfo && discountInfo.appliedAmountCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'cad',
+          product_data: {
+            name: `Discount (${discountInfo.code})`,
+          },
+          unit_amount: -discountInfo.appliedAmountCents,
+        },
+        quantity: 1,
+      });
+    }
+
+    // Prepare metadata for webhook — store order details for atomic creation
     const orderMetadata = {
       items: validatedItems.map((item) => ({
         productId: item.productId,
         size: item.size,
         quantity: item.quantity,
         color: item.color || '',
-        price: item.declaredPrice,
+        price: item.serverPrice,
       })),
       discountCode: discountInfo?.code || '',
-      discountAmount: discountInfo?.appliedAmount || 0,
+      discountAmount: discountInfo ? discountInfo.appliedAmountCents / 100 : 0,
       discountType: discountInfo?.type || '',
-      subtotal,
+      subtotal: subtotalCents / 100,
     };
+
+    // Sanitize email if provided
+    const sanitizedEmail = validatedBody.customerEmail
+      ? sanitizeEmail(validatedBody.customerEmail)
+      : undefined;
 
     // Create Stripe Checkout Session
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: 'payment',
       line_items: lineItems,
-      ...(validatedBody.customerEmail && { customer_email: validatedBody.customerEmail }),
+      ...(sanitizedEmail && { customer_email: sanitizedEmail }),
       success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/cart`,
+      shipping_address_collection: {
+        allowed_countries: ['CA', 'US'],
+      },
       metadata: {
         orderData: JSON.stringify(orderMetadata),
       },
     };
 
-    // Apply discount via Stripe if available
-    // Note: In production, you'd want to create/manage Stripe coupons server-side
-    // For now, we pass discount info in metadata for the webhook to handle
-    if (discountInfo) {
-      sessionParams.discounts = [
-        {
-          coupon: discountInfo.code,
-        },
-      ];
-    }
-
     const session = await stripe.checkout.sessions.create(sessionParams);
 
-    logger.info(`Checkout session created: ${session.id}`, {
-      email: validatedBody.customerEmail,
+    logger.info('Checkout session created', {
+      sessionId: session.id,
+      email: sanitizedEmail,
       itemCount: validatedItems.length,
-      subtotal,
+      subtotalCents,
+      ip,
     });
 
-    // Log the order creation
-    logAdminActionServer('order_created_server', {
+    logAdminActionServer('checkout_session_created', {
       sessionId: session.id,
-      customerEmail: validatedBody.customerEmail,
+      customerEmail: sanitizedEmail,
       itemCount: validatedItems.length,
-      subtotal,
-    }).catch(() => {}); // Fire and forget
+      subtotalCents,
+    }).catch(() => {});
 
     return NextResponse.json({ url: session.url, sessionId: session.id });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      logger.error('Validation error', { issues: error.issues.map(i => i.message) });
+      logger.warn('Validation error', { issues: error.issues.map(i => i.message) });
       return NextResponse.json(
         { error: 'Invalid request payload', details: error.issues },
         { status: 400 }

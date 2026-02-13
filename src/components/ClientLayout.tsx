@@ -27,23 +27,25 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }, [initCurrency]);
 
   // First-visit branded loading sequence
-  const [isFirstVisit, setIsFirstVisit] = useState(false);
-  const [loadingComplete, setLoadingComplete] = useState(true);
+  // Compute initial state synchronously to avoid setState-in-effect
+  const [isFirstVisit] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const hasVisited = sessionStorage.getItem('dymnds-visited');
+    if (!hasVisited) {
+      sessionStorage.setItem('dymnds-visited', '1');
+      return true;
+    }
+    return false;
+  });
+  const [loadingComplete, setLoadingComplete] = useState(!isFirstVisit);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const hasVisited = sessionStorage.getItem('dymnds-visited');
-      if (!hasVisited) {
-        setIsFirstVisit(true);
-        setLoadingComplete(false);
-        sessionStorage.setItem('dymnds-visited', '1');
-        const timer = setTimeout(() => {
-          setLoadingComplete(true);
-        }, 2200);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, []);
+    if (!isFirstVisit) return;
+    const timer = setTimeout(() => {
+      setLoadingComplete(true);
+    }, 2200);
+    return () => clearTimeout(timer);
+  }, [isFirstVisit]);
 
   // Scroll progress indicator
   const { scrollYProgress } = useScroll();

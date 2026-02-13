@@ -12,7 +12,7 @@ import QuestionForm from './QuestionForm';
 import { Check, ShoppingBag, Truck, Mail, ChevronDown } from 'lucide-react';
 import type { Product, ProductColor } from '@/lib/firebase';
 import type { Review } from '@/lib/fetch-products';
-import { useCartStore, type CartItem } from '@/lib/stores/cart-store';
+import { useCartStore } from '@/lib/stores/cart-store';
 import { useCurrency, convertPrice, formatPrice, getCadPrice } from '@/lib/stores/currency-store';
 import Link from 'next/link';
 
@@ -153,8 +153,13 @@ export default function ProductClient({ product, initialReviews = [], initialMat
   }, []);
 
   // Image navigation with CSS-based crossfade
+  const mainImageIndexRef = useRef(state.mainImageIndex);
+  useEffect(() => {
+    mainImageIndexRef.current = state.mainImageIndex;
+  }, [state.mainImageIndex]);
+
   const changeImage = useCallback((newIndex: number) => {
-    if (newIndex === state.mainImageIndex) return;
+    if (newIndex === mainImageIndexRef.current) return;
     dispatch({ type: 'SET_IMAGE_TRANSITION', transitioning: true });
     const timer = setTimeout(() => {
       dispatch({ type: 'SET_IMAGE_INDEX', index: newIndex });
@@ -165,7 +170,7 @@ export default function ProductClient({ product, initialReviews = [], initialMat
       });
     }, 200);
     return () => clearTimeout(timer);
-  }, [state.mainImageIndex]);
+  }, [dispatch]);
 
   // Handle color change
   const handleColorChange = (color: ProductColor) => {
@@ -244,7 +249,7 @@ export default function ProductClient({ product, initialReviews = [], initialMat
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       "url": `https://dymnds.ca/products/${product.slug}`,
-      "priceValidUntil": new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+      "priceValidUntil": "2026-12-31",
     },
   };
 

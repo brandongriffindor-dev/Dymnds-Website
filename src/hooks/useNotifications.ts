@@ -6,16 +6,15 @@ import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestor
 import type { Order } from '@/lib/firebase';
 
 export function useNotifications(user: User | null) {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  // Compute initial notification state synchronously to avoid setState-in-effect
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      return true;
+    }
+    return false;
+  });
   const [lastOrderCount, setLastOrderCount] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Notification permission check on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      setNotificationsEnabled(true);
-    }
-  }, []);
 
   // Real-time order listener with audio alerts
   useEffect(() => {
