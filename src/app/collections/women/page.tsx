@@ -69,8 +69,10 @@ export default async function WomenPage() {
       />
       <Navbar />
 
-      <section className="pt-36 pb-24 px-6">
-        <div className="max-w-7xl mx-auto">
+      <section className="pt-36 pb-24 px-6 relative overflow-hidden">
+        {/* Decorative ambient glow — left side */}
+        <div className="absolute top-1/4 left-0 w-[600px] h-[600px] bg-[var(--accent)]/[0.02] rounded-full blur-[200px] -translate-x-1/4 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+        <div className="max-w-7xl mx-auto relative z-10">
           <nav className="mb-8 flex items-center gap-2 text-xs text-white/40">
             <Link href="/" className="link-underline hover:text-white/70 transition-colors">Home</Link>
             <span>/</span>

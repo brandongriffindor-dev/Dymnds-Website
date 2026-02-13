@@ -5,7 +5,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AnimatedCounter from "@/components/AnimatedCounter";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import type { Product } from "@/lib/firebase";
 import { ChevronDown } from 'lucide-react';
@@ -156,6 +156,98 @@ function EditorialProductCard({
   );
 }
 
+/** Inline homepage newsletter — reuses /api/waitlist */
+function HomepageNewsletter() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || status === 'loading') return;
+    setStatus('loading');
+
+    try {
+      // Get CSRF token
+      const csrfRes = await fetch('/api/csrf');
+      const { token } = await csrfRes.json();
+
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, csrf_token: token }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setStatus('success');
+        setMessage('You\u2019re in. Welcome to the movement.');
+        setEmail('');
+      } else {
+        setStatus('error');
+        setMessage(data.error || 'Something went wrong.');
+      }
+    } catch {
+      setStatus('error');
+      setMessage('Network error. Please try again.');
+    }
+  };
+
+  return (
+    <section className="py-24 md:py-32 px-6 bg-black relative">
+      <div className="section-divider mb-20" />
+      <div className="max-w-xl mx-auto text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/50 mb-4">
+            Stay Connected
+          </p>
+          <h2 className="text-4xl md:text-5xl font-bebas tracking-tight mb-4">
+            Join The Movement
+          </h2>
+          <p className="text-white/40 text-sm mb-10">
+            First access to drops, behind-the-scenes content, and impact updates.
+          </p>
+
+          {status === 'success' ? (
+            <p className="text-[var(--accent)] text-sm" aria-live="polite">
+              {message}
+            </p>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className="flex-1 px-5 py-3.5 bg-white/[0.04] border border-white/[0.08] text-white text-sm placeholder:text-white/25 input-premium focus:outline-none"
+                aria-label="Email address"
+              />
+              <button
+                type="submit"
+                disabled={status === 'loading'}
+                className="px-8 py-3.5 bg-[var(--accent)] text-black text-[11px] tracking-[0.2em] uppercase font-semibold hover:bg-[var(--accent-light)] transition-colors duration-300 disabled:opacity-50"
+              >
+                {status === 'loading' ? 'Joining...' : 'Join'}
+              </button>
+            </form>
+          )}
+          {status === 'error' && (
+            <p className="text-red-400/70 text-xs mt-3" aria-live="polite">
+              {message}
+            </p>
+          )}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 /* ──────────────────── Main Component ──────────────────── */
 
 export default function HomeClient({ menFeatured, womenFeatured }: HomeClientProps) {
@@ -244,7 +336,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 1.0, ease: [0.16, 1, 0.3, 1] }}
-                className="text-[11px] md:text-[13px] text-white/35 tracking-[0.3em] max-w-[280px] uppercase text-left md:text-right leading-relaxed"
+                className="text-[11px] md:text-[13px] text-white/45 tracking-[0.3em] max-w-[280px] uppercase text-left md:text-right leading-relaxed"
               >
                 Forged in struggle &middot; Built for comebacks &middot; <span className="text-[var(--accent)]/60">10% heals</span>
               </motion.p>
@@ -282,15 +374,15 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         <motion.div
           className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.25 }}
+          animate={{ opacity: 0.4 }}
           transition={{ delay: 2.2, duration: 1.2 }}
         >
-          <span className="text-[9px] tracking-[0.5em] uppercase text-[var(--accent)]/50">Scroll</span>
+          <span className="text-[9px] tracking-[0.5em] uppercase text-[var(--accent)]/60">Scroll</span>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <ChevronDown className="w-4 h-4 text-[var(--accent)]/40" />
+            <ChevronDown className="w-4 h-4 text-[var(--accent)]/50" />
           </motion.div>
         </motion.div>
       </section>
@@ -345,7 +437,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-3">
+            <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/50 mb-3">
               The DYMNDS Standard
             </p>
             <h2 className="text-5xl md:text-7xl tracking-tight font-bebas">
@@ -398,7 +490,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               <div className="relative z-10">
                 <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--accent)]/50 mb-3">Materials</p>
                 <h3 className="text-2xl font-bebas tracking-tight mb-3">Zero Shortcuts</h3>
-                <p className="text-white/30 text-sm leading-relaxed">
+                <p className="text-white/40 text-sm leading-relaxed">
                   Premium compression fabrics, moisture-wicking tech, reinforced seams. Tested in the gym, not just the boardroom.
                 </p>
               </div>
@@ -415,7 +507,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
               <div className="relative z-10">
                 <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--accent)]/50 mb-3">Community</p>
                 <h3 className="text-2xl font-bebas tracking-tight mb-3">For the Comeback</h3>
-                <p className="text-white/30 text-sm leading-relaxed">
+                <p className="text-white/40 text-sm leading-relaxed">
                   Built for the mornings you don&rsquo;t feel like showing up. For when being here is the victory.
                 </p>
               </div>
@@ -446,7 +538,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           </div>
 
           {/* Right — body copy scrolls past */}
-          <div className="md:col-span-7 space-y-10 text-lg md:text-xl text-white/35 leading-relaxed">
+          <div className="md:col-span-7 space-y-10 text-lg md:text-xl text-white/45 leading-relaxed">
             {[
               'Diamonds aren\u2019t born brilliant. They\u2019re crushed, heated, and transformed under pressure most things can\u2019t survive.',
               "Your gear should match your story. Built for the hardest sets, the longest runs, the days when quitting sounds reasonable but you don\u2019t.",
@@ -482,7 +574,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         <>
           {/* Men's Collection */}
           {menFeatured.length > 0 && (
-            <section id="men" className="py-28 md:py-40 px-6 bg-black">
+            <section id="men" className="py-24 md:py-36 px-6 bg-black">
               <div className="max-w-7xl mx-auto">
                 {/* Section header */}
                 <motion.div
@@ -493,14 +585,14 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <div>
-                    <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/30 mb-3">
+                    <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-3">
                       The Collection
                     </p>
                     <h2 className="text-6xl md:text-7xl tracking-tight font-bebas">For Him</h2>
                   </div>
                   <Link
                     href="/collections/men"
-                    className="group flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/40 hover:text-[var(--accent)] transition-colors duration-500 pb-1"
+                    className="group flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/50 hover:text-[var(--accent)] transition-colors duration-500 pb-1"
                   >
                     View All
                     <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
@@ -550,7 +642,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
 
           {/* Women's Collection — mirrored layout */}
           {womenFeatured.length > 0 && (
-            <section id="women" className="py-28 md:py-40 px-6 bg-neutral-950">
+            <section id="women" className="py-32 md:py-48 px-6 bg-neutral-950">
               <div className="max-w-7xl mx-auto">
                 <motion.div
                   className="flex items-end justify-between mb-16"
@@ -560,14 +652,14 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <div>
-                    <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/30 mb-3">
+                    <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-3">
                       The Collection
                     </p>
                     <h2 className="text-6xl md:text-7xl tracking-tight font-bebas">For Her</h2>
                   </div>
                   <Link
                     href="/collections/women"
-                    className="group flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/40 hover:text-[var(--accent)] transition-colors duration-500 pb-1"
+                    className="group flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-[var(--accent)]/50 hover:text-[var(--accent)] transition-colors duration-500 pb-1"
                   >
                     View All
                     <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
@@ -636,10 +728,10 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                 />
               </span>
               <div className="text-left">
-                <p className="text-[10px] tracking-[0.4em] uppercase text-black/40 mb-2">
+                <p className="text-[10px] tracking-[0.4em] uppercase text-black/50 mb-2">
                   Of Every Order From Day One
                 </p>
-                <p className="text-lg md:text-xl leading-relaxed text-black/70">
+                <p className="text-lg md:text-xl leading-relaxed text-black/80">
                   Funds therapy, safe housing, and healing programs for survivors
                 </p>
               </div>
@@ -675,7 +767,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
                 }}
               >
                 <p className="text-3xl mb-3 font-bebas text-[var(--accent)]">{card.title}</p>
-                <p className="text-white/30 text-sm leading-relaxed">{card.desc}</p>
+                <p className="text-white/40 text-sm leading-relaxed">{card.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -728,7 +820,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
       </section>
 
       {/* ═══════ FOUNDER'S QUOTE — Parallax ═══════ */}
-      <section className="py-24 md:py-32 px-6 bg-neutral-950 relative overflow-hidden">
+      <section className="py-28 md:py-40 px-6 bg-neutral-950 relative overflow-hidden">
         {/* Giant decorative quotation mark with accent */}
         <span
           className="absolute -top-10 left-1/2 -translate-x-1/2 text-[14rem] md:text-[20rem] font-serif text-[var(--accent)]/[0.03] leading-none select-none pointer-events-none"
@@ -788,6 +880,9 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         </div>
       </motion.section>
 
+      {/* ═══════ NEWSLETTER ═══════ */}
+      <HomepageNewsletter />
+
       {/* ═══════ FINAL CTA ═══════ */}
       <section className="py-40 md:py-56 px-6 bg-black relative">
         {/* Accent gradient line */}
@@ -813,7 +908,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-white/30 mb-14 text-lg"
+            className="text-white/40 mb-14 text-lg"
           >
             Premium quality. Real impact. Every purchase heals.
           </motion.p>

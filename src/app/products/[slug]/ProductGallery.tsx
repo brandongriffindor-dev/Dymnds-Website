@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import ProductLightbox from '@/components/ProductLightbox';
 
 interface ProductGalleryProps {
   images: string[];
@@ -19,6 +20,8 @@ export default function ProductGallery({
   isTransitioning,
   onImageChange,
 }: ProductGalleryProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
   // Touch/swipe for gallery
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -54,7 +57,17 @@ export default function ProductGallery({
     <div className="mb-10 lg:mb-0">
       {/* Main Image */}
       <div
-        className="relative aspect-[4/5] bg-neutral-900 rounded-lg overflow-hidden mb-4"
+        className="relative aspect-[4/5] bg-neutral-900 rounded-lg overflow-hidden mb-4 cursor-zoom-in"
+        role="button"
+        tabIndex={0}
+        aria-label={`View ${productName} full size`}
+        onClick={() => images.length > 0 && setLightboxOpen(true)}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && images.length > 0) {
+            e.preventDefault();
+            setLightboxOpen(true);
+          }
+        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -123,6 +136,16 @@ export default function ProductGallery({
           ))}
         </div>
       )}
+
+      {/* Lightbox */}
+      <ProductLightbox
+        images={images}
+        currentIndex={selectedImageIndex}
+        productName={productName}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        onNavigate={onImageChange}
+      />
     </div>
   );
 }

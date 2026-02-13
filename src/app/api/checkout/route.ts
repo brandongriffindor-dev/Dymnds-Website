@@ -182,30 +182,34 @@ export async function POST(request: Request) {
     const validatedBody = CheckoutRequestSchema.parse(body);
 
     const db = getAdminDb();
-    const validatedItems: ValidatedItem[] = [];
+    let validatedItems: ValidatedItem[];
     let subtotal = 0;
 
-    // Validate all items and fetch product details
-    for (const item of validatedBody.items) {
-      try {
-        const validatedItem = await validateAndFetchProduct(
-          db,
-          item.productId,
-          item.size,
-          item.quantity,
-          item.declaredPrice,
-          item.color
-        );
-        validatedItems.push(validatedItem);
-        subtotal += validatedItem.stripePrice * validatedItem.quantity;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        logger.error(`Validation error for product ${item.productId}`, { error: errorMessage });
-        return NextResponse.json(
-          { error: errorMessage },
-          { status: 400 }
-        );
-      }
+    // Validate all items in parallel for faster checkout
+    try {
+      validatedItems = await Promise.all(
+        validatedBody.items.map((item) =>
+          validateAndFetchProduct(
+            db,
+            item.productId,
+            item.size,
+            item.quantity,
+            item.declaredPrice,
+            item.color
+          )
+        )
+      );
+      subtotal = validatedItems.reduce(
+        (sum, item) => sum + item.stripePrice * item.quantity,
+        0
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Product validation error during checkout', { error: errorMessage });
+      return NextResponse.json(
+        { error: 'One or more items in your cart are unavailable. Please refresh and try again.' },
+        { status: 400 }
+      );
     }
 
     // Validate discount if provided
@@ -217,7 +221,7 @@ export async function POST(request: Request) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         logger.error('Discount validation error', { error: errorMessage });
         return NextResponse.json(
-          { error: errorMessage },
+          { error: 'Invalid or expired discount code. Please try again.' },
           { status: 400 }
         );
       }

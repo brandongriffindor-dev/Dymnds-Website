@@ -61,8 +61,12 @@ export async function GET(request: Request) {
       products = snapshot.docs
         .map((doc) => safeParseProduct({ id: doc.id, ...doc.data() }))
         .filter((p): p is ValidatedProduct => p !== null);
-    } catch {
+    } catch (indexError) {
       // Fallback: if composite index isn't built, filter is_active server-side at minimum
+      logger.warn('Composite index query failed — falling back to in-memory filtering. Build the required Firestore composite index for better performance.', {
+        category, featured, newArrival, bestSeller, slug,
+        error: indexError instanceof Error ? indexError.message : 'Unknown',
+      });
       const fallbackSnap = await db.collection('products').where('is_active', '==', true).get();
       let all = fallbackSnap.docs
         .map((doc) => safeParseProduct({ id: doc.id, ...doc.data() }))

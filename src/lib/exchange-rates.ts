@@ -7,15 +7,26 @@ interface ExchangeRates {
   fetchedAt: number;
 }
 
+export type RateSource = 'live' | 'cache' | 'fallback';
+
+export interface ExchangeRateResult {
+  rate: number;
+  source: RateSource;
+}
+
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 const FALLBACK_RATE = 1.35; // Fallback if API is unavailable
 
 let cachedRates: ExchangeRates | null = null;
 
-export async function getExchangeRate(): Promise<number> {
+/**
+ * Get exchange rate with source metadata for transparency.
+ * Returns both the rate and where it came from (live, cache, fallback).
+ */
+export async function getExchangeRateWithSource(): Promise<ExchangeRateResult> {
   // Return cached rate if fresh
   if (cachedRates && Date.now() - cachedRates.fetchedAt < CACHE_DURATION) {
-    return cachedRates.CAD_TO_USD;
+    return { rate: cachedRates.CAD_TO_USD, source: 'cache' };
   }
 
   // Try fetching from API
@@ -23,7 +34,7 @@ export async function getExchangeRate(): Promise<number> {
     const apiKey = process.env.EXCHANGE_RATE_API_KEY;
     if (!apiKey) {
       console.warn('EXCHANGE_RATE_API_KEY not set, using fallback rate');
-      return FALLBACK_RATE;
+      return { rate: FALLBACK_RATE, source: 'fallback' };
     }
 
     const res = await fetch(
@@ -41,12 +52,21 @@ export async function getExchangeRate(): Promise<number> {
     }
 
     cachedRates = { CAD_TO_USD: rate, fetchedAt: Date.now() };
-    return rate;
+    return { rate, source: 'live' };
   } catch (error) {
     console.error('Failed to fetch exchange rate:', error);
     // Return cached rate even if stale, or fallback
-    return cachedRates?.CAD_TO_USD ?? FALLBACK_RATE;
+    if (cachedRates) {
+      return { rate: cachedRates.CAD_TO_USD, source: 'cache' };
+    }
+    return { rate: FALLBACK_RATE, source: 'fallback' };
   }
+}
+
+/** Convenience wrapper that returns just the rate (backward-compatible) */
+export async function getExchangeRate(): Promise<number> {
+  const result = await getExchangeRateWithSource();
+  return result.rate;
 }
 
 export function convertCadToUsd(cadAmount: number, rate: number): number {

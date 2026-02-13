@@ -187,10 +187,12 @@ export default function ContactPage() {
                           setFormData({ ...formData, name: e.target.value });
                           if (errors.name) setErrors({ ...errors, name: '' });
                         }}
+                        aria-invalid={!!errors.name}
+                        aria-describedby={errors.name ? 'contact-name-error' : undefined}
                         className={`input-premium w-full px-4 py-3 bg-neutral-900 border ${errors.name ? 'border-red-400/50' : 'border-white/10'} focus:border-white/30 transition-colors outline-none`}
                         placeholder="Your name"
                       />
-                      {errors.name && <p className="text-red-400/70 text-xs mt-1">{errors.name}</p>}
+                      {errors.name && <p id="contact-name-error" className="text-red-400/70 text-xs mt-1" role="alert">{errors.name}</p>}
                     </div>
 
                     <div>
@@ -205,10 +207,12 @@ export default function ContactPage() {
                           setFormData({ ...formData, email: e.target.value });
                           if (errors.email) setErrors({ ...errors, email: '' });
                         }}
+                        aria-invalid={!!errors.email}
+                        aria-describedby={errors.email ? 'contact-email-error' : undefined}
                         className={`input-premium w-full px-4 py-3 bg-neutral-900 border ${errors.email ? 'border-red-400/50' : 'border-white/10'} focus:border-white/30 transition-colors outline-none`}
                         placeholder="you@example.com"
                       />
-                      {errors.email && <p className="text-red-400/70 text-xs mt-1">{errors.email}</p>}
+                      {errors.email && <p id="contact-email-error" className="text-red-400/70 text-xs mt-1" role="alert">{errors.email}</p>}
                     </div>
 
                     <div>
@@ -242,10 +246,12 @@ export default function ContactPage() {
                           if (errors.message) setErrors({ ...errors, message: '' });
                         }}
                         rows={6}
+                        aria-invalid={!!errors.message}
+                        aria-describedby={errors.message ? 'contact-message-error' : undefined}
                         className={`input-premium w-full px-4 py-3 bg-neutral-900 border ${errors.message ? 'border-red-400/50' : 'border-white/10'} focus:border-white/30 transition-colors outline-none resize-none`}
                         placeholder="How can we help? (minimum 10 characters)"
                       />
-                      {errors.message && <p className="text-red-400/70 text-xs mt-1">{errors.message}</p>}
+                      {errors.message && <p id="contact-message-error" className="text-red-400/70 text-xs mt-1" role="alert">{errors.message}</p>}
                     </div>
 
                     {status === 'error' && (

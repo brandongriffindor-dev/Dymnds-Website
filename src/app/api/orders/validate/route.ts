@@ -65,11 +65,14 @@ export async function POST(request: Request) {
       available: false,
     }));
 
-    return NextResponse.json({
-      success: true,
-      valid: result.valid,
-      errors: sanitizedErrors,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        valid: result.valid,
+        errors: sanitizedErrors,
+      },
+      { headers: { 'Cache-Control': 'private, no-store' } }
+    );
   } catch (error) {
     logger.error('Orders validate API error', { route: '/api/orders/validate' }, error);
     return NextResponse.json(

@@ -31,13 +31,42 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
-  // Close on Escape
+  // Close on Escape + focus trap
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === 'Escape') onClose();
+
+      // Focus trap
+      if (e.key === 'Tab' && drawerRef.current) {
+        const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button, input, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    // Focus close button on open
+    const timer = setTimeout(() => {
+      drawerRef.current?.querySelector<HTMLElement>('button')?.focus();
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   return (
@@ -53,6 +82,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       {/* Drawer */}
       <div
         ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Shopping cart"
         className={`fixed top-0 right-0 h-full w-full max-w-md bg-neutral-950 border-l border-white/10 z-[70] transition-transform duration-300 ease-out flex flex-col ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
@@ -62,7 +94,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
           <div className="flex items-center gap-3">
             <ShoppingBag className="w-5 h-5" />
-            <h2 className="text-lg font-bebas tracking-wider">Your Cart ({totalItems})</h2>
+            <h2 className="text-lg font-bebas tracking-wider">Your Cart (<span aria-live="polite" aria-atomic="true">{totalItems}</span>)</h2>
           </div>
           <button
             onClick={onClose}
