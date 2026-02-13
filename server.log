@@ -110,3 +110,6 @@ This typically indicates that your device does not have a healthy Internet conne
  GET / 200 in 599ms (compile: 187ms, proxy.ts: 70ms, render: 342ms)
 [2026-02-13T09:02:53.708Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x4414a110 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
  GET / 200 in 215ms (compile: 14ms, proxy.ts: 70ms, render: 131ms)
+[2026-02-13T10:02:53.820Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x4414a111 error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
+[2026-02-13T10:02:54.052Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x4414a112 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+ GET / 200 in 254ms (compile: 6ms, proxy.ts: 3ms, render: 245ms)
