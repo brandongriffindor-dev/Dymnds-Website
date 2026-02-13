@@ -7,6 +7,7 @@ import { logAdminActionServer } from '@/lib/audit-log-server';
 import { validateCSRF } from '@/lib/csrf';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import { sanitizeEmail } from '@/lib/sanitize';
+import { STRIPE_API_VERSION } from '@/lib/constants';
 
 // Lazy-initialized Stripe client — avoids crash at module load if key is missing
 let _stripe: Stripe | null = null;
@@ -19,7 +20,7 @@ function getStripe(): Stripe {
       'Set it in Vercel Dashboard > Settings > Environment Variables (Production only).'
     );
   }
-  _stripe = new Stripe(key, { apiVersion: '2026-01-28.clover' });
+  _stripe = new Stripe(key, { apiVersion: STRIPE_API_VERSION });
   return _stripe;
 }
 

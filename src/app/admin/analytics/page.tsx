@@ -238,7 +238,7 @@ export default function AnalyticsPage() {
           <p className="text-white/25 text-sm text-center py-6">No category data available</p>
         ) : (
           <div className="space-y-4">
-            {Object.entries(salesByCategory).map(([category, count]) => {
+            {Object.entries(salesByCategory).sort(([, a], [, b]) => b - a).map(([category, count]) => {
               const percentage =
                 filteredOrders.length > 0
                   ? (count / filteredOrders.length) * 100

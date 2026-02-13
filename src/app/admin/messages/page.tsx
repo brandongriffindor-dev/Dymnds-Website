@@ -9,7 +9,6 @@ import {
   orderBy,
   doc,
   updateDoc,
-  deleteDoc,
   writeBatch,
   Timestamp,
 } from 'firebase/firestore';
@@ -90,7 +89,9 @@ export default function AdminMessagesPage() {
       try {
         const q = query(collection(db, 'contact_messages'), orderBy('timestamp', 'desc'));
         const snap = await getDocs(q);
-        const data = snap.docs.map((d) => {
+        const data = snap.docs
+          .filter((d) => d.data().is_deleted !== true)
+          .map((d) => {
           const raw = d.data();
           let ts = '';
           if (raw.timestamp instanceof Timestamp) {
@@ -152,11 +153,14 @@ export default function AdminMessagesPage() {
     setActionLoading(false);
   };
 
-  // Delete single message
+  // Soft-delete single message
   const deleteMessage = async (id: string) => {
     setActionLoading(true);
     try {
-      await deleteDoc(doc(db, 'contact_messages', id));
+      await updateDoc(doc(db, 'contact_messages', id), {
+        is_deleted: true,
+        deleted_at: new Date().toISOString(),
+      });
       logAdminAction('message_deleted', { messageId: id }, getAdminEmail());
       setMessages((prev) => prev.filter((m) => m.id !== id));
       if (expandedId === id) setExpandedId(null);
@@ -184,13 +188,17 @@ export default function AdminMessagesPage() {
     setActionLoading(false);
   };
 
-  // Bulk delete selected
+  // Bulk soft-delete selected
   const bulkDelete = async () => {
     setActionLoading(true);
     try {
       const batch = writeBatch(db);
+      const now = new Date().toISOString();
       selectedIds.forEach((id) => {
-        batch.delete(doc(db, 'contact_messages', id));
+        batch.update(doc(db, 'contact_messages', id), {
+          is_deleted: true,
+          deleted_at: now,
+        });
       });
       await batch.commit();
       logAdminAction('bulk_delete', { type: 'messages', count: selectedIds.size }, getAdminEmail());

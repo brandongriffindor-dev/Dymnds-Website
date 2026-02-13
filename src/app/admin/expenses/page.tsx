@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 interface Order {
   id: string;
   created_at: string;
-  total: number;
+  total_amount: number;
 }
 
 interface Expense {
@@ -127,7 +127,7 @@ export default function ExpensesPage() {
   const filteredOrders = getFilteredOrders();
   const filteredExpenses = getFilteredExpenses();
 
-  const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+  const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
   const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   const netIncome = totalRevenue - totalExpenses;
   const impactFund = totalRevenue * 0.1;
@@ -150,7 +150,7 @@ export default function ExpensesPage() {
           margin: 0,
         };
       }
-      dailyMap[dateStr].revenue += order.total || 0;
+      dailyMap[dateStr].revenue += order.total_amount || 0;
     });
 
     filteredExpenses.forEach((expense) => {
@@ -197,7 +197,7 @@ export default function ExpensesPage() {
           margin: 0,
         };
       }
-      monthlyMap[monthStr].revenue += order.total || 0;
+      monthlyMap[monthStr].revenue += order.total_amount || 0;
     });
 
     filteredExpenses.forEach((expense) => {
@@ -293,7 +293,7 @@ export default function ExpensesPage() {
       return expenseDate >= yearStart;
     });
 
-    const ytdRevenue = ytdOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const ytdRevenue = ytdOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
     const ytdExpensesTotal = ytdExpenses.reduce((sum, exp) => sum + exp.amount, 0);
     const ytdGST = ytdExpenses
       .filter((exp) => exp.gst_applied)

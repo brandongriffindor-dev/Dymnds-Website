@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { getAdminDb, FieldValue } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { logAdminActionServer } from '@/lib/audit-log-server';
-import { SIZES } from '@/lib/constants';
+import { SIZES, STRIPE_API_VERSION } from '@/lib/constants';
 import type { StockRecord } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -19,7 +19,7 @@ function getStripe(): Stripe {
       'Set it in Vercel Dashboard > Settings > Environment Variables (Production only).'
     );
   }
-  _stripe = new Stripe(key, { apiVersion: '2026-01-28.clover' });
+  _stripe = new Stripe(key, { apiVersion: STRIPE_API_VERSION });
   return _stripe;
 }
 
@@ -195,7 +195,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         : {},
       subtotal: subtotalDollars,
       discount: discountDollars,
-      total: totalDollars,
+      total_amount: totalDollars,
       donation: totalDollars * 0.10,
       status: 'pending',
       payment_status: 'paid',

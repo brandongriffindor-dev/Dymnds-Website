@@ -207,7 +207,7 @@ export default function ProductClient({ product, initialReviews = [], initialMat
 
     addToCart({
       id: cartItemId,
-      name: product.title,
+      title: product.title,
       price: Number(product.price),
       quantity: 1,
       size: state.selectedSize,

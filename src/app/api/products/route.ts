@@ -24,8 +24,9 @@ export async function GET(request: Request) {
     const newArrival = searchParams.get('newArrival');
     const bestSeller = searchParams.get('bestSeller');
     const slug = searchParams.get('slug');
+    const parsedLimit = parseInt(searchParams.get('limit') || '50', 10);
     const maxResults = Math.min(
-      parseInt(searchParams.get('limit') || '50', 10),
+      Number.isNaN(parsedLimit) ? 50 : parsedLimit,
       100
     );
 

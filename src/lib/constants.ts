@@ -49,3 +49,6 @@ export type ShippingCountry = (typeof SHIPPING_COUNTRIES)[number];
 
 // ─── Donation Rate ──────────────────────────────────────────────
 export const DONATION_RATE = 0.10;
+
+// ─── Stripe ────────────────────────────────────────────────────
+export const STRIPE_API_VERSION = '2026-01-28.clover' as const;

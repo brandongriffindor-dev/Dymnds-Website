@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { X, ShoppingBag, Minus, Plus, Trash2 } from 'lucide-react';
 import { useCartItems, useTotalItems, useSubtotal, useCartStore } from '@/lib/stores/cart-store';
-import { useCurrency, convertPrice, formatPrice } from '@/lib/stores/currency-store';
+import { useCurrency, useCurrencyStore, convertPrice, formatPrice } from '@/lib/stores/currency-store';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -19,6 +19,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const removeFromCart = useCartStore(s => s.removeFromCart);
   const updateQuantity = useCartStore(s => s.updateQuantity);
   const currency = useCurrency();
+  const rate = useCurrencyStore(s => s.rate);
   const drawerRef = useRef<HTMLDivElement>(null);
 
   // Lock body scroll when open
@@ -131,7 +132,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   {/* Image */}
                   <div className="relative w-20 h-24 bg-neutral-900 overflow-hidden flex-shrink-0">
                     {item.image ? (
-                      <Image src={item.image} alt={item.name} fill className="object-cover" sizes="80px" />
+                      <Image src={item.image} alt={item.title} fill className="object-cover" sizes="80px" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Image src="/diamond-white.png" alt="" width={24} height={24} className="opacity-20" />
@@ -141,20 +142,21 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                   {/* Details */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium truncate">{item.name}</h3>
+                    <h3 className="text-sm font-medium truncate">{item.title}</h3>
                     <p className="text-xs text-white/30 mt-0.5">
                       Size: {item.size}{item.color ? ` / ${item.color}` : ''}
                     </p>
                     <p className="text-sm mt-1 text-[var(--accent)]">
-                      {formatPrice(convertPrice(item.price, currency), currency)}
+                      {formatPrice(convertPrice(item.price, currency, rate), currency)}
                     </p>
 
                     {/* Quantity controls */}
                     <div className="flex items-center justify-between mt-2.5">
                       <div className="flex items-center gap-1.5">
                         <button
-                          onClick={() => updateQuantity(item.id, item.size, item.quantity - 1, item.color)}
-                          className="w-7 h-7 flex items-center justify-center border border-white/[0.08] hover:border-white/20 transition-colors duration-300"
+                          onClick={() => updateQuantity(item.id, item.size, Math.max(1, item.quantity - 1), item.color)}
+                          disabled={item.quantity <= 1}
+                          className="w-7 h-7 flex items-center justify-center border border-white/[0.08] hover:border-white/20 transition-colors duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
                           aria-label="Decrease quantity"
                         >
                           <Minus className="w-3 h-3" />
@@ -196,7 +198,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <div className="flex items-center justify-between">
               <span className="text-sm text-white/50">Subtotal</span>
               <span className="text-lg font-bebas tracking-wide">
-                {formatPrice(convertPrice(subtotal, currency), currency)}
+                {formatPrice(convertPrice(subtotal, currency, rate), currency)}
               </span>
             </div>
 

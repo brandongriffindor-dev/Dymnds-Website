@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollReveal from '@/components/ScrollReveal';
 import { useCartItems, useSubtotal, useDonation, useCartStore } from '@/lib/stores/cart-store';
-import { useCurrency, convertPrice, formatPrice } from '@/lib/stores/currency-store';
+import { useCurrency, convertPrice, formatPrice, useCurrencyStore } from '@/lib/stores/currency-store';
 import { getCSRFToken } from '@/lib/get-csrf-token';
 import { useState } from 'react';
 import { Minus, Plus, Trash2, ShoppingBag, Truck } from 'lucide-react';
@@ -16,6 +16,7 @@ export default function CartPage() {
   const subtotal = useSubtotal();
   const donation = useDonation();
   const currency = useCurrency();
+  const rate = useCurrencyStore(s => s.rate);
   const removeFromCart = useCartStore(s => s.removeFromCart);
   const updateQuantity = useCartStore(s => s.updateQuantity);
   const clearCart = useCartStore(s => s.clearCart);
@@ -26,7 +27,7 @@ export default function CartPage() {
   const total = subtotal + shipping;
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const fmt = (cad: number) => formatPrice(convertPrice(cad, currency), currency);
+  const fmt = (cad: number) => formatPrice(convertPrice(cad, currency, rate), currency);
 
   const handleCheckout = async () => {
     setCheckoutLoading(true);
@@ -134,7 +135,7 @@ export default function CartPage() {
                           {item.image ? (
                             <Image
                               src={item.image}
-                              alt={item.name}
+                              alt={item.title}
                               fill
                               className="object-cover"
                               sizes="112px"
@@ -154,7 +155,7 @@ export default function CartPage() {
                         <div className="flex-1 flex flex-col justify-between min-w-0">
                           <div>
                             <h3 className="font-bebas text-lg uppercase tracking-wide mb-1.5 truncate">
-                              {item.name}
+                              {item.title}
                             </h3>
                             <div className="flex gap-3 text-[10px] text-white/35 uppercase tracking-[0.2em] mb-2">
                               {item.size && <span>Size: {item.size}</span>}

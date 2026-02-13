@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextResponse } from 'next/server';
 import { withProtection } from '@/lib/with-protection';
 
 vi.mock('@/lib/csrf', () => ({
@@ -39,7 +40,7 @@ describe('withProtection', () => {
   });
 
   it('calls handler when CSRF valid and rate limit allowed', async () => {
-    const mockHandler = vi.fn(async () => new Response('success'));
+    const mockHandler = vi.fn(async () => NextResponse.json({ success: true }));
     (validateCSRF as any).mockResolvedValue({ valid: true });
     (rateLimit as any).mockResolvedValue({
       allowed: true,
@@ -48,7 +49,7 @@ describe('withProtection', () => {
     });
 
     const handler = withProtection(
-      { rateLimitKey: 'api' },
+      { rateLimitKey: 'api' as any },
       mockHandler
     );
     const request = new Request('http://localhost/api/test', {
@@ -73,7 +74,7 @@ describe('withProtection', () => {
 
     const mockHandler = vi.fn();
     const handler = withProtection(
-      { rateLimitKey: 'api' },
+      { rateLimitKey: 'api' as any },
       mockHandler
     );
     const request = new Request('http://localhost/api/test', {
@@ -96,7 +97,7 @@ describe('withProtection', () => {
 
     const mockHandler = vi.fn();
     const handler = withProtection(
-      { rateLimitKey: 'api' },
+      { rateLimitKey: 'api' as any },
       mockHandler
     );
     const request = new Request('http://localhost/api/test', {
@@ -120,7 +121,7 @@ describe('withProtection', () => {
 
     const mockHandler = vi.fn();
     const handler = withProtection(
-      { rateLimitKey: 'api' },
+      { rateLimitKey: 'api' as any },
       mockHandler
     );
     const request = new Request('http://localhost/api/test', {
@@ -143,7 +144,7 @@ describe('withProtection', () => {
 
     const mockHandler = vi.fn();
     const handler = withProtection(
-      { rateLimitKey: 'api' },
+      { rateLimitKey: 'api' as any },
       mockHandler
     );
     const request = new Request('http://localhost/api/test', {
@@ -163,9 +164,9 @@ describe('withProtection', () => {
       limit: 100,
     });
 
-    const mockHandler = vi.fn(async () => new Response('success'));
+    const mockHandler = vi.fn(async () => NextResponse.json({ success: true }));
     const handler = withProtection(
-      { rateLimitKey: 'api', skipCSRF: true },
+      { rateLimitKey: 'api' as any, skipCSRF: true },
       mockHandler
     );
     const request = new Request('http://localhost/api/test', {
@@ -186,16 +187,16 @@ describe('withProtection', () => {
       limit: 100,
     });
 
-    const mockHandler = vi.fn(async (request, context) => {
+    const mockHandler = vi.fn(async (request: any, context: any) => {
       expect(context.ip).toBeTruthy();
       expect(context.rateLimit).toBeTruthy();
       expect(context.rateLimit.remaining).toBe(99);
       expect(context.rateLimit.limit).toBe(100);
-      return new Response('success');
+      return NextResponse.json({ success: true });
     });
 
     const handler = withProtection(
-      { rateLimitKey: 'api' },
+      { rateLimitKey: 'api' as any },
       mockHandler
     );
     const request = new Request('http://localhost/api/test', {
@@ -223,7 +224,7 @@ describe('withProtection', () => {
     });
 
     const handler = withProtection(
-      { rateLimitKey: 'api' },
+      { rateLimitKey: 'api' as any },
       mockHandler
     );
     const request = new Request('http://localhost/api/test', {
@@ -243,9 +244,9 @@ describe('withProtection', () => {
       limit: 100,
     });
 
-    const mockHandler = vi.fn(async () => new Response('success'));
+    const mockHandler = vi.fn(async () => NextResponse.json({ success: true }));
     const handler = withProtection(
-      { rateLimitKey: 'checkout' },
+      { rateLimitKey: 'checkout' as any },
       mockHandler
     );
     const request = new Request('http://localhost/api/test', {

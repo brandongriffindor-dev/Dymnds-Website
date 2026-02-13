@@ -101,7 +101,7 @@ const createMockDb = () => {
       where: vi.fn((field: string, operator: string, value: any) => ({
         limit: vi.fn((count: number) => ({
           get: vi.fn(async () => {
-            const entries = Array.from(mockCollections[name]?.entries() || []);
+            const entries: [string, any][] = Array.from(mockCollections[name]?.entries() || []);
             const docs = entries
               .filter(([, doc]: [string, any]) => {
                 if (operator === '==') return doc[field] === value;
@@ -147,15 +147,15 @@ const createMockDb = () => {
               if (found) {
                 return {
                   exists: true,
-                  data: () => found,
+                  data: (): any => found,
                   id: ref.id,
                   ref,
                 };
               }
             }
-            return { exists: false, data: () => undefined, id: ref.id, ref };
+            return { exists: false, data: (): any => undefined, id: ref.id, ref };
           }
-          return { exists: false, data: () => undefined };
+          return { exists: false, data: (): any => undefined };
         }),
         set: vi.fn(async (ref: any, data: any) => {
           const docId = ref.id || `doc-${Math.random().toString(36).substr(2, 9)}`;

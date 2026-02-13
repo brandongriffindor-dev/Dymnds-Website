@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useCartStore, useTotalItems, useSubtotal, useDonation } from '@/lib/stores/cart-store';
-import type { CartItem } from '@/lib/types';
+import type { CartItem } from '@/lib/stores/cart-store';
 
 // Mock localStorage
 const localStorageMock = {
@@ -25,7 +25,7 @@ describe('cart-store.ts', () => {
     it('adds a new item to empty cart', () => {
       const item: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 1,
         size: 'M',
@@ -43,7 +43,7 @@ describe('cart-store.ts', () => {
     it('merges quantity when same id+size+color already exists', () => {
       const item1: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -52,7 +52,7 @@ describe('cart-store.ts', () => {
 
       const item2: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 3,
         size: 'M',
@@ -70,7 +70,7 @@ describe('cart-store.ts', () => {
     it('adds separately when same id but different size', () => {
       const item1: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -79,7 +79,7 @@ describe('cart-store.ts', () => {
 
       const item2: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 3,
         size: 'L',
@@ -96,7 +96,7 @@ describe('cart-store.ts', () => {
     it('adds separately when same id+size but different color', () => {
       const item1: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -105,7 +105,7 @@ describe('cart-store.ts', () => {
 
       const item2: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 3,
         size: 'M',
@@ -122,7 +122,7 @@ describe('cart-store.ts', () => {
     it('opens cart drawer when adding item', () => {
       const item: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 1,
         size: 'M',
@@ -139,7 +139,7 @@ describe('cart-store.ts', () => {
     it('removes the correct item by composite key', () => {
       const item1: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -148,7 +148,7 @@ describe('cart-store.ts', () => {
 
       const item2: CartItem = {
         id: 'product2',
-        name: 'Another Product',
+        title: 'Another Product',
         price: 50,
         quantity: 1,
         size: 'L',
@@ -168,7 +168,7 @@ describe('cart-store.ts', () => {
     it('does nothing when item not found', () => {
       const item: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -188,7 +188,7 @@ describe('cart-store.ts', () => {
     it('updates quantity for correct item', () => {
       const item: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -205,7 +205,7 @@ describe('cart-store.ts', () => {
     it('removes item when quantity is 0', () => {
       const item: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -222,7 +222,7 @@ describe('cart-store.ts', () => {
     it('removes item when quantity is negative', () => {
       const item: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -241,7 +241,7 @@ describe('cart-store.ts', () => {
     it('empties the cart array', () => {
       const item1: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -249,7 +249,7 @@ describe('cart-store.ts', () => {
 
       const item2: CartItem = {
         id: 'product2',
-        name: 'Another Product',
+        title: 'Another Product',
         price: 50,
         quantity: 1,
         size: 'L',
@@ -286,7 +286,7 @@ describe('cart-store.ts', () => {
     it('Subtotal calculates correctly: sum of (price * quantity) for all items', () => {
       const item1: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -294,7 +294,7 @@ describe('cart-store.ts', () => {
 
       const item2: CartItem = {
         id: 'product2',
-        name: 'Another Product',
+        title: 'Another Product',
         price: 50,
         quantity: 3,
         size: 'L',
@@ -312,7 +312,7 @@ describe('cart-store.ts', () => {
     it('TotalItems calculates correctly: sum of quantities', () => {
       const item1: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -320,7 +320,7 @@ describe('cart-store.ts', () => {
 
       const item2: CartItem = {
         id: 'product2',
-        name: 'Another Product',
+        title: 'Another Product',
         price: 50,
         quantity: 3,
         size: 'L',
@@ -338,7 +338,7 @@ describe('cart-store.ts', () => {
     it('Donation is 10% of subtotal', () => {
       const item1: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 2,
         size: 'M',
@@ -346,7 +346,7 @@ describe('cart-store.ts', () => {
 
       const item2: CartItem = {
         id: 'product2',
-        name: 'Another Product',
+        title: 'Another Product',
         price: 50,
         quantity: 3,
         size: 'L',
@@ -367,7 +367,7 @@ describe('cart-store.ts', () => {
     it('localStorage.setItem is called when cart changes', () => {
       const item: CartItem = {
         id: 'product1',
-        name: 'Test Product',
+        title: 'Test Product',
         price: 100,
         quantity: 1,
         size: 'M',

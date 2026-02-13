@@ -12,7 +12,7 @@
 import { escapeHtml } from '@/lib/sanitize';
 
 interface OrderItem {
-  name: string;
+  title: string;
   size: string;
   color?: string;
   quantity: number;
@@ -56,7 +56,7 @@ export function orderConfirmationEmail(data: OrderEmailData): string {
   const itemsHtml = data.items.map(item => `
     <tr>
       <td style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); color: #fff;">
-        ${escapeHtml(item.name)} — ${escapeHtml(item.size)}${item.color ? ` / ${escapeHtml(item.color)}` : ''} × ${item.quantity}
+        ${escapeHtml(item.title)} — ${escapeHtml(item.size)}${item.color ? ` / ${escapeHtml(item.color)}` : ''} × ${item.quantity}
       </td>
       <td style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: right; color: rgba(255,255,255,0.6);">
         $${(item.price * item.quantity).toFixed(2)}

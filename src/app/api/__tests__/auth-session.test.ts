@@ -7,7 +7,7 @@ vi.mock('@/lib/csrf', () => ({
 }));
 
 vi.mock('@/lib/rate-limit', () => ({
-  rateLimit: vi.fn(() => Promise.resolve({ allowed: true })),
+  rateLimit: vi.fn(() => Promise.resolve({ allowed: true, limit: 10, remaining: 9, resetAt: Date.now() + 60000 })),
   getClientIP: vi.fn(() => '192.168.1.1'),
 }));
 
@@ -59,7 +59,7 @@ describe('auth/session route', () => {
     const { cookies } = await import('next/headers');
 
     vi.mocked(validateCSRF).mockResolvedValue({ valid: true });
-    vi.mocked(rateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(rateLimit).mockResolvedValue({ allowed: true, limit: 10, remaining: 9, resetAt: Date.now() + 60000 });
     vi.mocked(getAuth).mockReturnValue({
       verifyIdToken: vi.fn(() =>
         Promise.resolve({ uid: 'admin-uid', email: 'admin@test.com' })
@@ -109,7 +109,7 @@ describe('auth/session route', () => {
 
     it('returns 429 when rate limited', async () => {
       const { rateLimit } = await import('@/lib/rate-limit');
-      vi.mocked(rateLimit).mockResolvedValueOnce({ allowed: false });
+      vi.mocked(rateLimit).mockResolvedValueOnce({ allowed: false, limit: 10, remaining: 0, resetAt: Date.now() + 60000 });
 
       const request = new Request('http://localhost:3000/api/auth/session', {
         method: 'POST',

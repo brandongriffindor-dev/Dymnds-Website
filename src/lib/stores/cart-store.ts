@@ -4,7 +4,7 @@ import { create } from 'zustand';
 
 export interface CartItem {
   id: string;
-  name: string;
+  title: string;
   price: number;
   quantity: number;
   size: string;

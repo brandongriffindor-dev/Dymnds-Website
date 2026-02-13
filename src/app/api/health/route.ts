@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
+import { STRIPE_API_VERSION } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
   if (process.env.STRIPE_SECRET_KEY) {
     try {
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2026-01-28.clover',
+        apiVersion: STRIPE_API_VERSION,
       });
       await stripe.balance.retrieve();
       checks.stripe = true;

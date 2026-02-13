@@ -371,7 +371,7 @@ export async function POST(request: Request) {
           shipping_address: sanitizedAddress,
           subtotal: serverTotal,
           discount: discountAmount,
-          total,
+          total_amount: total,
           donation: total * 0.10,
           status: 'pending',
           payment_status: 'pending',
@@ -417,18 +417,18 @@ export async function POST(request: Request) {
       );
     }
 
-    logger.info('Order created', { orderId: createdOrderId, total, ip });
+    logger.info('Order created', { orderId: createdOrderId, total_amount: total, ip });
 
     // SEC-009: Server-side audit log (tamper-resistant via Admin SDK)
     logAdminActionServer('order_created_server', {
       orderId: createdOrderId,
       itemCount: items.length,
-      total,
+      total_amount: total,
       ip,
     }).catch(() => {}); // Fire and forget — don't block response
 
     return NextResponse.json(
-      { success: true, orderId: createdOrderId, total },
+      { success: true, orderId: createdOrderId, total_amount: total },
       { status: 201 }
     );
   } catch (error) {

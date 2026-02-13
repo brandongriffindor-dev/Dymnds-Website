@@ -44,7 +44,7 @@ export async function fetchProducts(options: FetchProductsOptions = {}): Promise
 
     return snapshot.docs
       .map(doc => safeParseProduct({ id: doc.id, ...doc.data() }))
-      .filter((p): p is ValidatedProduct => p !== null);
+      .filter((p): p is ValidatedProduct => p !== null && !p.is_deleted);
   } catch {
     // Fallback: if composite index isn't built, fetch without orderBy
     try {

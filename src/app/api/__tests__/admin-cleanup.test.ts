@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET, POST } from '../../api/admin/cleanup/route';
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import type { DecodedIdToken } from 'firebase-admin/auth';
 
 // Mock modules
 vi.mock('@/lib/admin-auth', () => ({
@@ -12,7 +13,7 @@ vi.mock('@/lib/admin-auth', () => ({
         uid: 'admin-1',
         email: 'admin@test.com',
         role: 'super_admin',
-        decodedToken: {},
+        decodedToken: {} as DecodedIdToken,
       },
       null,
     ])
@@ -21,16 +22,16 @@ vi.mock('@/lib/admin-auth', () => ({
 
 vi.mock('@/lib/cleanup', () => ({
   findOrphanedCustomerNotes: vi.fn(() =>
-    Promise.resolve({ count: 0, items: [] })
+    Promise.resolve({ count: 0, emails: [] })
   ),
   purgeStaleWaitlistEntries: vi.fn(() =>
-    Promise.resolve({ count: 0, items: [] })
+    Promise.resolve({ count: 0, emails: [] })
   ),
   findOrdersWithoutProductRef: vi.fn(() =>
-    Promise.resolve({ count: 0, items: [] })
+    Promise.resolve({ count: 0, orderIds: [] })
   ),
   cleanupSoftDeletedRecords: vi.fn(() =>
-    Promise.resolve({ count: 0, items: [] })
+    Promise.resolve({ count: 0, ids: [] })
   ),
 }));
 
@@ -57,7 +58,7 @@ describe('admin/cleanup route', () => {
           uid: 'admin-1',
           email: 'admin@test.com',
           role: 'super_admin',
-          decodedToken: {},
+          decodedToken: {} as DecodedIdToken,
         },
         null,
       ]);
@@ -103,26 +104,26 @@ describe('admin/cleanup route', () => {
           uid: 'admin-1',
           email: 'admin@test.com',
           role: 'super_admin',
-          decodedToken: {},
+          decodedToken: {} as DecodedIdToken,
         },
         null,
       ]);
 
       vi.mocked(findOrphanedCustomerNotes).mockResolvedValue({
         count: 2,
-        items: [],
+        emails: [],
       });
       vi.mocked(purgeStaleWaitlistEntries).mockResolvedValue({
         count: 5,
-        items: [],
+        emails: [],
       });
       vi.mocked(findOrdersWithoutProductRef).mockResolvedValue({
         count: 1,
-        items: [],
+        orderIds: [],
       });
       vi.mocked(cleanupSoftDeletedRecords).mockResolvedValue({
         count: 3,
-        items: [],
+        ids: [],
       });
 
       const request = new NextRequest(new URL('http://localhost:3000/api/admin/cleanup'));
@@ -160,15 +161,15 @@ describe('admin/cleanup route', () => {
           uid: 'admin-1',
           email: 'admin@test.com',
           role: 'super_admin',
-          decodedToken: {},
+          decodedToken: {} as DecodedIdToken,
         },
         null,
       ]);
 
-      vi.mocked(findOrphanedCustomerNotes).mockResolvedValue({ count: 0, items: [] });
-      vi.mocked(purgeStaleWaitlistEntries).mockResolvedValue({ count: 0, items: [] });
-      vi.mocked(findOrdersWithoutProductRef).mockResolvedValue({ count: 0, items: [] });
-      vi.mocked(cleanupSoftDeletedRecords).mockResolvedValue({ count: 0, items: [] });
+      vi.mocked(findOrphanedCustomerNotes).mockResolvedValue({ count: 0, emails: [] });
+      vi.mocked(purgeStaleWaitlistEntries).mockResolvedValue({ count: 0, emails: [] });
+      vi.mocked(findOrdersWithoutProductRef).mockResolvedValue({ count: 0, orderIds: [] });
+      vi.mocked(cleanupSoftDeletedRecords).mockResolvedValue({ count: 0, ids: [] });
 
       const request = new NextRequest(new URL('http://localhost:3000/api/admin/cleanup'));
 
@@ -200,7 +201,7 @@ describe('admin/cleanup route', () => {
           uid: 'admin-1',
           email: 'admin@test.com',
           role: 'super_admin',
-          decodedToken: {},
+          decodedToken: {} as DecodedIdToken,
         },
         null,
       ]);

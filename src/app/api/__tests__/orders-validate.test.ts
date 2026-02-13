@@ -81,7 +81,7 @@ describe('orders/validate route', () => {
             available: false,
             stockCount: 5,
             message: 'Only 5 left in stock',
-          },
+          } as any,
         ],
       });
 
@@ -123,7 +123,7 @@ describe('orders/validate route', () => {
             available: false,
             stockCount: 5,
             message: 'Only 5 left in stock',
-          },
+          } as any,
         ],
       });
 
