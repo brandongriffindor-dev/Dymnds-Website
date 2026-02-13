@@ -175,3 +175,5 @@ This typically indicates that your device does not have a healthy Internet conne
 This typically indicates that your device does not have a healthy Internet connection at the moment. The client will operate in offline mode until it is able to successfully connect to the backend.
  GET / 200 in 627ms (compile: 151ms, proxy.ts: 10ms, render: 465ms)
 [2026-02-13T21:02:53.334Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x1b65fd2e error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
+[2026-02-13T22:02:51.666Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x312b459b error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+ GET / 200 in 118ms (compile: 6ms, proxy.ts: 4ms, render: 108ms)
