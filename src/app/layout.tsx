@@ -25,14 +25,14 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "DYMNDS | Premium Athletic Wear — Pressure Creates Diamonds",
+    default: "DYMNDS | Premium Athletic Wear — Pressure Creates DYMNDS",
     template: "%s",
   },
   description: "DYMNDS — premium athletic wear built under pressure. Performance compression, training gear, and recovery layers for athletes who refuse to quit. 10% of every order funds survivor healing.",
   keywords: "athletic wear, fitness apparel, premium clothing, workout gear, activewear, DYMNDS",
   metadataBase: new URL('https://dymnds.ca'),
   openGraph: {
-    title: "DYMNDS — Pressure Creates Diamonds",
+    title: "DYMNDS — Pressure Creates DYMNDS",
     description: "Premium athletic wear. 10% of every order funds survivor healing.",
     siteName: "DYMNDS",
     type: "website",
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     site: "@dymnds",
-    title: "DYMNDS — Pressure Creates Diamonds",
+    title: "DYMNDS — Pressure Creates DYMNDS",
     description: "Premium athletic wear. 10% of every order funds survivor healing.",
     images: ["https://dymnds.ca/og-image.png"],
   },

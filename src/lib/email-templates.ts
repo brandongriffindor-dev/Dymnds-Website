@@ -109,7 +109,7 @@ export function orderConfirmationEmail(data: OrderEmailData): string {
     <p>We'll email you when your order ships. Usually 1-2 business days.</p>
   </div>
   <div class="footer">
-    <p>DYMNDS — Pressure Creates Diamonds</p>
+    <p>DYMNDS — Pressure Creates DYMNDS</p>
     <p><a href="https://dymnds.ca" style="color: rgba(255,255,255,0.4);">dymnds.ca</a></p>
   </div>
 </div>
@@ -141,7 +141,7 @@ export function shippingNotificationEmail(customerName: string, orderId: string,
     <p>Estimated delivery: 3-5 business days</p>
   </div>
   <div class="footer">
-    <p>DYMNDS — Pressure Creates Diamonds</p>
+    <p>DYMNDS — Pressure Creates DYMNDS</p>
   </div>
 </div>
 </body>
@@ -174,7 +174,7 @@ export function reviewRequestEmail(customerName: string, productName: string, pr
     </div>
   </div>
   <div class="footer">
-    <p>DYMNDS — Pressure Creates Diamonds</p>
+    <p>DYMNDS — Pressure Creates DYMNDS</p>
   </div>
 </div>
 </body>
@@ -203,7 +203,7 @@ export function thirtyDayCheckinEmail(customerName: string): string {
     </div>
   </div>
   <div class="footer">
-    <p>DYMNDS — Pressure Creates Diamonds</p>
+    <p>DYMNDS — Pressure Creates DYMNDS</p>
     <p style="margin-top: 12px;"><a href="https://dymnds.ca" style="color: rgba(255,255,255,0.4);">dymnds.ca</a> | <a href="mailto:support@dymnds.ca" style="color: rgba(255,255,255,0.4);">support@dymnds.ca</a></p>
   </div>
 </div>

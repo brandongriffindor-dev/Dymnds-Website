@@ -79,7 +79,7 @@ export default function AdminLoginForm({
           </button>
         </form>
 
-        <p className="text-center text-white/15 text-xs mt-8 tracking-widest uppercase">Pressure Creates Diamonds</p>
+        <p className="text-center text-white/15 text-xs mt-8 tracking-widest uppercase">Pressure Creates DYMNDS</p>
       </div>
     </div>
   );

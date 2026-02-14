@@ -312,11 +312,11 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
         >
           <div className="flex flex-col md:grid md:grid-cols-12 gap-8 md:gap-6 items-end">
             <div className="md:col-span-8 lg:col-span-9">
-              {['Pressure', 'Creates', 'Diamonds'].map((word, i) => (
+              {['Pressure', 'Creates', 'DYMNDS'].map((word, i) => (
                 <div key={word} className="overflow-hidden">
                   <motion.div
                     className={`font-bebas tracking-[-0.03em] leading-[0.85] ${
-                      word === 'Diamonds' ? 'text-accent-gradient' : 'text-white'
+                      word === 'DYMNDS' ? 'text-accent-gradient' : 'text-white'
                     }`}
                     style={{ fontSize: 'clamp(4.5rem, 18vw, 16rem)' }}
                     initial={{ y: '120%' }}
