@@ -230,3 +230,9 @@ This typically indicates that your device does not have a healthy Internet conne
  GET / 200 in 10.0s (compile: 6ms, proxy.ts: 3ms, render: 10.0s)
  GET / 200 in 5.2s (compile: 3ms, proxy.ts: 3ms, render: 5.1s)
 [2026-02-14T14:03:21.086Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x10269592 error. Code: 13 Message: 13 INTERNAL: Received RST_STREAM with code 2 triggered by internal client error: read EHOSTUNREACH
+[2026-02-14T15:03:21.314Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x10269593 error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
+[2026-02-14T15:12:35.583Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x10269594 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+ GET / 200 in 127ms (compile: 3ms, proxy.ts: 1693µs, render: 123ms)
+[2026-02-14T16:13:41.238Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x10269595 error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
+[2026-02-14T18:02:52.154Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x10269596 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+ GET / 200 in 303ms (compile: 4ms, proxy.ts: 2ms, render: 297ms)
