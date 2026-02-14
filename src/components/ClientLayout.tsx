@@ -135,7 +135,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 1.3 }}
               >
-                Pressure Creates Diamonds
+                Pressure Creates DYMNDS
               </motion.p>
             </div>
           </motion.div>

@@ -21,7 +21,7 @@ export default function FAQPage() {
     },
     {
       question: 'What sizes do you offer?',
-      answer: 'We offer sizes XS through XXL. Each product page has a detailed size guide and a "What&apos;s My Size?" calculator to help you find the perfect fit.',
+      answer: 'We offer sizes XS through XL. Each product page has a detailed size guide and a "What&apos;s My Size?" calculator to help you find the perfect fit.',
     },
     {
       question: 'How do I care for my DYMNDS gear?',

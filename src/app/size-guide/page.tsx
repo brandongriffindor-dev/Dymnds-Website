@@ -18,7 +18,6 @@ export default function SizeGuidePage() {
       { size: 'M', chest: '38-40"', waist: '32-34"', chestCm: '97-102 cm', waistCm: '81-86 cm' },
       { size: 'L', chest: '41-43"', waist: '35-37"', chestCm: '104-109 cm', waistCm: '89-94 cm' },
       { size: 'XL', chest: '44-46"', waist: '38-40"', chestCm: '112-117 cm', waistCm: '97-102 cm' },
-      { size: 'XXL', chest: '47-49"', waist: '41-43"', chestCm: '119-124 cm', waistCm: '104-109 cm' },
     ],
     bottoms: [
       { size: 'XS', waist: '26-28"', hip: '32-34"', waistCm: '66-71 cm', hipCm: '81-86 cm' },
@@ -26,7 +25,6 @@ export default function SizeGuidePage() {
       { size: 'M', waist: '32-34"', hip: '38-40"', waistCm: '81-86 cm', hipCm: '97-102 cm' },
       { size: 'L', waist: '35-37"', hip: '41-43"', waistCm: '89-94 cm', hipCm: '104-109 cm' },
       { size: 'XL', waist: '38-40"', hip: '44-46"', waistCm: '97-102 cm', hipCm: '112-117 cm' },
-      { size: 'XXL', waist: '41-43"', hip: '47-49"', waistCm: '104-109 cm', hipCm: '119-124 cm' },
     ],
   };
 

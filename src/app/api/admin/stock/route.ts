@@ -102,7 +102,7 @@ export async function PATCH(request: Request) {
           };
 
           // Phase 3: Recalculate total stock across all colors
-          const totalStock: StockRecord = { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+          const totalStock: StockRecord = { XS: 0, S: 0, M: 0, L: 0, XL: 0 };
           for (const color of updatedColors) {
             for (const sizeKey of SIZES) {
               totalStock[sizeKey as keyof StockRecord] += color.stock?.[sizeKey] || 0;

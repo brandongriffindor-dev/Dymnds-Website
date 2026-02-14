@@ -204,7 +204,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-8 border-t border-white/[0.04]">
           <div className="flex flex-col items-center md:items-start gap-3">
             <p className="font-bebas text-lg tracking-wider text-white/60">
-              Pressure Creates Diamonds
+              Pressure Creates DYMNDS
             </p>
             <p className="text-xs text-white/25">
               &copy; 2026 DYMNDS. All rights reserved.

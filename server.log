@@ -182,3 +182,7 @@ This typically indicates that your device does not have a healthy Internet conne
  GET / 200 in 145ms (compile: 5ms, proxy.ts: 4ms, render: 136ms)
 [2026-02-14T00:02:52.628Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x312b459e error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
  GET / 200 in 108ms (compile: 5ms, proxy.ts: 3ms, render: 100ms)
+✓ Compiled in 44ms
+✓ Compiled in 41ms
+✓ Compiled in 41ms
+✓ Compiled in 46ms

@@ -49,7 +49,7 @@ export default function ProductsPage() {
     title: '',
     subtitle: '',
     price: 0,
-    stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
+    stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0 },
     category: 'Men',
     productType: 'Tops',
     displayOrder: 1,
@@ -64,8 +64,8 @@ export default function ProductsPage() {
     returnsInfo: '30-day hassle-free returns. Items must be unworn with tags attached.',
     matchingSetSlug: '',
     sizeGuide: {
-      chest: { XS: '32-34"', S: '35-37"', M: '38-40"', L: '41-43"', XL: '44-46"', XXL: '47-49"' },
-      waist: { XS: '26-28"', S: '29-31"', M: '32-34"', L: '35-37"', XL: '38-40"', XXL: '41-43"' }
+      chest: { XS: '32-34"', S: '35-37"', M: '38-40"', L: '41-43"', XL: '44-46"' },
+      waist: { XS: '26-28"', S: '29-31"', M: '32-34"', L: '35-37"', XL: '38-40"' }
     },
     colors: [] as ProductColor[],
     imageUrl: '',
@@ -458,7 +458,7 @@ export default function ProductsPage() {
 
       if (colorsData) {
         productData.colors = colorsData;
-        const totalStock: StockRecord = { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+        const totalStock: StockRecord = { XS: 0, S: 0, M: 0, L: 0, XL: 0 };
 
         colorsData.forEach((c: ProductColor) => {
           SIZES.forEach(s => {
@@ -494,7 +494,7 @@ export default function ProductsPage() {
         title: '',
         subtitle: '',
         price: 0,
-        stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
+        stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0 },
         category: 'Men',
         productType: 'Tops',
         displayOrder: 1,
@@ -509,8 +509,8 @@ export default function ProductsPage() {
         returnsInfo: '30-day hassle-free returns. Items must be unworn with tags attached.',
         matchingSetSlug: '',
         sizeGuide: {
-          chest: { XS: '32-34"', S: '35-37"', M: '38-40"', L: '41-43"', XL: '44-46"', XXL: '47-49"' },
-          waist: { XS: '26-28"', S: '29-31"', M: '32-34"', L: '35-37"', XL: '38-40"', XXL: '41-43"' }
+          chest: { XS: '32-34"', S: '35-37"', M: '38-40"', L: '41-43"', XL: '44-46"' },
+          waist: { XS: '26-28"', S: '29-31"', M: '32-34"', L: '35-37"', XL: '38-40"' }
         },
         colors: [],
         imageUrl: '',
@@ -1347,7 +1347,7 @@ export default function ProductsPage() {
                             name: names[newProduct.colors.length] || `Color ${newProduct.colors.length + 1}`,
                             hex: '#000000',
                             images: [],
-                            stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 }
+                            stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0 }
                           }
                         ]
                       });

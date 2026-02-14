@@ -125,7 +125,7 @@ async function restoreStockOnCancel(
           }
 
           // Recalculate total stock across all colors
-          const totalStock: Record<string, number> = { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+          const totalStock: Record<string, number> = { XS: 0, S: 0, M: 0, L: 0, XL: 0 };
           for (const c of colors) {
             for (const s of SIZES) {
               totalStock[s] += c.stock[s] ?? 0;

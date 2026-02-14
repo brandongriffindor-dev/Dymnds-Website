@@ -26,8 +26,7 @@ export default function SizeCalculator({ sizeGuide, onClose }: SizeCalculatorPro
     else if (chestNum <= 37 || waistNum <= 31) size = 'S';
     else if (chestNum <= 40 || waistNum <= 34) size = 'M';
     else if (chestNum <= 43 || waistNum <= 37) size = 'L';
-    else if (chestNum <= 46 || waistNum <= 40) size = 'XL';
-    else size = 'XXL';
+    else size = 'XL';
 
     setRecommendedSize(size);
   };

@@ -95,7 +95,7 @@ function Marquee() {
             key={i}
             className="flex items-center gap-10 mx-10 font-bebas text-[22px] md:text-[28px] tracking-[0.25em] uppercase text-[var(--accent)]/30"
           >
-            <span>Pressure Creates Diamonds</span>
+            <span>Pressure Creates DYMNDS</span>
             <span className="text-[var(--accent)]/20">&#9670;</span>
             <span>Wear The Change</span>
             <span className="text-[var(--accent)]/20">&#9670;</span>
@@ -773,7 +773,7 @@ export default function HomeClient({ menFeatured, womenFeatured }: HomeClientPro
           >
             {[...Array(2)].map((_, setIdx) => (
               <div key={setIdx} className="flex items-center gap-0">
-                {['No Shortcuts', 'Real Impact', 'Zero Pretension', 'Built to Last', 'Pressure Creates Diamonds'].map((value, i) => (
+                {['No Shortcuts', 'Real Impact', 'Zero Pretension', 'Built to Last', 'Pressure Creates DYMNDS'].map((value, i) => (
                   <span
                     key={`${setIdx}-${i}`}
                     className="font-bebas text-white/[0.04] tracking-tight leading-none px-6 md:px-10 flex-shrink-0"

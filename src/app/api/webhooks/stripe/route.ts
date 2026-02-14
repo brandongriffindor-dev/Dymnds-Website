@@ -103,7 +103,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         }
 
         // Recalculate total stock across all colors
-        const totalStock: StockRecord = { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+        const totalStock: StockRecord = { XS: 0, S: 0, M: 0, L: 0, XL: 0 };
         for (const color of colors) {
           for (const size of SIZES) {
             totalStock[size] += color.stock[size] ?? 0;

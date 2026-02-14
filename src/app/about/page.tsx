@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollReveal from '@/components/ScrollReveal';
@@ -19,23 +20,20 @@ export default function AboutPage() {
     {
       title: 'Built Under Pressure',
       desc: 'Every product is engineered for those who face real challenges. Premium materials, thoughtful design, zero shortcuts. We don\'t cut corners because our community doesn\'t accept them.',
-      icon: '◆',
     },
     {
       title: '10% From Day One',
       desc: 'This isn\'t a goal or an aspiration. From order one to order infinity, 10% goes directly to supporting survivors. It\'s our core mission and non-negotiable commitment.',
-      icon: '◆',
     },
     {
       title: 'No Shortcuts',
-      desc: 'We believe in integrity over convenience. Real impact over quick profits. DYMNDS is built on the principle that pressure creates diamonds—and we apply that to everything we do.',
-      icon: '◆',
+      desc: 'We believe in integrity over convenience. Real impact over quick profits. DYMNDS is built on the principle that pressure creates DYMNDS—and we apply that to everything we do.',
     },
   ];
 
   const values = [
     {
-      title: 'Pressure Creates Diamonds',
+      title: 'Pressure Creates DYMNDS',
       desc: 'We believe every struggle is an opportunity to become stronger. Your challenges are shaping you into something brilliant.',
     },
     {
@@ -67,11 +65,11 @@ export default function AboutPage() {
       {/* Hero — Split Layout */}
       <section className="pt-36 pb-20 px-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_20%_50%,rgba(200,169,126,0.04),transparent)]" />
-        <div className="max-w-7xl mx-auto grid md:grid-cols-12 gap-12 items-end relative z-10">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-12 gap-12 md:gap-16 items-end relative z-10">
           <div className="md:col-span-5">
             <ScrollReveal animation="fade-up" delay={0} duration={800}>
               <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--accent)]/40 mb-4">Our Story</p>
-              <h1 className="tracking-tight font-bebas leading-[0.82]" style={{ fontSize: 'clamp(5rem, 16vw, 13rem)' }}>
+              <h1 className="tracking-tight font-bebas leading-[0.82]" style={{ fontSize: 'clamp(4rem, 12vw, 10rem)' }}>
                 BUILT<br />UNDER<br />PRESSURE
               </h1>
               <div className="w-16 h-[1px] bg-[var(--accent)]/40 mt-8" />
@@ -80,7 +78,7 @@ export default function AboutPage() {
           <div className="md:col-span-7">
             <ScrollReveal animation="slide-right" delay={200} duration={800}>
               <p className="text-xl md:text-2xl text-white/50 leading-relaxed">
-                DYMNDS was born from a simple belief: pressure creates diamonds. And every struggle can become strength.
+                DYMNDS was born from a simple belief: pressure creates DYMNDS. And every struggle can become strength.
               </p>
             </ScrollReveal>
           </div>
@@ -159,7 +157,9 @@ export default function AboutPage() {
             <div className="grid md:grid-cols-3 gap-8">
               {coreCommitments.map((commitment, i) => (
                 <div key={i} className="card-premium p-8 bg-neutral-900 border border-white/5 hover:border-white/20 transition-all duration-500">
-                  <div className="text-4xl opacity-40 mb-4">{commitment.icon}</div>
+                  <div className="mb-4 opacity-40">
+                    <Image src="/diamond-white.png" alt="" width={36} height={36} className="w-9 h-9" />
+                  </div>
                   <h3 className="text-xl tracking-wider mb-3 font-bebas">
                     {commitment.title}
                   </h3>
@@ -210,7 +210,7 @@ export default function AboutPage() {
               Our Vision
             </h2>
             <p className="text-xl opacity-70 leading-relaxed mb-12">
-              We&apos;re building more than a clothing company. We&apos;re building a movement that proves business can be a force for good. Where every purchase creates real change. Where athletes support survivors. Where pressure truly creates diamonds.
+              We&apos;re building more than a clothing company. We&apos;re building a movement that proves business can be a force for good. Where every purchase creates real change. Where athletes support survivors. Where pressure truly creates DYMNDS.
             </p>
           </ScrollReveal>
 

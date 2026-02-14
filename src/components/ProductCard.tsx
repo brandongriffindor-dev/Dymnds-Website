@@ -162,7 +162,7 @@ export default function ProductCard({
         {/* Size availability dots */}
         {Object.keys(stock).length > 0 && (
           <div className="flex gap-1.5 pt-2">
-            {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => {
+            {['XS', 'S', 'M', 'L', 'XL'].map(size => {
               const inStock = (stock as Record<string, number>)?.[size] > 0;
               return (
                 <div key={size} className="flex flex-col items-center gap-0.5">

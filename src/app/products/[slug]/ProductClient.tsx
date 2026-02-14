@@ -224,7 +224,7 @@ export default function ProductClient({ product, initialReviews = [], initialMat
   // Get current stock based on color
   const currentStock = state.selectedColor?.stock || product.stock || {};
 
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const sizes = ['XS', 'S', 'M', 'L', 'XL'];
   const displayPrice = convertPrice(getCadPrice(product), currency);
   const impactMinutes = Math.round(displayPrice * 0.10 * 2);
 

@@ -36,7 +36,7 @@ export function useBadgeCounts(user: User | null) {
       try {
         const productsSnap = await getDocs(collection(db, 'products'));
         const productsData = productsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
-        const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+        const sizes = ['XS', 'S', 'M', 'L', 'XL'];
         let count = 0;
         productsData.forEach(p => {
           const colors = p.colors || [];

@@ -81,28 +81,22 @@ export default function ContactPage() {
 
   const contactInfo = [
     {
-      title: 'Email',
-      subtitle: 'For general inquiries',
-      link: 'mailto:hello@dymnds.ca',
-      email: 'hello@dymnds.ca',
-    },
-    {
-      title: 'Order Support',
-      subtitle: 'Questions about your order?',
+      title: 'General Inquiries',
+      subtitle: 'Questions, feedback, or just want to chat',
       link: 'mailto:support@dymnds.ca',
       email: 'support@dymnds.ca',
     },
     {
-      title: 'Press & Media',
-      subtitle: 'For press inquiries and interviews',
-      link: 'mailto:press@dymnds.ca',
-      email: 'press@dymnds.ca',
+      title: 'Order Support',
+      subtitle: 'Questions about your order?',
+      link: 'mailto:support@dymnds.ca?subject=Order Support',
+      email: 'support@dymnds.ca',
     },
     {
-      title: 'Partnerships',
-      subtitle: 'Want to collaborate?',
-      link: 'mailto:partners@dymnds.ca',
-      email: 'partners@dymnds.ca',
+      title: 'Press & Partnerships',
+      subtitle: 'Media inquiries and collaborations',
+      link: 'mailto:support@dymnds.ca?subject=Press / Partnership',
+      email: 'support@dymnds.ca',
     },
   ];
 
@@ -116,12 +110,6 @@ export default function ContactPage() {
       {
         "@type": "ContactPoint",
         "contactType": "customer service",
-        "email": "hello@dymnds.ca",
-        "url": "https://dymnds.ca/contact",
-      },
-      {
-        "@type": "ContactPoint",
-        "contactType": "sales",
         "email": "support@dymnds.ca",
         "url": "https://dymnds.ca/contact",
       },
@@ -281,7 +269,7 @@ export default function ContactPage() {
 
                 <div className="space-y-8">
                   {contactInfo.map((info, i) => (
-                    <a key={i} href={info.link} className="card-premium p-6 bg-neutral-900 border border-white/5 hover:border-white/20 transition-all duration-300 group">
+                    <a key={i} href={info.link} className="block card-premium p-6 bg-neutral-900 border border-white/5 hover:border-white/20 transition-all duration-300 group">
                       <div className="mb-2">
                         <h3 className="text-lg tracking-wider font-bebas group-hover:text-white/70 transition-colors">
                           {info.title}

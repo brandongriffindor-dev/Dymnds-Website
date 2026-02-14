@@ -65,7 +65,7 @@ export default function AdminDashboard() {
   }
 
   // Calculate low stock
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const sizes = ['XS', 'S', 'M', 'L', 'XL'];
   let lowStockCount = 0;
   let hasCritical = false;
   products.forEach(p => {

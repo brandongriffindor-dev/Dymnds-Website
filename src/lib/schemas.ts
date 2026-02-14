@@ -29,7 +29,6 @@ const SizeGuideEntrySchema = z.object({
   M: z.string().default(''),
   L: z.string().default(''),
   XL: z.string().default(''),
-  XXL: z.string().default(''),
 });
 
 // ─── Stock Schema (shared) ──────────────────────────────────────
@@ -40,8 +39,7 @@ const StockSchema = z.object({
   M: z.number().default(0),
   L: z.number().default(0),
   XL: z.number().default(0),
-  XXL: z.number().default(0),
-}).default({ XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 });
+}).default({ XS: 0, S: 0, M: 0, L: 0, XL: 0 });
 
 // ─── Product Color Schema ───────────────────────────────────────
 

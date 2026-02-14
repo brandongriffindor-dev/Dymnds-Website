@@ -118,7 +118,7 @@ export default function ImpactPage() {
 
             <ScrollReveal animation="blur-up" delay={100} duration={1000}>
               <p className="text-white">
-                Every purchase creates a ripple effect. Your $89 Compression Tee funds a therapy session. Your $149 Heavy Hoodie provides a night of safe housing. Your choice to wear DYMNDS helps someone reclaim their strength.
+                Every purchase creates a ripple effect. 10% of your order goes directly toward therapy, safe housing, and support programs for survivors. The more our community grows, the more lives we can reach. Your choice to wear DYMNDS helps someone take their next step toward healing.
               </p>
             </ScrollReveal>
           </div>

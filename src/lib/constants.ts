@@ -16,11 +16,11 @@ export const PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded'] as con
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
 // ─── Sizes ──────────────────────────────────────────────────────
-export const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
+export const SIZES = ['XS', 'S', 'M', 'L', 'XL'] as const;
 export type Size = (typeof SIZES)[number];
 
 /** Default stock object with all sizes set to 0 */
-export const DEFAULT_STOCK: Record<Size, number> = { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
+export const DEFAULT_STOCK: Record<Size, number> = { XS: 0, S: 0, M: 0, L: 0, XL: 0 };
 
 // ─── Categories ─────────────────────────────────────────────────
 export const CATEGORIES = ['Men', 'Women'] as const;
