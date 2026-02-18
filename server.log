@@ -367,3 +367,6 @@ This typically indicates that your device does not have a healthy Internet conne
 [2026-02-18T09:52:24.203Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x102695e1 error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
 [2026-02-18T09:52:29.742Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x102695e2 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
  GET / 200 in 132ms (compile: 5ms, proxy.ts: 4ms, render: 123ms)
+[2026-02-18T10:53:57.308Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x102695e3 error. Code: 2 Message: 2 UNKNOWN: 408:Request Timeout
+[2026-02-18T10:54:24.614Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x102695e4 error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+ GET / 200 in 350ms (compile: 3ms, proxy.ts: 3ms, render: 344ms)
