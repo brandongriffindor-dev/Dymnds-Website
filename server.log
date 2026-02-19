@@ -410,3 +410,6 @@ This typically indicates that your device does not have a healthy Internet conne
  GET / 200 in 341ms (compile: 5ms, proxy.ts: 4ms, render: 332ms)
 [2026-02-19T11:57:08.791Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x102695fc error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
  GET / 200 in 116ms (compile: 2ms, proxy.ts: 2ms, render: 111ms)
+[2026-02-19T12:13:49.276Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x102695fd error. Code: 14 Message: 14 UNAVAILABLE: 502:Bad Gateway
+[2026-02-19T12:57:06.035Z]  @firebase/firestore: Firestore (12.8.0): GrpcConnection RPC 'Listen' stream 0x102695fe error. Code: 3 Message: 3 INVALID_ARGUMENT: Invalid resource field value in the request.
+ GET / 200 in 390ms (compile: 5ms, proxy.ts: 3ms, render: 382ms)
